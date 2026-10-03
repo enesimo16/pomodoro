@@ -35,9 +35,30 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, A
                     .ThenInclude(r => r!.Items)
             .FirstOrDefaultAsync(t => t.TokenHash == tokenHash, cancellationToken);
 
-        if (existingToken == null || !existingToken.IsActive)
+        if (existingToken == null)
         {
-            throw new UnauthorizedAccessException("Geçersiz veya süresi dolmuş yenileme belirteci.");
+            throw new UnauthorizedAccessException("Geçersiz yenileme belirteci.");
+        }
+
+        if (existingToken.IsRevoked)
+        {
+            // Guvenlik: Belirtec tekrar kullanma girisimi (Replay Attack). Tum aktif oturumlari kapat.
+            var activeTokens = await _context.RefreshTokens
+                .Where(t => t.UserId == existingToken.UserId && t.RevokedAt == null && t.ExpiresAt > DateTime.UtcNow)
+                .ToListAsync(cancellationToken);
+
+            foreach (var t in activeTokens)
+            {
+                t.Revoke(request.IpAddress, "revoked_due_to_replay_attack");
+            }
+
+            await _context.SaveChangesAsync(cancellationToken);
+            throw new UnauthorizedAccessException("Güvenlik ihlali: Belirteç daha önce kullanılmış. Tüm oturumlar sonlandırıldı.");
+        }
+
+        if (existingToken.IsExpired)
+        {
+            throw new UnauthorizedAccessException("Yenileme belirtecinin süresi dolmuş.");
         }
 
         var user = existingToken.User;

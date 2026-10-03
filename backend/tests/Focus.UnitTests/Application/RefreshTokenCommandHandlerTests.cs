@@ -88,4 +88,47 @@ public class RefreshTokenCommandHandlerTests
         // Assert
         await act.Should().ThrowAsync<UnauthorizedAccessException>();
     }
+
+    [Fact]
+    public async Task Handle_ShouldDetectReplayAttack_AndRevokeAllSessions_WhenTokenAlreadyRevoked()
+    {
+        // Arrange
+        using var context = CreateDbContext();
+        var jwtSettings = new JwtSettings
+        {
+            SigningKey = "test_super_secret_signing_key_at_least_32_bytes_long_123456",
+            Issuer = "focus-api-test",
+            Audience = "focus-web-test"
+        };
+        var jwtService = new JwtTokenService(Options.Create(jwtSettings));
+
+        var user = User.CreateGuest("Fatma");
+        var compromisedToken = "stolen_token_123";
+        var compromisedHash = jwtService.HashToken(compromisedToken);
+        var activeToken = "valid_second_device_token_456";
+        var activeHash = jwtService.HashToken(activeToken);
+
+        context.Users.Add(user);
+        var token1 = new RefreshToken(user.Id, compromisedHash, DateTime.UtcNow.AddDays(10), "127.0.0.1");
+        token1.Revoke("127.0.0.1", "rotated");
+        var token2 = new RefreshToken(user.Id, activeHash, DateTime.UtcNow.AddDays(10), "127.0.0.1");
+
+        context.RefreshTokens.AddRange(token1, token2);
+        await context.SaveChangesAsync();
+
+        var handler = new RefreshTokenCommandHandler(context, jwtService);
+        var command = new RefreshTokenCommand(compromisedToken, "192.168.1.100");
+
+        // Act
+        var act = async () => await handler.Handle(command, CancellationToken.None);
+
+        // Assert: Guvenlik ihlali hatasi firlatmali
+        var exception = await act.Should().ThrowAsync<UnauthorizedAccessException>();
+        exception.WithMessage("*Güvenlik ihlali*");
+
+        // Ve diger aktif oturum da iptal edilmis olmali
+        var secondTokenInDb = await context.RefreshTokens.FirstOrDefaultAsync(t => t.TokenHash == activeHash);
+        secondTokenInDb.Should().NotBeNull();
+        secondTokenInDb!.IsRevoked.Should().BeTrue();
+    }
 }
