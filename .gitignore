@@ -1,0 +1,58 @@
+# -------------------------------------------------------------
+# Focus Platform - .gitignore
+# -------------------------------------------------------------
+
+# .NET & C#
+**/bin/
+**/obj/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+.vs/
+_ReSharper*/
+*.resharper
+*.dotCover
+
+# Test Sonuclari & Kapsam
+TestResults/
+*.trx
+coverage/
+
+# Ortam Degiskenleri & Gizli Anahtarlar (Kesinlikle git'e eklenmez)
+.env
+.env*.local
+*.pfx
+*.pem
+*.cer
+*.key
+
+# Frontend (Node.js & Next.js)
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/.env.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+
+# Docker & Yerel Veritabani Hacimleri
+postgres_data/
+pgdata/
+redis_data/
+
+# Isletim Sistemi
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store

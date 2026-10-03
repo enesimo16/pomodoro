@@ -1,0 +1,15 @@
+**/.git
+**/.vs
+**/.vscode
+**/.idea
+**/bin
+**/obj
+**/TestResults
+**/coverage
+**/*.md
+docs
+scripts
+frontend
+.env
+.env.*
+!.env.example
