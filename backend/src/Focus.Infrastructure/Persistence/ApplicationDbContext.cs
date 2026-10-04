@@ -19,6 +19,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<UserExternalLogin> UserExternalLogins => Set<UserExternalLogin>();
     public DbSet<CoinLedgerEntry> CoinLedgerEntries => Set<CoinLedgerEntry>();
+    public DbSet<FocusSession> FocusSessions => Set<FocusSession>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

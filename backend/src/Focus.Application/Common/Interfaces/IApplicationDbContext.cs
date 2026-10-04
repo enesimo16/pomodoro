@@ -13,6 +13,7 @@ public interface IApplicationDbContext
     DbSet<RefreshToken> RefreshTokens { get; }
     DbSet<UserExternalLogin> UserExternalLogins { get; }
     DbSet<CoinLedgerEntry> CoinLedgerEntries { get; }
+    DbSet<FocusSession> FocusSessions { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

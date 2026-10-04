@@ -1,6 +1,7 @@
 using System.Text;
 using Focus.Application.Common.Interfaces;
 using Focus.Infrastructure.Authentication;
+using Focus.Infrastructure.Common;
 using Focus.Infrastructure.Persistence;
 using Focus.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -33,6 +34,7 @@ public static class DependencyInjection
         // Ayarlar
         services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));
         services.Configure<GoogleAuthSettings>(configuration.GetSection(GoogleAuthSettings.SectionName));
+        services.Configure<ExternalApiSettings>(configuration.GetSection(ExternalApiSettings.SectionName));
 
         var jwtSettings = new JwtSettings();
         configuration.GetSection(JwtSettings.SectionName).Bind(jwtSettings);
@@ -42,6 +44,11 @@ public static class DependencyInjection
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IGoogleAuthService, GoogleAuthService>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
+
+        // Harici Medya & API Servisleri (Typed HttpClients)
+        services.AddHttpClient<IThemeVideoService, PixabayVideoService>();
+        services.AddHttpClient<IMusicTrackService, JamendoMusicService>();
+        services.AddHttpClient<IWeatherService, OpenMeteoWeatherService>();
 
         // JWT Kimlik Dogrulama
         var key = Encoding.UTF8.GetBytes(jwtSettings.SigningKey);

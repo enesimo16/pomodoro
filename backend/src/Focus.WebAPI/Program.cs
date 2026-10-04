@@ -1,11 +1,13 @@
 using Focus.Application;
 using Focus.Infrastructure;
+using Focus.WebAPI.Hubs;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // .NET Servisleri
 builder.Services.AddControllers();
+builder.Services.AddSignalR();
 builder.Services.AddEndpointsApiExplorer();
 
 // Swagger & OpenAPI
@@ -88,6 +90,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<TimerHub>("/hubs/timer");
 
 app.Run();
 
