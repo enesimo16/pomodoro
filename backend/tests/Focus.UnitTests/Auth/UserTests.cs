@@ -3,7 +3,7 @@ using Focus.Domain.Entities;
 using Focus.Domain.Enums;
 using Xunit;
 
-namespace Focus.UnitTests.Domain;
+namespace Focus.UnitTests.Auth;
 
 public class UserTests
 {

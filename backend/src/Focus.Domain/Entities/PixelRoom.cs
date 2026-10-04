@@ -49,9 +49,50 @@ public class PixelRoom : BaseEntity<Guid>
         return room;
     }
 
-    public void AddItem(string catalogItemId, int gridX, int gridY, int rotation)
+    public RoomItem AddItem(string catalogItemId, int gridX, int gridY, int rotation)
     {
-        _items.Add(new RoomItem(Id, catalogItemId, gridX, gridY, rotation));
+        var item = new RoomItem(Id, catalogItemId, gridX, gridY, rotation);
+        _items.Add(item);
+        UpdatedAt = DateTime.UtcNow;
+        return item;
+    }
+
+    public bool RemoveItem(Guid itemId)
+    {
+        var item = _items.FirstOrDefault(i => i.Id == itemId);
+        if (item != null)
+        {
+            _items.Remove(item);
+            UpdatedAt = DateTime.UtcNow;
+            return true;
+        }
+        return false;
+    }
+
+    public bool MoveItem(Guid itemId, int gridX, int gridY, int rotation)
+    {
+        var item = _items.FirstOrDefault(i => i.Id == itemId);
+        if (item != null)
+        {
+            item.Move(gridX, gridY, rotation);
+            UpdatedAt = DateTime.UtcNow;
+            return true;
+        }
+        return false;
+    }
+
+    public void UpdateTheme(string? wallPaperId, string? floorId)
+    {
+        if (!string.IsNullOrWhiteSpace(wallPaperId)) WallPaperId = wallPaperId;
+        if (!string.IsNullOrWhiteSpace(floorId)) FloorId = floorId;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void UpdateDetails(string name, bool isPublic, int maxVisitors = 5)
+    {
+        if (!string.IsNullOrWhiteSpace(name)) Name = name;
+        IsPublic = isPublic;
+        if (maxVisitors > 0) MaxVisitors = maxVisitors;
         UpdatedAt = DateTime.UtcNow;
     }
 

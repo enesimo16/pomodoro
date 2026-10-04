@@ -1,12 +1,11 @@
 using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using FluentAssertions;
 using Focus.Domain.Entities;
 using Focus.Infrastructure.Authentication;
 using Microsoft.Extensions.Options;
 using Xunit;
 
-namespace Focus.UnitTests.Infrastructure;
+namespace Focus.UnitTests.Auth;
 
 public class JwtTokenServiceTests
 {

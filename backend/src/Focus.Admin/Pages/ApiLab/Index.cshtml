@@ -7,7 +7,7 @@
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
     <div>
         <h4 class="fw-bold mb-0 text-dark">API Test Konsolu</h4>
-        <span class="text-muted small">WebAPI uç noktalarını tarayıcı üzerinden canlı test edin</span>
+        <span class="text-muted small">Faz 0 (Auth) ve Faz 1 (Avatar & Piksel Oda) uç noktalarını canlı test edin</span>
     </div>
     <div class="d-flex align-items-center gap-2">
         <span class="badge bg-light text-secondary border px-3 py-2">
@@ -20,56 +20,209 @@
 </div>
 
 <div class="row g-4">
-    <!-- Sol Kolon: Test Butonlari -->
+    <!-- Sol Kolon: Test Sekmeleri ve Kontroller -->
     <div class="col-lg-5">
-        <!-- 1. Misafir Girisi -->
-        <div class="card card-custom p-4 mb-3">
-            <h6 class="fw-bold text-dark mb-2">1. Misafir Girişi</h6>
-            <p class="text-muted small mb-3">Yeni bir misafir hesabı, piksel avatar ve varsayılan oda oluşturur.</p>
+        <!-- Sekme Başlıkları -->
+        <ul class="nav nav-pills mb-3 gap-1 bg-white p-1 rounded border" id="pills-tab" role="tablist">
+            <li class="nav-item flex-fill" role="presentation">
+                <button class="nav-link active w-100 text-center" id="tab-auth-btn" data-bs-toggle="pill" data-bs-target="#tab-auth" type="button" role="tab">1. Kimlik</button>
+            </li>
+            <li class="nav-item flex-fill" role="presentation">
+                <button class="nav-link w-100 text-center" id="tab-avatar-btn" data-bs-toggle="pill" data-bs-target="#tab-avatar" type="button" role="tab">2. Avatar</button>
+            </li>
+            <li class="nav-item flex-fill" role="presentation">
+                <button class="nav-link w-100 text-center" id="tab-room-btn" data-bs-toggle="pill" data-bs-target="#tab-room" type="button" role="tab">3. Piksel Oda</button>
+            </li>
+        </ul>
 
-            <div class="mb-3">
-                <input type="text" id="guestDisplayName" class="form-control" placeholder="Kullanıcı adı (İsteğe bağlı)" />
+        <div class="tab-content" id="pills-tabContent">
+            <!-- TAB 1: AUTH -->
+            <div class="tab-pane fade show active" id="tab-auth" role="tabpanel">
+                <div class="card card-custom p-3 mb-3">
+                    <h6 class="fw-bold text-dark mb-2">Misafir Hesabı Aç</h6>
+                    <div class="mb-2">
+                        <input type="text" id="guestDisplayName" class="form-control" placeholder="Kullanıcı adı (İsteğe bağlı)" />
+                    </div>
+                    <button id="btnCreateGuest" class="btn btn-primary w-100">
+                        Misafir Hesabı Aç (POST /auth/guest)
+                    </button>
+                </div>
+
+                <div class="card card-custom p-3 mb-3">
+                    <h6 class="fw-bold text-dark mb-2">Oturum & Token</h6>
+                    <div class="d-grid gap-2">
+                        <button id="btnGetMe" class="btn btn-outline-primary">
+                            Profil Bilgisi Getir (GET /auth/me)
+                        </button>
+                        <button id="btnRefreshToken" class="btn btn-outline-secondary">
+                            Token Yenile (POST /auth/refresh)
+                        </button>
+                        <button id="btnLogout" class="btn btn-outline-danger">
+                            Çıkış Yap (POST /auth/logout)
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card card-custom p-3">
+                    <h6 class="fw-bold text-dark mb-2">Güvenlik Savunması</h6>
+                    <button id="btnTestReplay" class="btn btn-outline-secondary w-100">
+                        Replay Attack Simülasyonu
+                    </button>
+                </div>
             </div>
-            <button id="btnCreateGuest" class="btn btn-primary w-100">
-                Misafir Hesabı Aç
-            </button>
-        </div>
 
-        <!-- 2. Kimlik Dogrulama ve Token -->
-        <div class="card card-custom p-4 mb-3">
-            <h6 class="fw-bold text-dark mb-2">2. Kimlik ve Token Yönetimi</h6>
-            <p class="text-muted small mb-3">Mevcut token veya çerezle profil çekme ve token rotasyonu.</p>
+            <!-- TAB 2: AVATAR -->
+            <div class="tab-pane fade" id="tab-avatar" role="tabpanel">
+                <div class="card card-custom p-3 mb-3">
+                    <h6 class="fw-bold text-dark mb-2">Avatar Bilgisi</h6>
+                    <button id="btnGetAvatar" class="btn btn-outline-primary w-100">
+                        Avatarımı Getir (GET /avatar)
+                    </button>
+                </div>
 
-            <div class="d-grid gap-2">
-                <button id="btnGetMe" class="btn btn-outline-primary">
-                    Kullanıcı Bilgisini Getir (/me)
-                </button>
-                <button id="btnRefreshToken" class="btn btn-outline-secondary">
-                    Token Yenile (Refresh)
-                </button>
-                <button id="btnLogout" class="btn btn-outline-danger">
-                    Oturumu Kapat (Logout)
-                </button>
+                <div class="card card-custom p-3">
+                    <h6 class="fw-bold text-dark mb-2">Avatar Özelleştir (PATCH /avatar)</h6>
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <label class="form-label small text-muted mb-1">Ten Rengi</label>
+                            <select id="avSkinTone" class="form-select">
+                                <option value="tone_1">Açık (Tone 1)</option>
+                                <option value="tone_2">Buğday (Tone 2)</option>
+                                <option value="tone_3">Esmer (Tone 3)</option>
+                                <option value="tone_4">Koyu (Tone 4)</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small text-muted mb-1">Saç Modeli</label>
+                            <select id="avHairStyle" class="form-select">
+                                <option value="messy_short">Kısa Dağınık</option>
+                                <option value="buzz_cut">Asker Traşı</option>
+                                <option value="ponytail">At Kuyruğu</option>
+                                <option value="curls">Kıvırcık</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <label class="form-label small text-muted mb-1">Saç Rengi</label>
+                            <select id="avHairColor" class="form-select">
+                                <option value="dark_brown">Koyu Kahve</option>
+                                <option value="black">Siyah</option>
+                                <option value="blonde">Sarı</option>
+                                <option value="red">Kızıl</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small text-muted mb-1">Üst Kıyafet</label>
+                            <select id="avTopItem" class="form-select">
+                                <option value="tshirt_basic_white">Beyaz T-Shirt</option>
+                                <option value="hoodie_black">Siyah Hoodie</option>
+                                <option value="sweater_green">Yeşil Kazak</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small text-muted mb-1">Alt Kıyafet</label>
+                            <select id="avBottomItem" class="form-select">
+                                <option value="jeans_basic_blue">Mavi Kot</option>
+                                <option value="jeans_black">Siyah Kot</option>
+                                <option value="shorts_grey">Gri Şort</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small text-muted mb-1">Aksesuar (Şapka)</label>
+                            <select id="avHatItem" class="form-select">
+                                <option value="">Şapka Yok</option>
+                                <option value="cap_red">Kırmızı Şapka</option>
+                                <option value="beanie_grey">Gri Bere</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button id="btnUpdateAvatar" class="btn btn-primary w-100">
+                        Görünümü Güncelle (PATCH /avatar)
+                    </button>
+                </div>
             </div>
-        </div>
 
-        <!-- 3. Guvenlik Kalkanlari -->
-        <div class="card card-custom p-4">
-            <h6 class="fw-bold text-dark mb-2">3. Güvenlik Testi</h6>
-            <p class="text-muted small mb-3">İptal edilmiş sahte token ile Replay Attack savunmasını test eder.</p>
+            <!-- TAB 3: ROOM -->
+            <div class="tab-pane fade" id="tab-room" role="tabpanel">
+                <div class="card card-custom p-3 mb-3">
+                    <h6 class="fw-bold text-dark mb-2">Oda Bilgisi</h6>
+                    <button id="btnGetRoom" class="btn btn-outline-primary w-100">
+                        Odamı Getir (GET /room)
+                    </button>
+                </div>
 
-            <button id="btnTestReplay" class="btn btn-outline-secondary w-100">
-                Replay Saldırısı Testi
-            </button>
+                <div class="card card-custom p-3 mb-3">
+                    <h6 class="fw-bold text-dark mb-2">Mobilya Ekle (POST /room/items)</h6>
+                    <div class="mb-2">
+                        <select id="roomCatalogItem" class="form-select">
+                            <option value="plant_bonsai">Bonsai Bitkisi</option>
+                            <option value="bookshelf_oak">Meşe Kitaplık</option>
+                            <option value="lamp_neon_sign">Neon Tabela</option>
+                            <option value="coffee_machine_retro">Retro Kahve Makinesi</option>
+                            <option value="rug_persian_mini">Mini Halı</option>
+                        </select>
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-4">
+                            <input type="number" id="roomGridX" class="form-control" placeholder="X (0-10)" value="4" min="0" max="10" />
+                        </div>
+                        <div class="col-4">
+                            <input type="number" id="roomGridY" class="form-control" placeholder="Y (0-10)" value="2" min="0" max="10" />
+                        </div>
+                        <div class="col-4">
+                            <select id="roomRotation" class="form-select">
+                                <option value="0">0°</option>
+                                <option value="90">90°</option>
+                                <option value="180">180°</option>
+                                <option value="270">270°</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button id="btnAddRoomItem" class="btn btn-primary w-100">
+                        Odaya Eşya Yerleştir
+                    </button>
+                </div>
+
+                <div class="card card-custom p-3">
+                    <h6 class="fw-bold text-dark mb-2">Tema Değiştir (PATCH /room/theme)</h6>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small text-muted mb-1">Duvar Kağıdı</label>
+                            <select id="roomWallpaper" class="form-select">
+                                <option value="wallpaper_brick_white">Beyaz Tuğla</option>
+                                <option value="wallpaper_cyber_neon">Siber Neon</option>
+                                <option value="wallpaper_wood_cozy">Sıcak Ahşap</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small text-muted mb-1">Zemin</label>
+                            <select id="roomFloor" class="form-select">
+                                <option value="floor_parquet_oak">Meşe Parke</option>
+                                <option value="floor_tatami_japanese">Japon Tatami</option>
+                                <option value="floor_marble_white">Beyaz Mermer</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button id="btnUpdateTheme" class="btn btn-outline-secondary w-100">
+                        Temayı Uygula
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
     <!-- Sag Kolon: Canli Oturum & Log Konsolu -->
     <div class="col-lg-7">
-        <!-- Oturum Durumu -->
+        <!-- Oturum ve Durum Karti -->
         <div class="card card-custom p-4 mb-4">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h6 class="fw-bold text-dark mb-0">Aktif Oturum Bilgisi</h6>
+                <h6 class="fw-bold text-dark mb-0">Aktif Oturum & Karakter Özeti</h6>
                 <span id="sessionStatusBadge" class="badge rounded-pill badge-status-guest">Oturum Yok</span>
             </div>
 
@@ -81,7 +234,7 @@
                 <div class="row g-2 mb-3">
                     <div class="col-sm-6">
                         <div class="p-3 rounded bg-light border">
-                            <span class="text-muted small d-block mb-1">Kullanıcı</span>
+                            <span class="text-muted small d-block mb-1">Kullanıcı & Tür</span>
                             <div id="lblDisplayName" class="fw-bold text-dark fs-6"></div>
                             <span id="lblUserType" class="badge rounded-pill mt-1"></span>
                         </div>
@@ -95,14 +248,24 @@
                     </div>
                 </div>
 
+                <!-- Avatar Detay -->
                 <div class="p-3 rounded bg-light border mb-3">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="text-muted small">Oda: <strong id="lblRoomName" class="text-dark"></strong></span>
-                        <span id="lblItemCount" class="badge bg-white text-secondary border small">0 Mobilya</span>
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="text-muted small fw-semibold">Avatar Görünümü</span>
                     </div>
-                    <ul id="listRoomItems" class="small text-secondary mb-0 ps-3"></ul>
+                    <div id="lblAvatarSummary" class="small text-secondary"></div>
                 </div>
 
+                <!-- Piksel Oda & Mobilyalar -->
+                <div class="p-3 rounded bg-light border mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted small">Oda: <strong id="lblRoomName" class="text-dark"></strong> (<span id="lblThemeSummary"></span>)</span>
+                        <span id="lblItemCount" class="badge bg-white text-secondary border small">0 Mobilya</span>
+                    </div>
+                    <div id="listRoomItems" class="d-flex flex-column gap-1 small text-secondary"></div>
+                </div>
+
+                <!-- Token -->
                 <div class="p-3 rounded bg-light border">
                     <div class="d-flex justify-content-between align-items-center mb-1">
                         <span class="text-muted small">Access Token (JWT)</span>
@@ -120,7 +283,7 @@
                 <button id="btnClearLog" class="btn btn-sm btn-link text-secondary text-decoration-none p-0 small">Temizle</button>
             </div>
             <div id="terminalLog" class="terminal-box">
-[Sistem] API Test Konsolu hazır. Hedef: @Model.WebApiBaseUrl
+[Sistem] API Test Konsolu hazır. Faz 0 (Auth) ve Faz 1 (Avatar, Oda) modülleri test edilebilir.
             </div>
         </div>
     </div>
@@ -129,8 +292,7 @@
 @section Scripts {
 <script>
     const apiBase = '@Model.WebApiBaseUrl';
-    
-    // Oturum verilerini localStorage / sessionStorage ile sakla
+
     let currentTokens = {
         accessToken: sessionStorage.getItem('focus_test_at') || null,
         refreshToken: sessionStorage.getItem('focus_test_rt') || null
@@ -143,6 +305,13 @@
         else sessionStorage.removeItem('focus_test_at');
         if (refreshToken) sessionStorage.setItem('focus_test_rt', refreshToken);
         else sessionStorage.removeItem('focus_test_rt');
+    }
+
+    function getAuthHeaders(includeContentType = true) {
+        const headers = {};
+        if (includeContentType) headers['Content-Type'] = 'application/json';
+        if (currentTokens.accessToken) headers['Authorization'] = `Bearer ${currentTokens.accessToken}`;
+        return headers;
     }
 
     function log(message, type = 'info') {
@@ -165,31 +334,46 @@
         document.getElementById('sessionContent').style.display = 'block';
 
         const user = authData.user;
+        const avatar = authData.avatar;
         const room = authData.room;
 
         const statusBadge = document.getElementById('sessionStatusBadge');
         statusBadge.className = 'badge rounded-pill badge-status-registered';
         statusBadge.innerText = 'Aktif Oturum';
 
-        document.getElementById('lblDisplayName').innerText = user.displayName;
-        
-        const typeBadge = document.getElementById('lblUserType');
-        typeBadge.innerText = user.isGuest ? 'Misafir Hesabı' : 'Kayıtlı Kullanıcı';
-        typeBadge.className = user.isGuest ? 'badge rounded-pill badge-status-guest mt-1' : 'badge rounded-pill badge-status-registered mt-1';
+        if (user) {
+            document.getElementById('lblDisplayName').innerText = user.displayName;
+            const typeBadge = document.getElementById('lblUserType');
+            typeBadge.innerText = user.isGuest ? 'Misafir Hesabı' : 'Kayıtlı Kullanıcı';
+            typeBadge.className = user.isGuest ? 'badge rounded-pill badge-status-guest mt-1' : 'badge rounded-pill badge-status-registered mt-1';
+            document.getElementById('lblLevel').innerText = `Seviye ${user.level} (${user.currentXp} XP)`;
+            document.getElementById('lblCoins').innerText = authData.totalCoins !== undefined ? authData.totalCoins : (user.currentXp >= 0 ? '50' : '0');
+        }
 
-        document.getElementById('lblLevel').innerText = `Seviye ${user.level} (${user.currentXp} XP)`;
-        document.getElementById('lblCoins').innerText = authData.totalCoins !== undefined ? authData.totalCoins : (user.currentXp >= 0 ? '50' : '0');
+        if (avatar) {
+            document.getElementById('lblAvatarSummary').innerText =
+                `Ten: ${avatar.skinTone} | Saç: ${avatar.hairStyle} (${avatar.hairColor}) | Üst: ${avatar.topItemCatalogId || '-'} | Alt: ${avatar.bottomItemCatalogId || '-'} | Şapka: ${avatar.hatItemCatalogId || 'Yok'}`;
+        }
 
         if (room) {
             document.getElementById('lblRoomName').innerText = room.name || 'Piksel Oda';
+            document.getElementById('lblThemeSummary').innerText = `${room.wallPaperId || '-'}, ${room.floorId || '-'}`;
             const itemsList = document.getElementById('listRoomItems');
             itemsList.innerHTML = '';
             const items = room.items || [];
             document.getElementById('lblItemCount').innerText = `${items.length} Mobilya`;
+
             items.forEach(item => {
-                const li = document.createElement('li');
-                li.innerText = `${item.catalogItemId} (Izgara: [${item.gridX}, ${item.gridY}])`;
-                itemsList.appendChild(li);
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'd-flex justify-content-between align-items-center py-1 border-bottom';
+                itemDiv.innerHTML = `
+                    <span><strong>${item.catalogItemId}</strong> (Konum: [${item.gridX}, ${item.gridY}], Yön: ${item.rotation}°)</span>
+                    <div class="d-flex gap-1">
+                        <button class="btn btn-sm btn-outline-secondary py-0 px-2" onclick="moveItemPrompt('${item.id}', ${item.gridX}, ${item.gridY}, ${item.rotation})">Taşı</button>
+                        <button class="btn btn-sm btn-outline-danger py-0 px-2" onclick="removeItem('${item.id}')">Sil</button>
+                    </div>
+                `;
+                itemsList.appendChild(itemDiv);
             });
         }
 
@@ -207,11 +391,10 @@
         document.getElementById('sessionEmptyAlert').style.display = 'block';
     }
 
-    // 1. Misafir Girisi Testi
+    // AUTH ISLEMLERI
     document.getElementById('btnCreateGuest').addEventListener('click', async () => {
         const name = document.getElementById('guestDisplayName').value.trim();
         log(`POST ${apiBase}/api/v1/auth/guest gönderiliyor...`);
-
         try {
             const res = await fetch(`${apiBase}/api/v1/auth/guest`, {
                 method: 'POST',
@@ -219,53 +402,41 @@
                 credentials: 'include',
                 body: JSON.stringify({ displayName: name || null })
             });
-
             const data = await res.json();
             if (res.ok) {
-                log(`HTTP 200 OK: Misafir hesabı başarıyla oluşturuldu! ID: ${data.user.id}`, 'success');
+                log(`HTTP 200 OK: Misafir hesabı oluşturuldu! ID: ${data.user.id}`, 'success');
                 saveTokens(data.accessToken, data.refreshToken);
                 updateSessionUI(data);
             } else {
                 log(`HTTP ${res.status} Hata: ${JSON.stringify(data)}`, 'error');
             }
         } catch (err) {
-            log(`Bağlantı Hatası: ${err.message}. (API sunucusu http://localhost:5000 çalışıyor mu?)`, 'error');
+            log(`Bağlantı Hatası: ${err.message}`, 'error');
         }
     });
 
-    // 2. Profilimi Getir (/me) Testi
     document.getElementById('btnGetMe').addEventListener('click', async () => {
         log(`GET ${apiBase}/api/v1/auth/me gönderiliyor...`);
-
-        const headers = {};
-        if (currentTokens.accessToken) {
-            headers['Authorization'] = `Bearer ${currentTokens.accessToken}`;
-        }
-
         try {
             const res = await fetch(`${apiBase}/api/v1/auth/me`, {
                 method: 'GET',
-                headers: headers,
+                headers: getAuthHeaders(false),
                 credentials: 'include'
             });
-
             if (res.ok) {
                 const data = await res.json();
-                log(`HTTP 200 OK: Kullanıcı kimliği doğrulandı! (${data.user.displayName})`, 'success');
+                log(`HTTP 200 OK: Kullanıcı kimliği doğrulandı (${data.user.displayName})`, 'success');
                 updateSessionUI(data);
             } else {
-                const errData = await res.text();
-                log(`HTTP ${res.status}: Oturum geçersiz veya token süresi dolmuş. Detay: ${errData}`, 'error');
+                log(`HTTP ${res.status}: Oturum geçersiz veya token süresi dolmuş.`, 'error');
             }
         } catch (err) {
             log(`Bağlantı Hatası: ${err.message}`, 'error');
         }
     });
 
-    // 3. Token Refresh Testi
     document.getElementById('btnRefreshToken').addEventListener('click', async () => {
         log(`POST ${apiBase}/api/v1/auth/refresh gönderiliyor...`);
-
         try {
             const res = await fetch(`${apiBase}/api/v1/auth/refresh`, {
                 method: 'POST',
@@ -273,24 +444,21 @@
                 credentials: 'include',
                 body: JSON.stringify({ refreshToken: currentTokens.refreshToken })
             });
-
             const data = await res.json();
             if (res.ok) {
-                log(`HTTP 200 OK: Token rotasyonu başarılı! Yeni Access ve Refresh token alındı.`, 'success');
+                log(`HTTP 200 OK: Token yenilendi (Rotated).`, 'success');
                 saveTokens(data.accessToken, data.refreshToken);
                 updateSessionUI(data);
             } else {
-                log(`HTTP ${res.status}: Token yenilenemedi. Detay: ${JSON.stringify(data)}`, 'error');
+                log(`HTTP ${res.status}: Yenileme başarısız.`, 'error');
             }
         } catch (err) {
             log(`Bağlantı Hatası: ${err.message}`, 'error');
         }
     });
 
-    // 4. Logout Testi
     document.getElementById('btnLogout').addEventListener('click', async () => {
         log(`POST ${apiBase}/api/v1/auth/logout gönderiliyor...`);
-
         try {
             const res = await fetch(`${apiBase}/api/v1/auth/logout`, {
                 method: 'POST',
@@ -298,9 +466,8 @@
                 credentials: 'include',
                 body: JSON.stringify({ refreshToken: currentTokens.refreshToken })
             });
-
             if (res.ok) {
-                log(`HTTP 204 No Content: Başarıyla çıkış yapıldı. Çerezler ve oturum sıfırlandı.`, 'warn');
+                log(`HTTP 204 No Content: Çıkış yapıldı.`, 'warn');
                 clearSessionUI();
             } else {
                 log(`HTTP ${res.status}: Çıkış isteği hata verdi.`, 'error');
@@ -310,19 +477,16 @@
         }
     });
 
-    // 5. Replay Attack Simülasyonu
     document.getElementById('btnTestReplay').addEventListener('click', async () => {
-        const dummyStolenToken = "stolen_compromised_token_xyz_999";
-        log(`Replay Saldırısı Simülasyonu: Geçersiz/ele geçirilmiş token ile refresh deneniyor...`, 'warn');
-
+        const dummyToken = "stolen_compromised_token_xyz_999";
+        log(`Replay Saldırısı Testi: Geçersiz token gönderiliyor...`, 'warn');
         try {
             const res = await fetch(`${apiBase}/api/v1/auth/refresh`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
-                body: JSON.stringify({ refreshToken: dummyStolenToken })
+                body: JSON.stringify({ refreshToken: dummyToken })
             });
-
             const data = await res.json();
             if (res.status === 401) {
                 log(`HTTP 401 Unauthorized [Başarılı Savunma]: Sistem yetkisiz erişimi engelledi.`, 'success');
@@ -334,7 +498,185 @@
         }
     });
 
-    // Token kopyalama
+    // AVATAR ISLEMLERI
+    document.getElementById('btnGetAvatar').addEventListener('click', async () => {
+        log(`GET ${apiBase}/api/v1/avatar gönderiliyor...`);
+        try {
+            const res = await fetch(`${apiBase}/api/v1/avatar`, {
+                method: 'GET',
+                headers: getAuthHeaders(false),
+                credentials: 'include'
+            });
+            if (res.ok) {
+                const avatar = await res.json();
+                log(`HTTP 200 OK: Avatar alındı! Ten: ${avatar.skinTone}, Saç: ${avatar.hairStyle}`, 'success');
+                updateSessionUI({ avatar: avatar });
+            } else {
+                log(`HTTP ${res.status}: Avatar alınamadı. Oturum açtınız mı?`, 'error');
+            }
+        } catch (err) {
+            log(`Bağlantı Hatası: ${err.message}`, 'error');
+        }
+    });
+
+    document.getElementById('btnUpdateAvatar').addEventListener('click', async () => {
+        const payload = {
+            skinTone: document.getElementById('avSkinTone').value,
+            hairStyle: document.getElementById('avHairStyle').value,
+            hairColor: document.getElementById('avHairColor').value,
+            topItemId: document.getElementById('avTopItem').value,
+            bottomItemId: document.getElementById('avBottomItem').value,
+            hatItemId: document.getElementById('avHatItem').value || null,
+            clearHat: !document.getElementById('avHatItem').value
+        };
+
+        log(`PATCH ${apiBase}/api/v1/avatar gönderiliyor: ${JSON.stringify(payload)}`);
+        try {
+            const res = await fetch(`${apiBase}/api/v1/avatar`, {
+                method: 'PATCH',
+                headers: getAuthHeaders(true),
+                credentials: 'include',
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+                const avatar = await res.json();
+                log(`HTTP 200 OK: Avatar başarıyla güncellendi!`, 'success');
+                updateSessionUI({ avatar: avatar });
+            } else {
+                log(`HTTP ${res.status}: Avatar güncellenemedi.`, 'error');
+            }
+        } catch (err) {
+            log(`Bağlantı Hatası: ${err.message}`, 'error');
+        }
+    });
+
+    // ROOM ISLEMLERI
+    document.getElementById('btnGetRoom').addEventListener('click', async () => {
+        log(`GET ${apiBase}/api/v1/room gönderiliyor...`);
+        try {
+            const res = await fetch(`${apiBase}/api/v1/room`, {
+                method: 'GET',
+                headers: getAuthHeaders(false),
+                credentials: 'include'
+            });
+            if (res.ok) {
+                const room = await res.json();
+                log(`HTTP 200 OK: Oda bilgisi alındı! Eşya Sayısı: ${room.items.length}`, 'success');
+                updateSessionUI({ room: room });
+            } else {
+                log(`HTTP ${res.status}: Oda alınamadı. Oturum açtınız mı?`, 'error');
+            }
+        } catch (err) {
+            log(`Bağlantı Hatası: ${err.message}`, 'error');
+        }
+    });
+
+    document.getElementById('btnAddRoomItem').addEventListener('click', async () => {
+        const payload = {
+            catalogItemId: document.getElementById('roomCatalogItem').value,
+            gridX: parseInt(document.getElementById('roomGridX').value) || 0,
+            gridY: parseInt(document.getElementById('roomGridY').value) || 0,
+            rotation: parseInt(document.getElementById('roomRotation').value) || 0
+        };
+
+        log(`POST ${apiBase}/api/v1/room/items gönderiliyor: ${JSON.stringify(payload)}`);
+        try {
+            const res = await fetch(`${apiBase}/api/v1/room/items`, {
+                method: 'POST',
+                headers: getAuthHeaders(true),
+                credentials: 'include',
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+                const item = await res.json();
+                log(`HTTP 201 Created: Eşya yerleştirildi! ID: ${item.id}`, 'success');
+                document.getElementById('btnGetRoom').click();
+            } else {
+                log(`HTTP ${res.status}: Eşya yerleştirilemedi.`, 'error');
+            }
+        } catch (err) {
+            log(`Bağlantı Hatası: ${err.message}`, 'error');
+        }
+    });
+
+    document.getElementById('btnUpdateTheme').addEventListener('click', async () => {
+        const payload = {
+            wallpaperCatalogId: document.getElementById('roomWallpaper').value,
+            floorCatalogId: document.getElementById('roomFloor').value
+        };
+
+        log(`PATCH ${apiBase}/api/v1/room/theme gönderiliyor: ${JSON.stringify(payload)}`);
+        try {
+            const res = await fetch(`${apiBase}/api/v1/room/theme`, {
+                method: 'PATCH',
+                headers: getAuthHeaders(true),
+                credentials: 'include',
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+                const room = await res.json();
+                log(`HTTP 200 OK: Oda teması başarıyla güncellendi!`, 'success');
+                updateSessionUI({ room: room });
+            } else {
+                log(`HTTP ${res.status}: Tema güncellenemedi.`, 'error');
+            }
+        } catch (err) {
+            log(`Bağlantı Hatası: ${err.message}`, 'error');
+        }
+    });
+
+    window.removeItem = async function(itemId) {
+        log(`DELETE ${apiBase}/api/v1/room/items/${itemId} gönderiliyor...`);
+        try {
+            const res = await fetch(`${apiBase}/api/v1/room/items/${itemId}`, {
+                method: 'DELETE',
+                headers: getAuthHeaders(false),
+                credentials: 'include'
+            });
+            if (res.ok) {
+                log(`HTTP 204 No Content: Eşya odadan kaldırıldı.`, 'warn');
+                document.getElementById('btnGetRoom').click();
+            } else {
+                log(`HTTP ${res.status}: Eşya silinemedi.`, 'error');
+            }
+        } catch (err) {
+            log(`Bağlantı Hatası: ${err.message}`, 'error');
+        }
+    };
+
+    window.moveItemPrompt = async function(itemId, currX, currY, currRot) {
+        const newX = prompt("Yeni Grid X (0-10):", currX);
+        if (newX === null) return;
+        const newY = prompt("Yeni Grid Y (0-10):", currY);
+        if (newY === null) return;
+        const newRot = prompt("Yeni Yön (0, 90, 180, 270):", currRot);
+        if (newRot === null) return;
+
+        const payload = {
+            gridX: parseInt(newX) || 0,
+            gridY: parseInt(newY) || 0,
+            rotation: parseInt(newRot) || 0
+        };
+
+        log(`PUT ${apiBase}/api/v1/room/items/${itemId} gönderiliyor: ${JSON.stringify(payload)}`);
+        try {
+            const res = await fetch(`${apiBase}/api/v1/room/items/${itemId}`, {
+                method: 'PUT',
+                headers: getAuthHeaders(true),
+                credentials: 'include',
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+                log(`HTTP 200 OK: Eşyanın konumu güncellendi!`, 'success');
+                document.getElementById('btnGetRoom').click();
+            } else {
+                log(`HTTP ${res.status}: Eşya taşınamadı.`, 'error');
+            }
+        } catch (err) {
+            log(`Bağlantı Hatası: ${err.message}`, 'error');
+        }
+    };
+
     document.getElementById('btnCopyToken').addEventListener('click', () => {
         if (currentTokens.accessToken) {
             navigator.clipboard.writeText(currentTokens.accessToken).then(() => {
@@ -343,7 +685,6 @@
         }
     });
 
-    // Sifirla butonu
     document.getElementById('btnResetAll').addEventListener('click', () => {
         clearSessionUI();
         log(`Tüm yerel oturum verileri temizlendi.`, 'info');
@@ -353,7 +694,6 @@
         document.getElementById('terminalLog').innerHTML = '';
     });
 
-    // Sayfa acildiginda mevcut oturum varsa otomatik kontrol et
     if (currentTokens.accessToken) {
         log(`Kayıtlı oturum tespit edildi. Profil sorgulanıyor...`, 'info');
         document.getElementById('btnGetMe').click();

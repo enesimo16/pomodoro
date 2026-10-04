@@ -39,23 +39,30 @@ public class UserAvatar : BaseEntity<Guid>
     }
 
     public void UpdateAppearance(
-        string skinTone,
-        string hairStyle,
-        string hairColor,
-        string? topItemId,
-        string? bottomItemId,
-        string? hatItemId,
-        string? glassesItemId,
-        string? shoesItemId)
+        string? skinTone = null,
+        string? hairStyle = null,
+        string? hairColor = null,
+        string? topItemId = null,
+        string? bottomItemId = null,
+        string? hatItemId = null,
+        string? glassesItemId = null,
+        string? shoesItemId = null,
+        bool clearHat = false,
+        bool clearGlasses = false)
     {
-        SkinTone = skinTone;
-        HairStyle = hairStyle;
-        HairColor = hairColor;
-        TopItemCatalogId = topItemId;
-        BottomItemCatalogId = bottomItemId;
-        HatItemCatalogId = hatItemId;
-        GlassesItemCatalogId = glassesItemId;
-        ShoesItemCatalogId = shoesItemId;
+        if (!string.IsNullOrWhiteSpace(skinTone)) SkinTone = skinTone;
+        if (!string.IsNullOrWhiteSpace(hairStyle)) HairStyle = hairStyle;
+        if (!string.IsNullOrWhiteSpace(hairColor)) HairColor = hairColor;
+        if (!string.IsNullOrWhiteSpace(topItemId)) TopItemCatalogId = topItemId;
+        if (!string.IsNullOrWhiteSpace(bottomItemId)) BottomItemCatalogId = bottomItemId;
+        if (!string.IsNullOrWhiteSpace(shoesItemId)) ShoesItemCatalogId = shoesItemId;
+
+        if (clearHat) HatItemCatalogId = null;
+        else if (hatItemId != null) HatItemCatalogId = hatItemId;
+
+        if (clearGlasses) GlassesItemCatalogId = null;
+        else if (glassesItemId != null) GlassesItemCatalogId = glassesItemId;
+
         UpdatedAt = DateTime.UtcNow;
     }
 }
