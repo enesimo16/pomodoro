@@ -7,7 +7,7 @@
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
     <div>
         <h4 class="fw-bold mb-0 text-dark">API Test Konsolu</h4>
-        <span class="text-muted small">Faz 0 (Auth), Faz 1 (Avatar & Piksel Oda) ve Faz 2 (Özelleştirilebilir Sayaç & Medya API'leri)</span>
+        <span class="text-muted small">Faz 0 (Auth), Faz 1 (Avatar & Piksel Oda) ve Faz 2 (Sayaç, Atmosferik Video, Lo-Fi Müzik & Hava Durumu)</span>
     </div>
     <div class="d-flex align-items-center gap-2">
         <span class="badge bg-light text-secondary border px-3 py-2">
@@ -20,7 +20,7 @@
 </div>
 
 <div class="row g-4">
-    <!-- Sol Kolon: Test Sekmeleri ve Kontroller -->
+    <!-- Sol Kolon: Kontroller ve Arama Sekmeleri -->
     <div class="col-lg-5">
         <!-- Sekme Başlıkları -->
         <ul class="nav nav-pills mb-3 gap-1 bg-white p-1 rounded border" id="pills-tab" role="tablist">
@@ -251,7 +251,7 @@
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label small text-muted mb-1">Atmosfer / Tema ID</label>
+                        <label class="form-label small text-muted mb-1">Seçili Tema</label>
                         <input type="text" id="sessionThemeId" class="form-control" value="rainy_window" placeholder="Örn: rainy_window, cozy_cloudy" />
                     </div>
 
@@ -300,102 +300,182 @@
                 </div>
             </div>
 
-            <!-- TAB 5: MEDYA & API (FAZ 2) -->
+            <!-- TAB 5: MEDYA & DIŞ API'LER (FAZ 2) -->
             <div class="tab-pane fade" id="tab-media" role="tabpanel">
-                <!-- Pixabay Video Kartı -->
+                <!-- 1. Pixabay Video Arama -->
                 <div class="card card-custom p-3 mb-3">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <h6 class="fw-bold text-dark mb-0">Pixabay HD Arka Plan Temaları</h6>
                         <span class="badge bg-success-subtle text-success border">Video API</span>
                     </div>
                     <div class="input-group mb-2">
-                        <input type="text" id="pixabayQuery" class="form-control" value="rain window" placeholder="rain window, cafe, fireplace..." />
-                        <button id="btnSearchThemes" class="btn btn-primary">Ara</button>
+                        <input type="text" id="pixabayQuery" class="form-control" value="rain window" placeholder="İstediğiniz temayı yazın..." />
+                        <button id="btnSearchThemes" class="btn btn-primary px-3">Ara</button>
                     </div>
-                    <div id="themesContainer" class="d-flex flex-column gap-2 mt-2" style="max-height: 280px; overflow-y: auto;">
-                        <span class="text-muted small text-center p-3 bg-light rounded">Henüz tema aranmadı. Yukarıdan "Ara" butonuna basınız.</span>
+                    <div class="d-flex flex-wrap gap-1 mb-2">
+                        <button type="button" class="btn btn-sm btn-light border text-secondary px-2 py-0 btn-theme-chip" data-q="rain window">🌧️ Yağmur</button>
+                        <button type="button" class="btn btn-sm btn-light border text-secondary px-2 py-0 btn-theme-chip" data-q="cozy cafe coffee">☕ Sıcak Kafe</button>
+                        <button type="button" class="btn btn-sm btn-light border text-secondary px-2 py-0 btn-theme-chip" data-q="fireplace burning">🔥 Şömine</button>
+                        <button type="button" class="btn btn-sm btn-light border text-secondary px-2 py-0 btn-theme-chip" data-q="night city tokyo">🌃 Gece Şehri</button>
+                        <button type="button" class="btn btn-sm btn-light border text-secondary px-2 py-0 btn-theme-chip" data-q="forest nature calm">🌲 Doğa & Orman</button>
+                    </div>
+                    <div id="themesContainer" class="d-flex flex-column gap-2" style="max-height: 250px; overflow-y: auto;">
+                        <span class="text-muted small text-center p-3 bg-light rounded">Aramak için yukarıdan "Ara" butonuna tıklayınız.</span>
                     </div>
                 </div>
 
-                <!-- Jamendo Lo-Fi Plak Çalar -->
+                <!-- 2. Jamendo & Lo-Fi Müzik Arama -->
                 <div class="card card-custom p-3 mb-3">
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h6 class="fw-bold text-dark mb-0">Jamendo Retro Lo-Fi Plak Çalar</h6>
+                        <h6 class="fw-bold text-dark mb-0">Jamendo & Lo-Fi Plak Çalar</h6>
                         <span class="badge bg-info-subtle text-info border">Müzik API</span>
                     </div>
-                    <button id="btnGetLofiTracks" class="btn btn-outline-primary w-100 mb-2">
-                        Lo-Fi Parçaları Getir (GET /api/v1/media/tracks)
-                    </button>
-                    <div id="tracksContainer" class="d-flex flex-column gap-2" style="max-height: 280px; overflow-y: auto;">
-                        <span class="text-muted small text-center p-3 bg-light rounded">Parçalar listelenmedi.</span>
+                    <div class="input-group mb-2">
+                        <input type="text" id="musicQuery" class="form-control" value="lofi" placeholder="Parça, sanatçı veya müzik türü..." />
+                        <button id="btnSearchMusic" class="btn btn-outline-primary px-3">Parça Ara</button>
+                    </div>
+                    <div class="d-flex flex-wrap gap-1 mb-2">
+                        <button type="button" class="btn btn-sm btn-light border text-secondary px-2 py-0 btn-music-chip" data-q="lofi">🎧 Lo-Fi</button>
+                        <button type="button" class="btn btn-sm btn-light border text-secondary px-2 py-0 btn-music-chip" data-q="piano">🎹 Piyano</button>
+                        <button type="button" class="btn btn-sm btn-light border text-secondary px-2 py-0 btn-music-chip" data-q="chillhop">☕ Chillhop</button>
+                        <button type="button" class="btn btn-sm btn-light border text-secondary px-2 py-0 btn-music-chip" data-q="ambient">🌿 Ambiyans</button>
+                        <button type="button" class="btn btn-sm btn-light border text-secondary px-2 py-0 btn-music-chip" data-q="jazz">🎷 Caz</button>
+                    </div>
+                    <div id="tracksContainer" class="d-flex flex-column gap-2" style="max-height: 250px; overflow-y: auto;">
+                        <span class="text-muted small text-center p-3 bg-light rounded">Parçaları listelemek için "Parça Ara"ya basınız.</span>
                     </div>
                 </div>
 
-                <!-- Open-Meteo Canlı Hava Durumu -->
+                <!-- 3. Open-Meteo & Hava Durumu Simülatörü -->
                 <div class="card card-custom p-3">
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h6 class="fw-bold text-dark mb-0">Open-Meteo Canlı Hava Durumu</h6>
+                        <h6 class="fw-bold text-dark mb-0">Hava Durumu Senkronu & Simülatörü</h6>
                         <span class="badge bg-secondary-subtle text-secondary border">Hava Senkronu</span>
                     </div>
-                    <div class="d-flex gap-1 mb-2">
-                        <button type="button" class="btn btn-sm btn-outline-secondary flex-fill btn-city" data-lat="41.0082" data-lon="28.9784">İstanbul</button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary flex-fill btn-city" data-lat="39.9334" data-lon="32.8597">Ankara</button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary flex-fill btn-city" data-lat="38.4237" data-lon="27.1428">İzmir</button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary flex-fill btn-city" data-lat="51.5074" data-lon="-0.1278">Londra</button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary flex-fill btn-city" data-lat="35.6762" data-lon="139.6503">Tokyo</button>
+                    
+                    <!-- Canlı Şehirler -->
+                    <label class="form-label small text-muted mb-1">Canlı Şehir Seçimi:</label>
+                    <div class="d-flex flex-wrap gap-1 mb-2">
+                        <button type="button" class="btn btn-sm btn-outline-secondary flex-fill btn-city py-1" data-lat="41.0082" data-lon="28.9784">İstanbul</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary flex-fill btn-city py-1" data-lat="39.9334" data-lon="32.8597">Ankara</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary flex-fill btn-city py-1" data-lat="38.4237" data-lon="27.1428">İzmir</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary flex-fill btn-city py-1" data-lat="51.5074" data-lon="-0.1278">Londra</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary flex-fill btn-city py-1" data-lat="35.6762" data-lon="139.6503">Tokyo</button>
                     </div>
+
+                    <!-- Farklı Hava Durumu Tepkisi Simülatörü -->
+                    <label class="form-label small text-muted mb-1">Tüm Hava Durumu Tepkilerini Canlı Test Edin:</label>
+                    <div class="d-flex flex-wrap gap-1 mb-2">
+                        <button type="button" class="btn btn-sm btn-outline-warning btn-weather-sim" data-code="0">☀️ Güneşli</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary btn-weather-sim" data-code="2">⛅ Parçalı</button>
+                        <button type="button" class="btn btn-sm btn-outline-dark btn-weather-sim" data-code="3">☁️ Kapalı</button>
+                        <button type="button" class="btn btn-sm btn-outline-primary btn-weather-sim" data-code="61">🌧️ Yağmurlu</button>
+                        <button type="button" class="btn btn-sm btn-outline-danger btn-weather-sim" data-code="95">⛈️ Fırtınalı</button>
+                        <button type="button" class="btn btn-sm btn-outline-info btn-weather-sim" data-code="71">❄️ Karlı</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary btn-weather-sim" data-code="45">🌫️ Sisli</button>
+                    </div>
+
                     <div class="row g-2 mb-2">
                         <div class="col-6">
-                            <label class="form-label small text-muted mb-1">Enlem (Lat)</label>
-                            <input type="text" id="weatherLat" class="form-control" value="41.0082" />
+                            <input type="text" id="weatherLat" class="form-control form-control-sm" value="41.0082" placeholder="Enlem" />
                         </div>
                         <div class="col-6">
-                            <label class="form-label small text-muted mb-1">Boylam (Lon)</label>
-                            <input type="text" id="weatherLon" class="form-control" value="28.9784" />
+                            <input type="text" id="weatherLon" class="form-control form-control-sm" value="28.9784" placeholder="Boylam" />
                         </div>
                     </div>
-                    <button id="btnGetWeather" class="btn btn-outline-secondary w-100 mb-2">
-                        Hava Durumunu Çek (GET /api/v1/media/weather)
+                    <button id="btnGetWeather" class="btn btn-outline-secondary btn-sm w-100">
+                        Canlı Koordinattan Çek (GET /api/v1/media/weather)
                     </button>
-                    <div id="weatherReportContainer" class="p-3 bg-light rounded text-center small text-muted">
-                        Hava durumu bilgisi bekleniyor.
-                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Sağ Kolon: Canlı Oturum, Sayaç Paneli & Log Konsolu -->
+    <!-- Sağ Kolon: Canlı Stüdyo & Atmosfer Önizleme, Sayaç, Karakter ve Log Konsolu -->
     <div class="col-lg-7">
-        <!-- Canlı Sayaç & Masa Lambası Kartı (Faz 2) -->
-        <div class="card card-custom p-4 mb-4 border-primary-subtle" id="timerWidgetCard" style="background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);">
-            <div class="d-flex justify-content-between align-items-center mb-3">
+        <!-- CANLI STÜDYO VE ATMOSFER ÖNİZLEME ALANI (FAZ 2) -->
+        <div class="card card-custom mb-4 overflow-hidden border shadow-sm" id="studioPreviewCard" style="border-top: 4px solid #2563eb; transition: all 0.3s ease;">
+            <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center gap-2">
-                    <span class="fw-bold text-dark fs-6">Canlı Odak Sayacı</span>
-                    <span id="badgeTimerMode" class="badge bg-secondary-subtle text-secondary border">Hazır</span>
+                    <span class="fs-6 fw-bold text-dark mb-0">Canlı Atmosfer & Önizleme Stüdyosu</span>
+                    <span id="badgeStudioTheme" class="badge bg-primary-subtle text-primary border border-primary-subtle">Yağmurlu Pencere</span>
                 </div>
-                <!-- Masa Lambası Durumu -->
-                <div id="deskLampBadge" class="badge px-3 py-2 border rounded-pill bg-light text-secondary">
-                    🌙 Masa Lambası Sönük
-                </div>
-            </div>
-
-            <!-- Sayaç Göstergesi -->
-            <div class="text-center py-3 bg-white rounded border mb-3 shadow-sm">
-                <div class="text-muted small text-uppercase fw-semibold mb-1" id="lblTimerSubHeader">Kalan Süre</div>
-                <div id="lblTimerDisplay" class="display-3 fw-bold text-dark font-monospace mb-1">48:00</div>
-                <div class="d-flex justify-content-center align-items-center gap-3 text-secondary small">
-                    <span>Döngü: <strong id="lblRoundProgress" class="text-dark">Tur 1 / 4</strong></span>
-                    <span>•</span>
-                    <span>Durum: <strong id="lblTimerStatus" class="text-dark">Beklemede</strong></span>
-                    <span>•</span>
-                    <span>Çalışılan: <strong id="lblNetDuration" class="text-dark">0 sn</strong></span>
+                <div class="d-flex align-items-center gap-2">
+                    <span id="deskLampBadge" class="badge px-3 py-2 border rounded-pill bg-light text-secondary">
+                        🌙 Masa Lambası Sönük
+                    </span>
                 </div>
             </div>
 
-            <!-- İlerleme Çubuğu -->
-            <div class="progress" style="height: 6px;">
-                <div id="timerProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: 100%;"></div>
+            <!-- Video Arka Plan Ekranı (Canlı Döngü) -->
+            <div class="position-relative bg-dark" style="height: 240px; overflow: hidden;">
+                <video id="previewVideoPlayer"
+                       style="width: 100%; height: 100%; object-fit: cover; filter: brightness(0.85);"
+                       autoplay loop muted playsinline
+                       poster="https://images.unsplash.com/photo-1519692933481-e162a57d6721?w=640"
+                       src="https://cdn.pixabay.com/video/2017/08/30/11722-231759069_medium.mp4">
+                </video>
+
+                <!-- Video Üzeri Atmosfer & Hava Durumu Overlay'i -->
+                <div class="position-absolute top-0 start-0 p-3 text-white" style="background: linear-gradient(180deg, rgba(0,0,0,0.6) 0%, transparent 100%); width: 100%;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-2">
+                            <span id="previewWeatherBadge" class="badge bg-dark bg-opacity-75 border border-secondary px-2 py-1">🌧️ Yağmurlu • 18.5°C</span>
+                            <span id="previewWindowEffectBadge" class="badge bg-primary bg-opacity-75 border px-2 py-1">💧 Camda Yağmur Damlaları</span>
+                        </div>
+                        <div class="d-flex gap-1">
+                            <button id="btnToggleVideoPlay" class="btn btn-sm btn-dark bg-opacity-75 border text-white py-0 px-2">Durdur</button>
+                            <button id="btnToggleVideoMute" class="btn btn-sm btn-dark bg-opacity-75 border text-white py-0 px-2">Ses Aç</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Video Üzeri Alt Bilgi: Atmosfer Açıklaması -->
+                <div class="position-absolute bottom-0 start-0 p-3 text-white" style="background: linear-gradient(0deg, rgba(0,0,0,0.7) 0%, transparent 100%); width: 100%;">
+                    <div id="previewAtmosphereDesc" class="small fw-light text-white-50">Dışarıda sağanak yağmur var. Masa lambasının altında çalışmak harika hissettiriyor.</div>
+                    <div id="previewSoundscapeDesc" class="small fw-semibold text-warning mt-1">🎵 Önerilen Ambiyans: Pencereye Vuran Yağmur & Lo-Fi Piyano</div>
+                </div>
+            </div>
+
+            <!-- Müzik & Plak Çalar Barı -->
+            <div class="p-3 bg-light border-top d-flex flex-wrap align-items-center justify-content-between gap-3" id="musicPlayerBar">
+                <div class="d-flex align-items-center gap-2">
+                    <img id="playerTrackImg" src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=120" style="width: 44px; height: 44px; border-radius: 6px; object-fit: cover; border: 1px solid #cbd5e1;" />
+                    <div style="max-width: 200px;">
+                        <strong id="playerTrackTitle" class="d-block text-dark small text-truncate">Midnight Lofi Study</strong>
+                        <span id="playerArtistName" class="text-muted small text-truncate d-block">Focus Chill Lab</span>
+                    </div>
+                </div>
+                <!-- Dahili Ses Oynatıcı -->
+                <div class="flex-grow-1" style="min-width: 220px;">
+                    <audio id="previewAudioPlayer" controls class="w-100" style="height: 36px;" src="https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3"></audio>
+                </div>
+            </div>
+
+            <!-- Canlı Sayaç Kartı -->
+            <div class="p-4 bg-white border-top">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="fw-bold text-dark fs-6">Odaklanma Durumu</span>
+                        <span id="badgeTimerMode" class="badge bg-secondary-subtle text-secondary border">Hazır</span>
+                    </div>
+                    <span id="lblRoundProgress" class="badge bg-light text-secondary border px-3 py-1">Tur 1 / 4</span>
+                </div>
+
+                <div class="text-center py-2 mb-3">
+                    <div class="text-muted small text-uppercase fw-semibold mb-1" id="lblTimerSubHeader">Kalan Süre</div>
+                    <div id="lblTimerDisplay" class="display-3 fw-bold text-dark font-monospace mb-1">48:00</div>
+                    <div class="d-flex justify-content-center align-items-center gap-3 text-secondary small">
+                        <span>Durum: <strong id="lblTimerStatus" class="text-dark">Beklemede</strong></span>
+                        <span>•</span>
+                        <span>Çalışılan: <strong id="lblNetDuration" class="text-dark">0 sn</strong></span>
+                    </div>
+                </div>
+
+                <!-- İlerleme Çubuğu -->
+                <div class="progress" style="height: 6px;">
+                    <div id="timerProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: 100%;"></div>
+                </div>
             </div>
         </div>
 
@@ -430,9 +510,7 @@
 
                 <!-- Avatar Detay -->
                 <div class="p-3 rounded bg-light border mb-3">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <span class="text-muted small fw-semibold">Avatar Görünümü</span>
-                    </div>
+                    <span class="text-muted small fw-semibold d-block mb-1">Avatar Görünümü</span>
                     <div id="lblAvatarSummary" class="small text-secondary"></div>
                 </div>
 
@@ -463,7 +541,7 @@
                 <button id="btnClearLog" class="btn btn-sm btn-link text-secondary text-decoration-none p-0 small">Temizle</button>
             </div>
             <div id="terminalLog" class="terminal-box">
-[Sistem] API Test Konsolu hazır. Faz 0 (Auth), Faz 1 (Avatar, Oda) ve Faz 2 (Sayaç, Pixabay, Jamendo, Open-Meteo) test edilebilir.
+[Sistem] API Test Konsolu hazır. Faz 0 (Auth), Faz 1 (Avatar, Oda) ve Faz 2 (Sayaç, Pixabay Video, Lo-Fi Müzik & Hava Senkronu) hazır.
             </div>
         </div>
     </div>
@@ -480,8 +558,12 @@
 
     let activeSession = null;
     let timerInterval = null;
-    let remainingSeconds = 0;
-    let totalPlannedSeconds = 0;
+    let remainingSeconds = 48 * 60;
+    let totalPlannedSeconds = 48 * 60;
+
+    // Medya Oynatıcı Referansları
+    const videoPlayer = document.getElementById('previewVideoPlayer');
+    const audioPlayer = document.getElementById('previewAudioPlayer');
 
     function saveTokens(accessToken, refreshToken) {
         currentTokens.accessToken = accessToken;
@@ -600,7 +682,32 @@
         updateTimerDisplay(48 * 60, 48 * 60, 'Beklemede', 'Hazır', 'Tur 1 / 4', false);
     }
 
-    // SAYAÇ VE MASA LAMBASI UI GÜNCELLEMESİ
+    // SAĞDAKİ CANLI TEMA & MÜZİK ÖNİZLEMESİNİ GÜNCELLE
+    function setPreviewTheme(videoUrl, title, posterUrl = null) {
+        if (!videoUrl) return;
+        videoPlayer.src = videoUrl;
+        if (posterUrl) videoPlayer.poster = posterUrl;
+        videoPlayer.play().catch(e => console.log('Video autoplay:', e));
+
+        document.getElementById('badgeStudioTheme').textContent = title;
+        document.getElementById('sessionThemeId').value = title;
+        document.getElementById('btnToggleVideoPlay').textContent = 'Durdur';
+        log(`Sağdaki stüdyo önizlemesine tema videosu yüklendi: "${title}"`, 'info');
+    }
+
+    function setPreviewTrack(audioUrl, title, artist, imgUrl = null) {
+        if (!audioUrl) return;
+        audioPlayer.src = audioUrl;
+        document.getElementById('playerTrackTitle').textContent = title;
+        document.getElementById('playerArtistName').textContent = artist;
+        if (imgUrl) {
+            document.getElementById('playerTrackImg').src = imgUrl;
+        }
+        audioPlayer.play().catch(e => console.log('Audio autoplay:', e));
+        log(`Sağdaki piksel plak çalara müzik yüklendi: "${title}" - ${artist}`, 'info');
+    }
+
+    // SAYAÇ VE MASA LAMBASI UI
     function updateTimerUI(session) {
         activeSession = session;
         if (!session) {
@@ -617,14 +724,13 @@
         const isDeskLightOn = isFocus && (isRunning || isPaused);
         const lamp = document.getElementById('deskLampBadge');
         if (isDeskLightOn) {
-            lamp.className = 'badge px-3 py-2 border rounded-pill bg-warning-subtle text-warning-emphasis border-warning';
+            lamp.className = 'badge px-3 py-2 border rounded-pill bg-warning-subtle text-warning-emphasis border-warning shadow-sm';
             lamp.innerHTML = '💡 Masa Lambası Yanıyor (Karakter Masada)';
         } else {
             lamp.className = 'badge px-3 py-2 border rounded-pill bg-light text-secondary';
-            lamp.innerHTML = '🌙 Masa Lambası Sönük (Dinlenme / Boşta)';
+            lamp.innerHTML = '🌙 Masa Lambası Sönük (Dinlenme Modu)';
         }
 
-        // Mod badge
         const badgeMode = document.getElementById('badgeTimerMode');
         badgeMode.textContent = isFocus ? '🎯 Odaklanma Modu' : '☕ Mola Modu';
         badgeMode.className = isFocus
@@ -676,7 +782,7 @@
         document.getElementById('lblRoundProgress').textContent = roundText;
         const lamp = document.getElementById('deskLampBadge');
         if (lampOn) {
-            lamp.className = 'badge px-3 py-2 border rounded-pill bg-warning-subtle text-warning-emphasis border-warning';
+            lamp.className = 'badge px-3 py-2 border rounded-pill bg-warning-subtle text-warning-emphasis border-warning shadow-sm';
             lamp.innerHTML = '💡 Masa Lambası Yanıyor';
         } else {
             lamp.className = 'badge px-3 py-2 border rounded-pill bg-light text-secondary';
@@ -684,7 +790,30 @@
         }
     }
 
-    // 1. AUTH İŞLEMLERİ
+    // Video Kontrolleri
+    document.getElementById('btnToggleVideoPlay').addEventListener('click', () => {
+        const btn = document.getElementById('btnToggleVideoPlay');
+        if (videoPlayer.paused) {
+            videoPlayer.play();
+            btn.textContent = 'Durdur';
+        } else {
+            videoPlayer.pause();
+            btn.textContent = 'Oynat';
+        }
+    });
+
+    document.getElementById('btnToggleVideoMute').addEventListener('click', () => {
+        const btn = document.getElementById('btnToggleVideoMute');
+        if (videoPlayer.muted) {
+            videoPlayer.muted = false;
+            btn.textContent = 'Sessize Al';
+        } else {
+            videoPlayer.muted = true;
+            btn.textContent = 'Ses Aç';
+        }
+    });
+
+    // 1. AUTH
     document.getElementById('btnCreateGuest').addEventListener('click', async () => {
         const displayName = document.getElementById('guestDisplayName').value.trim();
         log(`POST ${apiBase}/api/v1/auth/guest gönderiliyor...`);
@@ -697,10 +826,9 @@
             });
             if (res.ok) {
                 const data = await res.json();
-                log(`HTTP 201 Created: Misafir hesabı açıldı! Kullanıcı ID: ${data.user.id}`, 'success');
-                saveTokens(data.tokens.accessToken, data.tokens.refreshToken);
+                log(`HTTP 201 Created: Misafir hesabı açıldı! ID: ${data.user.id}`, 'success');
+                saveTokens(data.accessToken, data.refreshToken);
                 updateSessionUI(data);
-                // Aktif seansı kontrol et
                 document.getElementById('btnGetActiveSession').click();
             } else {
                 log(`HTTP ${res.status}: Misafir hesabı açılamadı.`, 'error');
@@ -726,7 +854,7 @@
                 document.getElementById('btnGetRoom').click();
                 document.getElementById('btnGetActiveSession').click();
             } else {
-                log(`HTTP ${res.status}: Profil getirilemedi. Token geçersiz olabilir.`, 'error');
+                log(`HTTP ${res.status}: Profil getirilemedi.`, 'error');
             }
         } catch (err) {
             log(`Bağlantı Hatası: ${err.message}`, 'error');
@@ -744,7 +872,7 @@
             });
             if (res.ok) {
                 const tokens = await res.json();
-                log(`HTTP 200 OK: Yeni token çifti başarıyla alındı!`, 'success');
+                log(`HTTP 200 OK: Yeni token çifti alındı!`, 'success');
                 saveTokens(tokens.accessToken, tokens.refreshToken);
                 updateSessionUI({ tokens: tokens });
             } else {
@@ -786,7 +914,7 @@
         if (res1.ok) {
             const newTokens = await res1.json();
             saveTokens(newTokens.accessToken, newTokens.refreshToken);
-            log(`[Test] 1. İstek başarılı, token döndü. Şimdi ESKİ token ile 2. istek (Replay) yapılıyor...`, 'warn');
+            log(`[Test] 1. İstek başarılı. Eski token ile 2. istek (Replay) yapılıyor...`, 'warn');
             const res2 = await fetch(`${apiBase}/api/v1/auth/refresh`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -794,15 +922,15 @@
                 body: JSON.stringify({ refreshToken: stolenToken })
             });
             if (res2.status === 401) {
-                log(`[Test Başarılı!] HTTP 401: Eski token reddedildi ve tüm oturumlar zincirleme iptal edildi!`, 'success');
+                log(`[Test Başarılı!] HTTP 401: Eski token tespit edildi ve zincirleme iptal edildi!`, 'success');
                 clearSessionUI();
             } else {
-                log(`[Güvenlik Uyarısı] HTTP ${res2.status}: Eski token beklenmedik şekilde kabul edildi!`, 'error');
+                log(`[Uyarı] HTTP ${res2.status}: Beklenmedik yanıt.`, 'error');
             }
         }
     });
 
-    // 2. AVATAR İŞLEMLERİ
+    // 2. AVATAR
     document.getElementById('btnGetAvatar').addEventListener('click', async () => {
         log(`GET ${apiBase}/api/v1/avatar gönderiliyor...`);
         try {
@@ -815,8 +943,6 @@
                 const avatar = await res.json();
                 log(`HTTP 200 OK: Avatar bilgisi alındı!`, 'success');
                 updateSessionUI({ avatar: avatar });
-            } else {
-                log(`HTTP ${res.status}: Avatar alınamadı.`, 'error');
             }
         } catch (err) {
             log(`Bağlantı Hatası: ${err.message}`, 'error');
@@ -834,7 +960,7 @@
             clearHat: !document.getElementById('avHatItem').value
         };
 
-        log(`PATCH ${apiBase}/api/v1/avatar gönderiliyor: ${JSON.stringify(payload)}`);
+        log(`PATCH ${apiBase}/api/v1/avatar gönderiliyor...`);
         try {
             const res = await fetch(`${apiBase}/api/v1/avatar`, {
                 method: 'PATCH',
@@ -844,17 +970,15 @@
             });
             if (res.ok) {
                 const avatar = await res.json();
-                log(`HTTP 200 OK: Avatar başarıyla güncellendi!`, 'success');
+                log(`HTTP 200 OK: Avatar güncellendi!`, 'success');
                 updateSessionUI({ avatar: avatar });
-            } else {
-                log(`HTTP ${res.status}: Avatar güncellenemedi.`, 'error');
             }
         } catch (err) {
             log(`Bağlantı Hatası: ${err.message}`, 'error');
         }
     });
 
-    // 3. PIXEL ROOM İŞLEMLERİ
+    // 3. PIXEL ROOM
     document.getElementById('btnGetRoom').addEventListener('click', async () => {
         log(`GET ${apiBase}/api/v1/room gönderiliyor...`);
         try {
@@ -865,10 +989,8 @@
             });
             if (res.ok) {
                 const room = await res.json();
-                log(`HTTP 200 OK: Oda bilgisi alındı! Eşya Sayısı: ${room.items.length}`, 'success');
+                log(`HTTP 200 OK: Oda bilgisi alındı! Eşya: ${room.items.length}`, 'success');
                 updateSessionUI({ room: room });
-            } else {
-                log(`HTTP ${res.status}: Oda alınamadı.`, 'error');
             }
         } catch (err) {
             log(`Bağlantı Hatası: ${err.message}`, 'error');
@@ -895,8 +1017,6 @@
                 const item = await res.json();
                 log(`HTTP 201 Created: Eşya yerleştirildi! ID: ${item.id}`, 'success');
                 document.getElementById('btnGetRoom').click();
-            } else {
-                log(`HTTP ${res.status}: Eşya yerleştirilemedi.`, 'error');
             }
         } catch (err) {
             log(`Bağlantı Hatası: ${err.message}`, 'error');
@@ -921,8 +1041,6 @@
                 const room = await res.json();
                 log(`HTTP 200 OK: Oda teması güncellendi!`, 'success');
                 updateSessionUI({ room: room });
-            } else {
-                log(`HTTP ${res.status}: Tema güncellenemedi.`, 'error');
             }
         } catch (err) {
             log(`Bağlantı Hatası: ${err.message}`, 'error');
@@ -977,7 +1095,7 @@
         }
     };
 
-    // 4. SAYAÇ & DÖNGÜ İŞLEMLERİ (FAZ 2)
+    // 4. SAYAÇ & DÖNGÜ (FAZ 2)
     document.getElementById('btnStartSession').addEventListener('click', async () => {
         const payload = {
             kind: document.getElementById('sessionKind').value,
@@ -998,7 +1116,7 @@
             });
             if (res.ok) {
                 const session = await res.json();
-                log(`HTTP 201 Created: Seans başladı! Durum: ${session.status}, Kalan: ${session.remainingSeconds} sn`, 'success');
+                log(`HTTP 201 Created: Seans başladı! Kalan: ${session.remainingSeconds} sn. Masa lambası yandı.`, 'success');
                 updateTimerUI(session);
             } else {
                 log(`HTTP ${res.status}: Seans başlatılamadı. Oturum açık mı?`, 'error');
@@ -1020,8 +1138,6 @@
                 const session = await res.json();
                 log(`HTTP 200 OK: Seans duraklatıldı!`, 'warn');
                 updateTimerUI(session);
-            } else {
-                log(`HTTP ${res.status}: Seans duraklatılamadı.`, 'error');
             }
         } catch (err) {
             log(`Bağlantı Hatası: ${err.message}`, 'error');
@@ -1040,8 +1156,6 @@
                 const session = await res.json();
                 log(`HTTP 200 OK: Seans devam ettiriliyor!`, 'success');
                 updateTimerUI(session);
-            } else {
-                log(`HTTP ${res.status}: Seans devam ettirilemedi.`, 'error');
             }
         } catch (err) {
             log(`Bağlantı Hatası: ${err.message}`, 'error');
@@ -1061,8 +1175,6 @@
                 const session = await res.json();
                 log(`HTTP 200 OK: Seansa +10 dk eklendi! Yeni süre: ${session.plannedMinutes} dk`, 'info');
                 updateTimerUI(session);
-            } else {
-                log(`HTTP ${res.status}: Seans uzatılamadı.`, 'error');
             }
         } catch (err) {
             log(`Bağlantı Hatası: ${err.message}`, 'error');
@@ -1079,12 +1191,9 @@
             });
             if (res.ok) {
                 const data = await res.json();
-                log(`HTTP 200 OK: Seans tamamlandı! +${data.xpEarned} XP, +${data.coinsEarned} Focus Coin kazanıldı! Sıradaki Adım: ${data.nextKind} (Tur ${data.nextRound})`, 'success');
+                log(`HTTP 200 OK: Seans tamamlandı! +${data.xpEarned} XP, +${data.coinsEarned} Focus Coin kazanıldı! Sıradaki: ${data.nextKind} (Tur ${data.nextRound})`, 'success');
                 updateTimerUI(data.session);
-                // Profil bakiye ve seviyeyi güncelle
                 document.getElementById('btnGetMe').click();
-            } else {
-                log(`HTTP ${res.status}: Seans tamamlanamadı.`, 'error');
             }
         } catch (err) {
             log(`Bağlantı Hatası: ${err.message}`, 'error');
@@ -1092,7 +1201,7 @@
     });
 
     document.getElementById('btnAbandonSession').addEventListener('click', async () => {
-        log(`POST ${apiBase}/api/v1/sessions/abandon (Masadan Kalk) gönderiliyor...`);
+        log(`POST ${apiBase}/api/v1/sessions/abandon gönderiliyor...`);
         try {
             const res = await fetch(`${apiBase}/api/v1/sessions/abandon`, {
                 method: 'POST',
@@ -1101,10 +1210,8 @@
             });
             if (res.ok) {
                 const session = await res.json();
-                log(`HTTP 200 OK: Seans iptal edildi, karakter masadan kalktı. Lamba söndü.`, 'warn');
+                log(`HTTP 200 OK: Seans iptal edildi, karakter masadan kalktı, lamba söndü.`, 'warn');
                 updateTimerUI(session);
-            } else {
-                log(`HTTP ${res.status}: Masadan kalkılamadı.`, 'error');
             }
         } catch (err) {
             log(`Bağlantı Hatası: ${err.message}`, 'error');
@@ -1120,52 +1227,63 @@
                 credentials: 'include'
             });
             if (res.status === 204) {
-                log(`HTTP 204 No Content: Aktif bir seans bulunmuyor.`, 'info');
+                log(`HTTP 204 No Content: Aktif seans yok.`, 'info');
                 updateTimerUI(null);
             } else if (res.ok) {
                 const session = await res.json();
                 log(`HTTP 200 OK: Aktif seans bulundu: ${session.kind}, ${session.status}, Kalan: ${session.remainingSeconds} sn`, 'success');
                 updateTimerUI(session);
-            } else {
-                log(`HTTP ${res.status}: Seans bilgisi alınamadı.`, 'error');
             }
         } catch (err) {
             log(`Bağlantı Hatası: ${err.message}`, 'error');
         }
     });
 
-    // 5. MEDYA & DIŞ API TESTLERİ (FAZ 2)
-    // Pixabay Video Arama
+    // 5. MEDYA ARAMALARI VE SAĞDAKİ ÖNİZLEMEYE AKTARIM
+    // Hızlı Tema Chip'leri
+    document.querySelectorAll('.btn-theme-chip').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            document.getElementById('pixabayQuery').value = e.target.getAttribute('data-q');
+            document.getElementById('btnSearchThemes').click();
+        });
+    });
+
     document.getElementById('btnSearchThemes').addEventListener('click', async () => {
         const query = document.getElementById('pixabayQuery').value.trim() || 'rain window';
-        log(`GET ${apiBase}/api/v1/media/themes?query=${encodeURIComponent(query)}&perPage=6 gönderiliyor...`);
+        log(`GET ${apiBase}/api/v1/media/themes?query=${encodeURIComponent(query)}&perPage=6 aranıyor...`);
         const container = document.getElementById('themesContainer');
-        container.innerHTML = '<div class="text-center p-3 text-muted">Pixabay aranıyor...</div>';
+        container.innerHTML = '<div class="text-center p-3 text-muted">Pixabay HD videoları aranıyor...</div>';
 
         try {
-            const res = await fetch(`${apiBase}/api/v1/media/themes?query=${encodeURIComponent(query)}&perPage=6`, {
-                method: 'GET',
-                headers: { 'Content-Type': 'application/json' }
-            });
+            const res = await fetch(`${apiBase}/api/v1/media/themes?query=${encodeURIComponent(query)}&perPage=6`);
             if (res.ok) {
                 const videos = await res.json();
-                log(`HTTP 200 OK: ${videos.length} adet tema videosu getirildi!`, 'success');
+                log(`HTTP 200 OK: ${videos.length} adet tema videosu bulundu!`, 'success');
                 container.innerHTML = '';
-                videos.forEach(v => {
+                videos.forEach((v, idx) => {
                     const card = document.createElement('div');
                     card.className = 'p-2 bg-light rounded border';
+                    const safeTag = escapeHtml(v.tags.split(',')[0].trim());
                     card.innerHTML = `
                         <div class="d-flex justify-content-between align-items-center mb-1">
-                            <span class="small fw-bold text-dark text-truncate" style="max-width: 200px;">${escapeHtml(v.tags)}</span>
+                            <span class="small fw-bold text-dark text-truncate" style="max-width: 220px;">${escapeHtml(v.tags)}</span>
                             <span class="badge bg-secondary-subtle text-secondary small">${v.duration} sn</span>
                         </div>
-                        <video src="${v.mediumVideoUrl}" controls preload="none" poster="${v.thumbnailUrl}" style="width: 100%; max-height: 140px; border-radius: 4px; object-fit: cover;"></video>
-                        <div class="mt-1 d-flex justify-content-between align-items-center">
-                            <a href="${v.pageUrl}" target="_blank" class="small text-muted text-decoration-none">Pixabay Sayfası ↗</a>
-                            <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" onclick="selectTheme('${escapeHtml(v.tags.split(',')[0].trim())}')">Temayı Seç</button>
+                        <div class="d-flex gap-2 align-items-center">
+                            <img src="${v.thumbnailUrl || 'https://images.unsplash.com/photo-1519692933481-e162a57d6721?w=200'}" style="width: 80px; height: 50px; border-radius: 4px; object-fit: cover;" />
+                            <div class="flex-grow-1">
+                                <button type="button" class="btn btn-sm btn-primary w-100 py-1" onclick="setPreviewTheme('${v.mediumVideoUrl}', '${safeTag}', '${v.thumbnailUrl}')">
+                                    ▶ Sağda Oynat & Seç
+                                </button>
+                            </div>
                         </div>
                     `;
                     container.appendChild(card);
+
+                    // Ilk sonucu otomatik sağdaki önizlemeye koy
+                    if (idx === 0) {
+                        setPreviewTheme(v.mediumVideoUrl, safeTag, v.thumbnailUrl);
+                    }
                 });
             } else {
                 container.innerHTML = `<div class="text-danger small p-2">HTTP ${res.status}: Video getirilemedi.</div>`;
@@ -1176,41 +1294,48 @@
         }
     });
 
-    window.selectTheme = function(themeTag) {
-        document.getElementById('sessionThemeId').value = themeTag;
-        log(`Tema seçildi: ${themeTag}. Sayaç formuna aktarıldı.`, 'info');
-        document.getElementById('tab-session-btn').click();
-    };
+    // Hızlı Müzik Chip'leri
+    document.querySelectorAll('.btn-music-chip').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            document.getElementById('musicQuery').value = e.target.getAttribute('data-q');
+            document.getElementById('btnSearchMusic').click();
+        });
+    });
 
-    // Jamendo Lo-Fi Parçalar
-    document.getElementById('btnGetLofiTracks').addEventListener('click', async () => {
-        log(`GET ${apiBase}/api/v1/media/tracks?limit=6 gönderiliyor...`);
+    document.getElementById('btnSearchMusic').addEventListener('click', async () => {
+        const query = document.getElementById('musicQuery').value.trim() || 'lofi';
+        log(`GET ${apiBase}/api/v1/media/tracks?query=${encodeURIComponent(query)}&limit=6 aranıyor...`);
         const container = document.getElementById('tracksContainer');
-        container.innerHTML = '<div class="text-center p-3 text-muted">Parçalar yükleniyor...</div>';
+        container.innerHTML = '<div class="text-center p-3 text-muted">Parçalar aranıyor...</div>';
 
         try {
-            const res = await fetch(`${apiBase}/api/v1/media/tracks?limit=6`, {
-                method: 'GET',
-                headers: { 'Content-Type': 'application/json' }
-            });
+            const res = await fetch(`${apiBase}/api/v1/media/tracks?query=${encodeURIComponent(query)}&limit=6`);
             if (res.ok) {
                 const tracks = await res.json();
-                log(`HTTP 200 OK: ${tracks.length} adet Lo-Fi parça listelendi!`, 'success');
+                log(`HTTP 200 OK: "${query}" için ${tracks.length} parça listelendi!`, 'success');
                 container.innerHTML = '';
-                tracks.forEach(t => {
+                tracks.forEach((t, idx) => {
                     const card = document.createElement('div');
-                    card.className = 'p-2 bg-light rounded border d-flex flex-column gap-1';
+                    card.className = 'p-2 bg-light rounded border d-flex align-items-center justify-content-between gap-2';
+                    const trackImg = t.imageUrl || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=120';
                     card.innerHTML = `
-                        <div class="d-flex align-items-center gap-2">
-                            ${t.imageUrl ? `<img src="${t.imageUrl}" style="width: 40px; height: 40px; border-radius: 4px; object-fit: cover;" />` : ''}
-                            <div class="flex-grow-1 text-truncate">
+                        <div class="d-flex align-items-center gap-2 text-truncate" style="max-width: 220px;">
+                            <img src="${trackImg}" style="width: 36px; height: 36px; border-radius: 4px; object-fit: cover;" />
+                            <div class="text-truncate">
                                 <strong class="text-dark small d-block text-truncate">${escapeHtml(t.name)}</strong>
-                                <span class="text-muted small">${escapeHtml(t.artistName)} (${t.duration} sn)</span>
+                                <span class="text-muted small">${escapeHtml(t.artistName)}</span>
                             </div>
                         </div>
-                        <audio src="${t.audioUrl}" controls preload="none" class="w-100 mt-1" style="height: 32px;"></audio>
+                        <button type="button" class="btn btn-sm btn-outline-success py-1 px-2" onclick="setPreviewTrack('${t.audioUrl}', '${escapeHtml(t.name)}', '${escapeHtml(t.artistName)}', '${trackImg}')">
+                            ▶ Çal
+                        </button>
                     `;
                     container.appendChild(card);
+
+                    // Ilk parçayı sağdaki plak çalara yükle
+                    if (idx === 0) {
+                        setPreviewTrack(t.audioUrl, t.name, t.artistName, trackImg);
+                    }
                 });
             } else {
                 container.innerHTML = `<div class="text-danger small p-2">HTTP ${res.status}: Müzik parçaları getirilemedi.</div>`;
@@ -1221,55 +1346,81 @@
         }
     });
 
-    // Open-Meteo Canlı Hava Durumu
-    document.querySelectorAll('.btn-city').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            document.getElementById('weatherLat').value = e.target.getAttribute('data-lat');
-            document.getElementById('weatherLon').value = e.target.getAttribute('data-lon');
-            document.getElementById('btnGetWeather').click();
-        });
-    });
-
-    document.getElementById('btnGetWeather').addEventListener('click', async () => {
-        const lat = document.getElementById('weatherLat').value;
-        const lon = document.getElementById('weatherLon').value;
-        log(`GET ${apiBase}/api/v1/media/weather?latitude=${lat}&longitude=${lon} gönderiliyor...`);
-        const container = document.getElementById('weatherReportContainer');
-        container.innerHTML = 'Hava durumu çekiliyor...';
+    // 6. HAVA DURUMU SENKRONU & SİMÜLASYONU
+    async function fetchWeather(lat, lon, simCode = null) {
+        let url = `${apiBase}/api/v1/media/weather?latitude=${lat}&longitude=${lon}`;
+        if (simCode !== null) {
+            url += `&weatherCode=${simCode}`;
+            log(`[Simülasyon] WMO Kodu ${simCode} ile hava durumu sorgulanıyor...`);
+        } else {
+            log(`GET ${url} gönderiliyor...`);
+        }
 
         try {
-            const res = await fetch(`${apiBase}/api/v1/media/weather?latitude=${lat}&longitude=${lon}`, {
-                method: 'GET',
-                headers: { 'Content-Type': 'application/json' }
-            });
+            const res = await fetch(url);
             if (res.ok) {
                 const w = await res.json();
-                log(`HTTP 200 OK: Canlı hava durumu alındı: ${w.temperature}°C, ${w.weatherCondition}, Önerilen Tema: ${w.suggestedTheme}`, 'success');
-                container.className = 'p-3 bg-white rounded border text-start shadow-sm';
-                container.innerHTML = `
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="fs-4 fw-bold text-dark">${w.temperature}°C</span>
-                        <span class="badge ${w.isDay ? 'bg-warning-subtle text-warning-emphasis' : 'bg-dark text-white'} border">
-                            ${w.isDay ? '☀️ Gündüz' : '🌙 Gece'}
-                        </span>
-                    </div>
-                    <div class="text-secondary small mb-1">Durum: <strong class="text-dark">${escapeHtml(w.weatherCondition)}</strong> (WMO: ${w.weatherCode})</div>
-                    <div class="text-secondary small mb-2">Rüzgar Hızı: <strong class="text-dark">${w.windSpeed} km/s</strong></div>
-                    <div class="p-2 bg-light rounded border d-flex justify-content-between align-items-center">
-                        <span class="small text-muted">Önerilen Piksel Tema: <strong class="text-primary">${escapeHtml(w.suggestedTheme)}</strong></span>
-                        <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" onclick="selectTheme('${escapeHtml(w.suggestedTheme)}')">Temayı Bağla</button>
-                    </div>
-                `;
+                log(`HTTP 200 OK: Hava Durumu: ${w.temperature}°C, ${w.weatherCondition} • Önerilen Tema: ${w.suggestedTheme}`, 'success');
+
+                // Sağdaki Önizleme Stüdyosunu Güncelle
+                document.getElementById('previewWeatherBadge').textContent = `${w.isDay ? '☀️' : '🌙'} ${w.weatherCondition} • ${w.temperature}°C`;
+                document.getElementById('previewWindowEffectBadge').textContent = w.windowEffect;
+                document.getElementById('previewAtmosphereDesc').textContent = w.description;
+                document.getElementById('previewSoundscapeDesc').textContent = `🎵 Ambiyans Tavsiyesi: ${w.soundscapeRecommendation}`;
+
+                // Odanın aydınlatma rengini uygula (border glow)
+                const studioCard = document.getElementById('studioPreviewCard');
+                studioCard.style.borderTopColor = w.roomLightingColor || '#2563eb';
+                studioCard.style.boxShadow = `0 10px 25px -5px ${w.roomLightingColor}40`;
+
+                // Otomatik olarak uygun temayı arat
+                if (w.suggestedTheme === 'rainy_window') {
+                    document.getElementById('pixabayQuery').value = 'rain window';
+                } else if (w.suggestedTheme === 'snowy_cabin') {
+                    document.getElementById('pixabayQuery').value = 'snow winter';
+                } else if (w.suggestedTheme === 'thunder_room') {
+                    document.getElementById('pixabayQuery').value = 'storm rain lightning';
+                } else if (w.suggestedTheme === 'sunny_loft') {
+                    document.getElementById('pixabayQuery').value = 'sunny morning';
+                } else if (w.suggestedTheme === 'foggy_morning') {
+                    document.getElementById('pixabayQuery').value = 'fog morning nature';
+                }
             } else {
-                container.innerHTML = `<span class="text-danger">HTTP ${res.status}: Hava durumu alınamadı.</span>`;
+                log(`HTTP ${res.status}: Hava durumu alınamadı.`, 'error');
             }
         } catch (err) {
             log(`Bağlantı Hatası: ${err.message}`, 'error');
-            container.innerHTML = `<span class="text-danger">${err.message}</span>`;
         }
+    }
+
+    // Şehir Butonları
+    document.querySelectorAll('.btn-city').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const lat = e.target.getAttribute('data-lat');
+            const lon = e.target.getAttribute('data-lon');
+            document.getElementById('weatherLat').value = lat;
+            document.getElementById('weatherLon').value = lon;
+            fetchWeather(lat, lon, null);
+        });
     });
 
-    // Kopyalama & Genel Butonlar
+    // Hava Durumu Simülatör Butonları (Farklı tepkileri test etmek için)
+    document.querySelectorAll('.btn-weather-sim').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const code = parseInt(e.target.getAttribute('data-code'));
+            const lat = document.getElementById('weatherLat').value;
+            const lon = document.getElementById('weatherLon').value;
+            fetchWeather(lat, lon, code);
+        });
+    });
+
+    document.getElementById('btnGetWeather').addEventListener('click', () => {
+        const lat = document.getElementById('weatherLat').value;
+        const lon = document.getElementById('weatherLon').value;
+        fetchWeather(lat, lon, null);
+    });
+
+    // Kopyalama & Sıfırlama
     document.getElementById('btnCopyToken').addEventListener('click', () => {
         if (currentTokens.accessToken) {
             navigator.clipboard.writeText(currentTokens.accessToken).then(() => {
@@ -1287,6 +1438,7 @@
         document.getElementById('terminalLog').innerHTML = '';
     });
 
+    // Açılışta oturum varsa bilgileri çek
     if (currentTokens.accessToken) {
         log(`Kayıtlı oturum tespit edildi. Profil sorgulanıyor...`, 'info');
         document.getElementById('btnGetMe').click();

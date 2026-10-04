@@ -31,17 +31,21 @@ public class ExternalMediaController : BaseApiController
 
     [HttpGet("tracks")]
     [ProducesResponseType(typeof(IReadOnlyList<MusicTrackDto>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetLofiTracks([FromQuery] int limit = 10, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> GetTracks([FromQuery] string query = "lofi", [FromQuery] int limit = 10, CancellationToken cancellationToken = default)
     {
-        var tracks = await _musicService.GetLofiTracksAsync(limit, cancellationToken);
+        var tracks = await _musicService.SearchTracksAsync(query, limit, cancellationToken);
         return Ok(tracks);
     }
 
     [HttpGet("weather")]
     [ProducesResponseType(typeof(WeatherReportDto), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetWeather([FromQuery] double latitude = 41.0082, [FromQuery] double longitude = 28.9784, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> GetWeather(
+        [FromQuery] double latitude = 41.0082,
+        [FromQuery] double longitude = 28.9784,
+        [FromQuery] int? weatherCode = null,
+        CancellationToken cancellationToken = default)
     {
-        var weather = await _weatherService.GetCurrentWeatherAsync(latitude, longitude, cancellationToken);
+        var weather = await _weatherService.GetCurrentWeatherAsync(latitude, longitude, weatherCode, cancellationToken);
         return Ok(weather);
     }
 }

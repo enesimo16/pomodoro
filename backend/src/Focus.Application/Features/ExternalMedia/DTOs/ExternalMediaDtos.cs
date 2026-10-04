@@ -24,5 +24,9 @@ public record WeatherReportDto(
     int WeatherCode,
     string WeatherCondition,
     string SuggestedTheme,
+    string WindowEffect,
+    string SoundscapeRecommendation,
+    string RoomLightingColor,
+    string Description,
     bool IsDay,
     DateTime Time);

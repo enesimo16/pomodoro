@@ -24,17 +24,23 @@ public class JamendoMusicService : IMusicTrackService
         _logger = logger;
     }
 
-    public async Task<IReadOnlyList<MusicTrackDto>> GetLofiTracksAsync(int limit = 10, CancellationToken cancellationToken = default)
+    public Task<IReadOnlyList<MusicTrackDto>> GetLofiTracksAsync(int limit = 10, CancellationToken cancellationToken = default)
+    {
+        return SearchTracksAsync("lofi", limit, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<MusicTrackDto>> SearchTracksAsync(string query = "lofi", int limit = 10, CancellationToken cancellationToken = default)
     {
         var clientId = _settings.Jamendo.ClientId;
         if (string.IsNullOrWhiteSpace(clientId))
         {
             _logger.LogWarning("Jamendo Client ID is not configured.");
-            return GetFallbackTracks();
+            return GetFallbackTracks(query);
         }
 
         var validLimit = Math.Clamp(limit, 1, 30);
-        var url = $"https://api.jamendo.com/v3.0/tracks/?client_id={clientId}&format=json&tags=lofi&limit={validLimit}&audioformat=mp32";
+        var trimmedQuery = string.IsNullOrWhiteSpace(query) ? "lofi" : query.Trim();
+        var url = $"https://api.jamendo.com/v3.0/tracks/?client_id={clientId}&format=json&search={Uri.EscapeDataString(trimmedQuery)}&limit={validLimit}&audioformat=mp32&order=popularity_total";
 
         try
         {
@@ -42,13 +48,13 @@ public class JamendoMusicService : IMusicTrackService
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogWarning("Jamendo API returned {StatusCode}: {Reason}", response.StatusCode, response.ReasonPhrase);
-                return GetFallbackTracks();
+                return GetFallbackTracks(query);
             }
 
             var doc = await response.Content.ReadFromJsonAsync<JsonDocument>(cancellationToken: cancellationToken);
             if (doc == null || !doc.RootElement.TryGetProperty("results", out var resultsElement))
             {
-                return GetFallbackTracks();
+                return GetFallbackTracks(query);
             }
 
             var list = new List<MusicTrackDto>();
@@ -75,22 +81,22 @@ public class JamendoMusicService : IMusicTrackService
                 }
             }
 
-            return list.Count > 0 ? list : GetFallbackTracks();
+            return list.Count > 0 ? list : GetFallbackTracks(query);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to fetch tracks from Jamendo");
-            return GetFallbackTracks();
+            return GetFallbackTracks(query);
         }
     }
 
-    private static IReadOnlyList<MusicTrackDto> GetFallbackTracks()
+    private static List<MusicTrackDto> GetFallbackTracks(string query)
     {
         return new List<MusicTrackDto>
         {
             new(
                 "demo-1",
-                "Midnight Lofi Study",
+                $"Chill Flow ({query})",
                 180,
                 "Focus Chill Lab",
                 "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3",
@@ -106,7 +112,7 @@ public class JamendoMusicService : IMusicTrackService
                 "https://creativecommons.org/licenses/by/4.0/"),
             new(
                 "demo-3",
-                "Deep Flow Session",
+                "Deep Study Beats",
                 240,
                 "Retro Horizon",
                 "https://cdn.pixabay.com/download/audio/2022/10/14/audio_9939f772dd.mp3",
