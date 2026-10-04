@@ -1,59 +1,49 @@
 @page
 @model Focus.Admin.Pages.Users.IndexModel
 @{
-    ViewData["Title"] = "Kullanıcı Yönetimi";
+    ViewData["Title"] = "Kullanıcılar";
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h2 class="fw-bold mb-1"><i class="bi bi-people text-primary me-2"></i>Kullanıcılar & Karakterler</h2>
-        <p class="text-secondary mb-0">Tüm misafir ve kayıtlı kullanıcıların seviye, oda ve coin durumları.</p>
-    </div>
-    <a asp-page="/ApiLab/Index" class="btn btn-outline-info">
-        <i class="bi bi-terminal me-1"></i> API Test Konsolu
-    </a>
+    <h3 class="fw-bold mb-0">Kullanıcılar</h3>
+    <a asp-page="/ApiLab/Index" class="btn btn-outline-secondary btn-sm">API Test</a>
 </div>
 
-<!-- Filtre & Arama Formu -->
-<div class="card card-custom p-3 mb-4 shadow-sm">
+<div class="card card-custom p-3 mb-4">
     <form method="get" class="row g-2 align-items-center">
         <div class="col-md-6">
-            <div class="input-group">
-                <span class="input-group-text bg-dark border-secondary text-secondary"><i class="bi bi-search"></i></span>
-                <input type="text" name="Search" value="@Model.Search" class="form-control bg-dark text-white border-secondary" placeholder="İsim veya e-posta ile ara..." />
-            </div>
+            <input type="text" name="Search" value="@Model.Search" class="form-control" placeholder="İsim veya e-posta ile ara..." />
         </div>
         <div class="col-md-4">
-            <select name="Filter" class="form-select bg-dark text-white border-secondary">
-                <option value="">Tüm Kullanıcılar</option>
-                <option value="guest" selected="@(Model.Filter == "guest")">Yalnızca Misafirler</option>
-                <option value="registered" selected="@(Model.Filter == "registered")">Yalnızca Kayıtlı Kullanıcılar</option>
+            <select name="Filter" class="form-select">
+                <option value="">Tümü</option>
+                <option value="guest" selected="@(Model.Filter == "guest")">Misafirler</option>
+                <option value="registered" selected="@(Model.Filter == "registered")">Kayıtlı Kullanıcılar</option>
             </select>
         </div>
         <div class="col-md-2 d-flex gap-2">
-            <button type="submit" class="btn btn-primary w-100"><i class="bi bi-funnel me-1"></i> Filtrele</button>
-            <a asp-page="/Users/Index" class="btn btn-outline-secondary"><i class="bi bi-arrow-counterclockwise"></i></a>
+            <button type="submit" class="btn btn-primary w-100">Filtrele</button>
+            <a asp-page="/Users/Index" class="btn btn-outline-secondary">Temizle</a>
         </div>
     </form>
 </div>
 
-<!-- Kullanici Tablosu -->
-<div class="card card-custom p-4 shadow-sm">
+<div class="card card-custom p-4">
     @if (!Model.Users.Any())
     {
-        <div class="alert alert-secondary mb-0 bg-dark text-secondary border-secondary">
+        <div class="text-muted small py-3">
             Kriterlere uygun kullanıcı bulunamadı.
         </div>
     }
     else
     {
         <div class="table-responsive">
-            <table class="table table-dark table-hover align-middle mb-0">
+            <table class="table table-hover align-middle mb-0">
                 <thead>
-                    <tr class="text-secondary small text-uppercase">
-                        <th>Kullanıcı Adı</th>
+                    <tr class="text-muted small text-uppercase border-bottom">
+                        <th>Kullanıcı</th>
                         <th>Tür</th>
-                        <th>Oda Adı</th>
+                        <th>Oda</th>
                         <th>Seviye / XP</th>
                         <th>Coin</th>
                         <th>Kayıt Tarihi</th>
@@ -64,30 +54,30 @@
                     {
                         <tr>
                             <td>
-                                <div class="fw-semibold text-white">@user.DisplayName</div>
-                                <div class="small text-secondary">@(user.Email ?? "Misafir (E-posta yok)")</div>
+                                <div class="fw-semibold text-dark">@user.DisplayName</div>
+                                <div class="small text-muted">@(user.Email ?? "Misafir")</div>
                             </td>
                             <td>
                                 @if (user.IsGuest)
                                 {
-                                    <span class="badge bg-warning text-dark status-badge">Misafir</span>
+                                    <span class="badge bg-light text-secondary border">Misafir</span>
                                 }
                                 else
                                 {
-                                    <span class="badge bg-success status-badge">Kayıtlı</span>
+                                    <span class="badge bg-light text-dark border">Kayıtlı</span>
                                 }
                             </td>
                             <td>
-                                <span class="text-info"><i class="bi bi-house-door me-1"></i>@(user.RoomName ?? "Yok")</span>
+                                <span class="text-dark">@(user.RoomName ?? "-")</span>
                             </td>
                             <td>
-                                <span class="badge bg-primary">Lvl @user.Level</span>
-                                <span class="small text-secondary ms-1">@user.Xp XP</span>
+                                <span class="badge bg-light text-primary border">Lvl @user.Level</span>
+                                <span class="small text-muted ms-1">@user.Xp XP</span>
                             </td>
                             <td>
-                                <span class="text-warning fw-bold"><i class="bi bi-coin me-1"></i>@user.Coins</span>
+                                <span class="fw-semibold text-dark">@user.Coins</span>
                             </td>
-                            <td class="text-secondary small">
+                            <td class="text-muted small">
                                 @user.CreatedAt.ToString("dd.MM.yyyy HH:mm")
                             </td>
                         </tr>

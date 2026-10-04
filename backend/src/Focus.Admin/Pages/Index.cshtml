@@ -5,100 +5,63 @@
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h2 class="fw-bold mb-1"><i class="bi bi-speedometer2 text-primary me-2"></i>Sistem Genel Bakış</h2>
-        <p class="text-secondary mb-0">Focus platformu veritabanı, kullanıcılar ve aktif oturum istatistikleri.</p>
-    </div>
+    <h3 class="fw-bold mb-0">Dashboard</h3>
     <div class="d-flex gap-2">
-        <a asp-page="/ApiLab/Index" class="btn btn-primary">
-            <i class="bi bi-play-circle me-1"></i> API Test Alanına Git
-        </a>
-        <a asp-page="/Users/Index" class="btn btn-outline-light">
-            <i class="bi bi-people me-1"></i> Tüm Kullanıcılar
-        </a>
+        <a asp-page="/Users/Index" class="btn btn-outline-secondary btn-sm">Kullanıcılar</a>
+        <a asp-page="/ApiLab/Index" class="btn btn-primary btn-sm">API Test</a>
     </div>
 </div>
 
-<!-- Istatistik Kartlari -->
 <div class="row g-3 mb-4">
     <div class="col-md-3">
-        <div class="card card-custom p-3 shadow-sm">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <span class="text-secondary small text-uppercase fw-semibold">Toplam Kullanıcı</span>
-                    <h3 class="fw-bold mt-1 text-white">@Model.TotalUsers</h3>
-                </div>
-                <div class="bg-primary bg-opacity-25 p-3 rounded-circle text-primary">
-                    <i class="bi bi-people fs-4"></i>
-                </div>
-            </div>
+        <div class="card card-custom p-3">
+            <div class="text-muted small text-uppercase fw-semibold mb-1">Toplam Kullanıcı</div>
+            <div class="fs-3 fw-bold text-dark">@Model.TotalUsers</div>
         </div>
     </div>
     <div class="col-md-3">
-        <div class="card card-custom p-3 shadow-sm">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <span class="text-secondary small text-uppercase fw-semibold">Aktif Misafirler</span>
-                    <h3 class="fw-bold mt-1 text-warning">@Model.GuestUsers</h3>
-                </div>
-                <div class="bg-warning bg-opacity-25 p-3 rounded-circle text-warning">
-                    <i class="bi bi-person-badge fs-4"></i>
-                </div>
-            </div>
+        <div class="card card-custom p-3">
+            <div class="text-muted small text-uppercase fw-semibold mb-1">Misafir</div>
+            <div class="fs-3 fw-bold text-dark">@Model.GuestUsers</div>
         </div>
     </div>
     <div class="col-md-3">
-        <div class="card card-custom p-3 shadow-sm">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <span class="text-secondary small text-uppercase fw-semibold">Kayıtlı (OAuth)</span>
-                    <h3 class="fw-bold mt-1 text-success">@Model.RegisteredUsers</h3>
-                </div>
-                <div class="bg-success bg-opacity-25 p-3 rounded-circle text-success">
-                    <i class="bi bi-shield-check fs-4"></i>
-                </div>
-            </div>
+        <div class="card card-custom p-3">
+            <div class="text-muted small text-uppercase fw-semibold mb-1">Kayıtlı</div>
+            <div class="fs-3 fw-bold text-dark">@Model.RegisteredUsers</div>
         </div>
     </div>
     <div class="col-md-3">
-        <div class="card card-custom p-3 shadow-sm">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <span class="text-secondary small text-uppercase fw-semibold">Dolaşımdaki Coin</span>
-                    <h3 class="fw-bold mt-1 text-info">@Model.TotalCoinsInCirculation</h3>
-                </div>
-                <div class="bg-info bg-opacity-25 p-3 rounded-circle text-info">
-                    <i class="bi bi-coin fs-4"></i>
-                </div>
-            </div>
+        <div class="card card-custom p-3">
+            <div class="text-muted small text-uppercase fw-semibold mb-1">Dolaşımdaki Coin</div>
+            <div class="fs-3 fw-bold text-dark">@Model.TotalCoinsInCirculation</div>
         </div>
     </div>
 </div>
 
-<!-- Son Kullanicilar Tablosu -->
-<div class="card card-custom p-4 shadow-sm mb-4">
+<div class="card card-custom p-4 mb-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h5 class="fw-bold mb-0 text-white"><i class="bi bi-clock-history me-2 text-warning"></i>Son Katılan Kullanıcılar</h5>
-        <a asp-page="/Users/Index" class="btn btn-sm btn-outline-secondary">Hepsini Gör</a>
+        <h6 class="fw-bold mb-0 text-dark">Son Kullanıcılar</h6>
+        <a asp-page="/Users/Index" class="btn btn-sm btn-link text-secondary text-decoration-none p-0">Tümü</a>
     </div>
 
     @if (!Model.RecentUsers.Any())
     {
-        <div class="alert alert-secondary mb-0 bg-dark text-secondary border-secondary">
-            <i class="bi bi-info-circle me-1"></i> Henüz veritabanında kullanıcı bulunmuyor. <a asp-page="/ApiLab/Index" class="text-primary fw-semibold">API Test Alanı</a> üzerinden hemen bir misafir oluşturup test edebilirsiniz.
+        <div class="text-muted small py-3">
+            Henüz kayıtlı kullanıcı bulunmuyor.
         </div>
     }
     else
     {
         <div class="table-responsive">
-            <table class="table table-dark table-hover align-middle mb-0">
+            <table class="table table-hover align-middle mb-0">
                 <thead>
-                    <tr class="text-secondary small text-uppercase">
+                    <tr class="text-muted small text-uppercase border-bottom">
                         <th>Kullanıcı</th>
                         <th>Tür</th>
                         <th>Seviye / XP</th>
                         <th>Kayıt Tarihi</th>
-                        <th>İşlem</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -106,29 +69,29 @@
                     {
                         <tr>
                             <td>
-                                <div class="fw-semibold text-white">@user.DisplayName</div>
-                                <div class="small text-secondary">@(user.Email ?? "Misafir (E-posta yok)")</div>
+                                <div class="fw-semibold text-dark">@user.DisplayName</div>
+                                <div class="small text-muted">@(user.Email ?? "Misafir")</div>
                             </td>
                             <td>
                                 @if (user.IsGuest)
                                 {
-                                    <span class="badge bg-warning text-dark status-badge">Misafir</span>
+                                    <span class="badge bg-light text-secondary border">Misafir</span>
                                 }
                                 else
                                 {
-                                    <span class="badge bg-success status-badge">Kayıtlı</span>
+                                    <span class="badge bg-light text-dark border">Kayıtlı</span>
                                 }
                             </td>
                             <td>
-                                <span class="badge bg-primary">Lvl @user.Level</span>
-                                <span class="small text-secondary ms-1">@user.Xp XP</span>
+                                <span class="badge bg-light text-primary border">Lvl @user.Level</span>
+                                <span class="small text-muted ms-1">@user.Xp XP</span>
                             </td>
-                            <td class="text-secondary small">
+                            <td class="text-muted small">
                                 @user.CreatedAt.ToString("dd.MM.yyyy HH:mm")
                             </td>
-                            <td>
-                                <a asp-page="/Users/Details" asp-route-id="@user.Id" class="btn btn-sm btn-outline-light">
-                                    <i class="bi bi-eye me-1"></i> İncele
+                            <td class="text-end">
+                                <a asp-page="/Users/Index" asp-route-Search="@user.DisplayName" class="btn btn-sm btn-outline-secondary">
+                                    Detay
                                 </a>
                             </td>
                         </tr>

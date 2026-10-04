@@ -1,115 +1,97 @@
 @page
 @model Focus.Admin.Pages.ApiLab.IndexModel
 @{
-    ViewData["Title"] = "API Test Alanı";
+    ViewData["Title"] = "API Test";
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h2 class="fw-bold mb-1"><i class="bi bi-terminal text-primary me-2"></i>API Test Laboratuvarı</h2>
-        <p class="text-secondary mb-0">Frontend olmadan WebAPI uçlarını doğrudan tarayıcıdan test edin.</p>
-    </div>
-    <span class="badge bg-secondary p-2">
-        Hedef API: <span class="text-info fw-semibold">@Model.WebApiBaseUrl</span>
-    </span>
+    <h3 class="fw-bold mb-0">API Test</h3>
+    <span class="text-muted small">@Model.WebApiBaseUrl</span>
 </div>
 
 <div class="row g-4">
-    <!-- Sol Kolon: Test Butonlari ve Formlar -->
     <div class="col-lg-5">
-        <div class="card card-custom p-4 shadow-sm mb-4">
-            <h5 class="fw-bold text-white mb-3"><i class="bi bi-play-circle text-primary me-2"></i>1. Misafir Girişi Testi</h5>
-            <p class="small text-secondary mb-3">Tek tıkla sıfır sürtünmeli misafir hesabı, piksel oda ve avatar oluşturur.</p>
-
+        <div class="card card-custom p-4 mb-4">
+            <h6 class="fw-bold text-dark mb-3">Misafir Girişi</h6>
             <div class="mb-3">
-                <label class="form-label small text-secondary">Kullanıcı Adı (İsteğe bağlı):</label>
-                <input type="text" id="guestDisplayName" class="form-control bg-dark text-white border-secondary" placeholder="Örn: EnesMisafir (boş bırakılabilir)" />
+                <input type="text" id="guestDisplayName" class="form-control" placeholder="Kullanıcı Adı (İsteğe bağlı)" />
             </div>
-
-            <button id="btnCreateGuest" class="btn btn-primary w-100 fw-semibold">
-                <i class="bi bi-person-plus me-1"></i> Tek Tıkla Misafir Hesabı Aç (POST /auth/guest)
+            <button id="btnCreateGuest" class="btn btn-primary w-100">
+                Misafir Hesabı Aç
             </button>
         </div>
 
-        <div class="card card-custom p-4 shadow-sm mb-4">
-            <h5 class="fw-bold text-white mb-3"><i class="bi bi-person-check text-success me-2"></i>2. Aktif Kullanıcı & Oda Bilgisi</h5>
-            <p class="small text-secondary mb-3">HttpOnly çerez veya Access Token ile kullanıcının profilini, odasını ve coin bakiyesini çeker.</p>
-
-            <button id="btnGetMe" class="btn btn-success w-100 fw-semibold mb-2">
-                <i class="bi bi-shield-lock me-1"></i> Kimliğimi Doğrula (GET /auth/me)
+        <div class="card card-custom p-4 mb-4">
+            <h6 class="fw-bold text-dark mb-3">Profil ve Token</h6>
+            <button id="btnGetMe" class="btn btn-outline-primary w-100 mb-2">
+                Kullanıcı Bilgisini Getir (/me)
             </button>
-            <button id="btnRefreshToken" class="btn btn-outline-warning w-100 fw-semibold">
-                <i class="bi bi-arrow-repeat me-1"></i> Token Yenile (POST /auth/refresh)
+            <button id="btnRefreshToken" class="btn btn-outline-secondary w-100">
+                Token Yenile
             </button>
         </div>
 
-        <div class="card card-custom p-4 shadow-sm">
-            <h5 class="fw-bold text-white mb-3"><i class="bi bi-shield-slash text-danger me-2"></i>3. Güvenlik & Çıkış</h5>
-            <p class="small text-secondary mb-3">Token iptali ve Replay Attack savunma simülasyonu.</p>
-
+        <div class="card card-custom p-4">
+            <h6 class="fw-bold text-dark mb-3">Oturum</h6>
             <div class="d-flex gap-2">
-                <button id="btnLogout" class="btn btn-outline-secondary w-50">
-                    <i class="bi bi-box-arrow-right me-1"></i> Çıkış (Logout)
+                <button id="btnLogout" class="btn btn-outline-danger w-50">
+                    Çıkış Yap
                 </button>
-                <button id="btnTestReplay" class="btn btn-outline-danger w-50">
-                    <i class="bi bi-bug me-1"></i> Replay Testi
+                <button id="btnTestReplay" class="btn btn-outline-secondary w-50">
+                    Replay Testi
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Sag Kolon: Canli Oturum Detayi & Terminal Konsolu -->
     <div class="col-lg-7">
-        <!-- Canli Oturum Karti -->
-        <div class="card card-custom p-4 shadow-sm mb-4">
+        <div class="card card-custom p-4 mb-4">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="fw-bold text-white mb-0"><i class="bi bi-person-vcard text-info me-2"></i>Canlı Oturum Durumu</h5>
-                <span id="sessionStatusBadge" class="badge bg-secondary">Oturum Açılmadı</span>
+                <h6 class="fw-bold text-dark mb-0">Aktif Oturum</h6>
+                <span id="sessionStatusBadge" class="badge bg-light text-secondary border">Yok</span>
             </div>
 
-            <div id="sessionEmptyAlert" class="alert alert-secondary mb-0 bg-dark text-secondary border-secondary">
-                Henüz oturum açılmadı. Soldaki "Misafir Hesabı Aç" butonuna tıklayarak ilk oturumunuzu başlatabilirsiniz.
+            <div id="sessionEmptyAlert" class="text-muted small py-2">
+                Aktif bir oturum bulunmuyor.
             </div>
 
             <div id="sessionContent" style="display: none;">
                 <div class="row g-3 mb-3">
                     <div class="col-6">
-                        <div class="p-2 rounded bg-dark border border-secondary">
-                            <span class="small text-secondary">Kullanıcı:</span>
-                            <div id="lblDisplayName" class="fw-bold text-white"></div>
-                            <span id="lblUserType" class="badge bg-warning text-dark mt-1"></span>
+                        <div class="p-2 rounded bg-light border">
+                            <span class="small text-muted d-block">Kullanıcı</span>
+                            <div id="lblDisplayName" class="fw-bold text-dark"></div>
+                            <span id="lblUserType" class="badge bg-light text-secondary border mt-1"></span>
                         </div>
                     </div>
                     <div class="col-6">
-                        <div class="p-2 rounded bg-dark border border-secondary">
-                            <span class="small text-secondary">Seviye & Coin:</span>
-                            <div class="fw-bold text-warning"><i class="bi bi-coin me-1"></i><span id="lblCoins"></span> Coin</div>
-                            <span id="lblLevel" class="badge bg-primary mt-1"></span>
+                        <div class="p-2 rounded bg-light border">
+                            <span class="small text-muted d-block">Seviye & Coin</span>
+                            <div class="fw-bold text-dark"><span id="lblCoins"></span> Coin</div>
+                            <span id="lblLevel" class="badge bg-light text-primary border mt-1"></span>
                         </div>
                     </div>
                 </div>
 
-                <div class="p-3 rounded bg-dark border border-secondary mb-3">
-                    <h6 class="fw-bold text-white mb-2"><i class="bi bi-house-door text-info me-1"></i>Piksel Oda ve Mobilyalar:</h6>
-                    <div class="small text-secondary mb-2">Oda: <strong id="lblRoomName" class="text-white"></strong></div>
-                    <ul id="listRoomItems" class="small text-light mb-0 ps-3"></ul>
+                <div class="p-3 rounded bg-light border mb-3">
+                    <span class="small text-muted d-block mb-1">Oda: <strong id="lblRoomName" class="text-dark"></strong></span>
+                    <ul id="listRoomItems" class="small text-secondary mb-0 ps-3"></ul>
                 </div>
 
-                <div class="p-2 rounded bg-dark border border-secondary small text-truncate">
-                    <span class="text-secondary">Access Token (Özet):</span>
-                    <code id="lblTokenPreview" class="d-block text-info mt-1"></code>
+                <div class="p-2 rounded bg-light border small text-truncate">
+                    <span class="text-muted d-block">Access Token:</span>
+                    <code id="lblTokenPreview" class="d-block text-secondary mt-1"></code>
                 </div>
             </div>
         </div>
 
-        <!-- Terminal Konsolu -->
-        <div class="card card-custom p-3 shadow-sm">
+        <div class="card card-custom p-3">
             <div class="d-flex justify-content-between align-items-center mb-2">
-                <span class="small text-uppercase fw-bold text-secondary"><i class="bi bi-terminal-fill text-warning me-1"></i>Canlı İstek Konsolu</span>
+                <span class="small text-uppercase fw-semibold text-muted">İstek Günlüğü</span>
                 <button id="btnClearLog" class="btn btn-sm btn-link text-secondary text-decoration-none p-0">Temizle</button>
             </div>
             <div id="terminalLog" class="terminal-box">
-                [Sistem] API Test Alanı hazır. WebAPI: @Model.WebApiBaseUrl
+[Sistem] API Test Alanı hazır. WebAPI: @Model.WebApiBaseUrl
             </div>
         </div>
     </div>
@@ -126,14 +108,14 @@
     function log(message, type = 'info') {
         const box = document.getElementById('terminalLog');
         const time = new Date().toLocaleTimeString();
-        let color = '#38bdf8';
-        if (type === 'success') color = '#4ade80';
-        if (type === 'error') color = '#f87171';
-        if (type === 'warn') color = '#fbbf24';
+        let color = '#0f172a';
+        if (type === 'success') color = '#16a34a';
+        if (type === 'error') color = '#dc2626';
+        if (type === 'warn') color = '#d97706';
 
         const line = document.createElement('div');
         line.style.color = color;
-        line.innerHTML = `[${time}] ${message}`;
+        line.innerText = `[${time}] ${message}`;
         box.appendChild(line);
         box.scrollTop = box.scrollHeight;
     }
@@ -145,15 +127,14 @@
         const user = authData.user;
         const room = authData.room;
 
-        document.getElementById('sessionStatusBadge').className = 'badge bg-success';
-        document.getElementById('sessionStatusBadge').innerText = 'Aktif Oturum';
+        document.getElementById('sessionStatusBadge').className = 'badge bg-success text-white';
+        document.getElementById('sessionStatusBadge').innerText = 'Aktif';
 
         document.getElementById('lblDisplayName').innerText = user.displayName;
         document.getElementById('lblUserType').innerText = user.isGuest ? 'Misafir' : 'Kayıtlı';
-        document.getElementById('lblUserType').className = user.isGuest ? 'badge bg-warning text-dark' : 'badge bg-success';
 
         document.getElementById('lblLevel').innerText = `Seviye ${user.level} (${user.currentXp} XP)`;
-        document.getElementById('lblCoins').innerText = authData.totalCoins !== undefined ? authData.totalCoins : (user.currentXp >= 0 ? '50 (Başlangıç)' : '0');
+        document.getElementById('lblCoins').innerText = authData.totalCoins !== undefined ? authData.totalCoins : (user.currentXp >= 0 ? '50' : '0');
 
         if (room) {
             document.getElementById('lblRoomName').innerText = room.name;
@@ -161,7 +142,7 @@
             itemsList.innerHTML = '';
             (room.items || []).forEach(item => {
                 const li = document.createElement('li');
-                li.innerText = `${item.catalogItemId} (Izgara: [${item.gridX}, ${item.gridY}], Yön: ${item.rotation}°)`;
+                li.innerText = `${item.catalogItemId} (${item.gridX}, ${item.gridY})`;
                 itemsList.appendChild(li);
             });
         }
@@ -186,8 +167,7 @@
 
             const data = await res.json();
             if (res.ok) {
-                log(`HTTP 200 OK: Misafir başarıyla oluşturuldu! ID: ${data.user.id}`, 'success');
-                log(`HttpOnly çerezler yazıldı: focus_at, focus_rt`, 'success');
+                log(`HTTP 200 OK: Misafir hesabı oluşturuldu. ID: ${data.user.id}`, 'success');
                 currentTokens.accessToken = data.accessToken;
                 currentTokens.refreshToken = data.refreshToken;
                 updateSessionUI(data);
@@ -195,7 +175,7 @@
                 log(`Hata (${res.status}): ${JSON.stringify(data)}`, 'error');
             }
         } catch (err) {
-            log(`Bağlantı Hatası: ${err.message}. WebAPI (5000) çalışıyor mu?`, 'error');
+            log(`Bağlantı Hatası: ${err.message}`, 'error');
         }
     });
 
@@ -217,7 +197,7 @@
 
             if (res.ok) {
                 const data = await res.json();
-                log(`HTTP 200 OK: Kimlik başarıyla doğrulandı! Kullanıcı: ${data.user.displayName}`, 'success');
+                log(`HTTP 200 OK: Kullanıcı bilgisi doğrulandı: ${data.user.displayName}`, 'success');
                 updateSessionUI(data);
             } else {
                 log(`HTTP ${res.status}: Yetkisiz veya geçersiz token.`, 'error');
@@ -241,7 +221,7 @@
 
             const data = await res.json();
             if (res.ok) {
-                log(`HTTP 200 OK: Token başarıyla yenilendi (Rotated)!`, 'success');
+                log(`HTTP 200 OK: Token başarıyla yenilendi.`, 'success');
                 currentTokens.accessToken = data.accessToken;
                 currentTokens.refreshToken = data.refreshToken;
                 updateSessionUI(data);
@@ -266,11 +246,11 @@
             });
 
             if (res.ok) {
-                log(`HTTP 204 No Content: Başarıyla çıkış yapıldı. Çerezler temizlendi.`, 'warn');
+                log(`HTTP 204 No Content: Çıkış yapıldı.`, 'warn');
                 currentTokens.accessToken = null;
                 currentTokens.refreshToken = null;
-                document.getElementById('sessionStatusBadge').className = 'badge bg-secondary';
-                document.getElementById('sessionStatusBadge').innerText = 'Çıkış Yapıldı';
+                document.getElementById('sessionStatusBadge').className = 'badge bg-light text-secondary border';
+                document.getElementById('sessionStatusBadge').innerText = 'Yok';
                 document.getElementById('sessionContent').style.display = 'none';
                 document.getElementById('sessionEmptyAlert').style.display = 'block';
             }
@@ -282,7 +262,7 @@
     // 5. Replay Attack Simülasyonu
     document.getElementById('btnTestReplay').addEventListener('click', async () => {
         const dummyStolenToken = "stolen_compromised_token_xyz_999";
-        log(`Replay Saldırısı Simülasyonu: İptal edilmiş/sahte token gönderiliyor...`, 'warn');
+        log(`Replay Testi: Geçersiz token gönderiliyor...`, 'warn');
 
         try {
             const res = await fetch(`${apiBase}/api/v1/auth/refresh`, {
@@ -293,7 +273,7 @@
             });
 
             const data = await res.json();
-            log(`HTTP ${res.status} [Beklenen Savunma]: ${data.message || 'Yetkisiz erişim engellendi.'}`, res.status === 401 ? 'success' : 'error');
+            log(`HTTP ${res.status}: ${data.message || 'Yetkisiz erişim engellendi.'}`, res.status === 401 ? 'success' : 'error');
         } catch (err) {
             log(`Bağlantı Hatası: ${err.message}`, 'error');
         }
