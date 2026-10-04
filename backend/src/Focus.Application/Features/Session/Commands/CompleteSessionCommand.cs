@@ -80,6 +80,24 @@ public class CompleteSessionCommandHandler : IRequestHandler<CompleteSessionComm
             _context.CoinLedgerEntries.Add(ledgerEntry);
         }
 
+        // Streak kaydi (sadece Odaklanma seanslari icin)
+        if (session.Kind == SessionKind.Focus)
+        {
+            var streak = await _context.UserStreaks.FirstOrDefaultAsync(s => s.UserId == request.UserId, cancellationToken);
+            if (streak == null)
+            {
+                streak = UserStreak.CreateDefault(request.UserId);
+                _context.UserStreaks.Add(streak);
+            }
+
+            var streakResult = streak.RecordActivity(now);
+            if (streakResult.BonusCoins > 0)
+            {
+                var streakCoinEntry = new CoinLedgerEntry(request.UserId, CoinTransactionReason.StreakReward, streakResult.BonusCoins, session.Id);
+                _context.CoinLedgerEntries.Add(streakCoinEntry);
+            }
+        }
+
         await _context.SaveChangesAsync(cancellationToken);
 
         var totalCoins = await _context.CoinLedgerEntries

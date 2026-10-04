@@ -14,6 +14,9 @@ public interface IApplicationDbContext
     DbSet<UserExternalLogin> UserExternalLogins { get; }
     DbSet<CoinLedgerEntry> CoinLedgerEntries { get; }
     DbSet<FocusSession> FocusSessions { get; }
+    DbSet<CatalogItem> CatalogItems { get; }
+    DbSet<UserInventoryItem> UserInventoryItems { get; }
+    DbSet<UserStreak> UserStreaks { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

@@ -49,6 +49,12 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 
     public async Task<(HttpClient Client, AuthResponseDto AuthData)> CreateAuthenticatedClientAsync(string? displayName = null)
     {
+        using (var scope = Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            db.Database.EnsureCreated();
+        }
+
         var client = CreateClient();
 
         var response = await client.PostAsJsonAsync("/api/v1/auth/guest", new { displayName });

@@ -7,6 +7,7 @@ public class User : BaseEntity<Guid>, IAggregateRoot
 {
     private readonly List<RefreshToken> _refreshTokens = new();
     private readonly List<UserExternalLogin> _externalLogins = new();
+    private readonly List<UserInventoryItem> _inventoryItems = new();
 
     public string DisplayName { get; private set; } = null!;
     public string? Email { get; private set; }
@@ -23,8 +24,10 @@ public class User : BaseEntity<Guid>, IAggregateRoot
     public UserAvatar? Avatar { get; private set; }
     public PixelRoom? Room { get; private set; }
     public UserPreferences? Preferences { get; private set; }
+    public UserStreak? Streak { get; private set; }
     public IReadOnlyCollection<RefreshToken> RefreshTokens => _refreshTokens.AsReadOnly();
     public IReadOnlyCollection<UserExternalLogin> ExternalLogins => _externalLogins.AsReadOnly();
+    public IReadOnlyCollection<UserInventoryItem> InventoryItems => _inventoryItems.AsReadOnly();
 
     // EF Core constructor
     private User() { }
@@ -48,6 +51,7 @@ public class User : BaseEntity<Guid>, IAggregateRoot
         user.Avatar = UserAvatar.CreateDefault(user.Id);
         user.Room = PixelRoom.CreateDefault(user.Id, $"{user.DisplayName}'in Odası");
         user.Preferences = UserPreferences.CreateDefault(user.Id);
+        user.Streak = UserStreak.CreateDefault(user.Id);
 
         return user;
     }
@@ -75,6 +79,7 @@ public class User : BaseEntity<Guid>, IAggregateRoot
         user.Avatar = UserAvatar.CreateDefault(user.Id);
         user.Room = PixelRoom.CreateDefault(user.Id, $"{displayName}'in Odası");
         user.Preferences = UserPreferences.CreateDefault(user.Id);
+        user.Streak = UserStreak.CreateDefault(user.Id);
         user._externalLogins.Add(new UserExternalLogin(user.Id, AuthProvider.Google, providerKey, email));
 
         return user;

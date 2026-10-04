@@ -20,6 +20,9 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<UserExternalLogin> UserExternalLogins => Set<UserExternalLogin>();
     public DbSet<CoinLedgerEntry> CoinLedgerEntries => Set<CoinLedgerEntry>();
     public DbSet<FocusSession> FocusSessions => Set<FocusSession>();
+    public DbSet<CatalogItem> CatalogItems => Set<CatalogItem>();
+    public DbSet<UserInventoryItem> UserInventoryItems => Set<UserInventoryItem>();
+    public DbSet<UserStreak> UserStreaks => Set<UserStreak>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -32,5 +35,8 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
         }
 
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
+
+        // Baslangic esya katalog verileri
+        CatalogSeeder.SeedCatalogItems(modelBuilder);
     }
 }
