@@ -4,64 +4,67 @@
     ViewData["Title"] = "Dashboard";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h3 class="fw-bold mb-0">Dashboard</h3>
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+    <div>
+        <h4 class="fw-bold mb-0 text-dark">Dashboard</h4>
+        <span class="text-muted small">Kullanıcı verileri ve genel sistem durumu</span>
+    </div>
     <div class="d-flex gap-2">
-        <a asp-page="/Users/Index" class="btn btn-outline-secondary btn-sm">Kullanıcılar</a>
-        <a asp-page="/ApiLab/Index" class="btn btn-primary btn-sm">API Test</a>
+        <a asp-page="/Users/Index" class="btn btn-outline-secondary">Kullanıcılar</a>
+        <a asp-page="/ApiLab/Index" class="btn btn-primary">API Test Konsolu</a>
     </div>
 </div>
 
 <div class="row g-3 mb-4">
-    <div class="col-md-3">
-        <div class="card card-custom p-3">
-            <div class="text-muted small text-uppercase fw-semibold mb-1">Toplam Kullanıcı</div>
-            <div class="fs-3 fw-bold text-dark">@Model.TotalUsers</div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card card-custom p-3 h-100">
+            <div class="text-muted small text-uppercase fw-semibold mb-2">Toplam Kullanıcı</div>
+            <div class="fs-2 fw-bold text-dark lh-1">@Model.TotalUsers</div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card card-custom p-3">
-            <div class="text-muted small text-uppercase fw-semibold mb-1">Misafir</div>
-            <div class="fs-3 fw-bold text-dark">@Model.GuestUsers</div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card card-custom p-3 h-100">
+            <div class="text-muted small text-uppercase fw-semibold mb-2">Misafir</div>
+            <div class="fs-2 fw-bold text-dark lh-1">@Model.GuestUsers</div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card card-custom p-3">
-            <div class="text-muted small text-uppercase fw-semibold mb-1">Kayıtlı</div>
-            <div class="fs-3 fw-bold text-dark">@Model.RegisteredUsers</div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card card-custom p-3 h-100">
+            <div class="text-muted small text-uppercase fw-semibold mb-2">Kayıtlı</div>
+            <div class="fs-2 fw-bold text-dark lh-1">@Model.RegisteredUsers</div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card card-custom p-3">
-            <div class="text-muted small text-uppercase fw-semibold mb-1">Dolaşımdaki Coin</div>
-            <div class="fs-3 fw-bold text-dark">@Model.TotalCoinsInCirculation</div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card card-custom p-3 h-100">
+            <div class="text-muted small text-uppercase fw-semibold mb-2">Dolaşımdaki Coin</div>
+            <div class="fs-2 fw-bold text-dark lh-1">@Model.TotalCoinsInCirculation</div>
         </div>
     </div>
 </div>
 
-<div class="card card-custom p-4 mb-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
+<div class="card card-custom overflow-hidden">
+    <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-white">
         <h6 class="fw-bold mb-0 text-dark">Son Kullanıcılar</h6>
-        <a asp-page="/Users/Index" class="btn btn-sm btn-link text-secondary text-decoration-none p-0">Tümü</a>
+        <a asp-page="/Users/Index" class="text-decoration-none small text-muted">Tümünü Gör &rarr;</a>
     </div>
 
     @if (!Model.RecentUsers.Any())
     {
-        <div class="text-muted small py-3">
-            Henüz kayıtlı kullanıcı bulunmuyor.
+        <div class="p-4 text-center text-muted small">
+            Henüz kayıtlı bir kullanıcı bulunmuyor.
         </div>
     }
     else
     {
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
+            <table class="table table-custom mb-0">
                 <thead>
-                    <tr class="text-muted small text-uppercase border-bottom">
+                    <tr>
                         <th>Kullanıcı</th>
-                        <th>Tür</th>
+                        <th>Hesap Türü</th>
                         <th>Seviye / XP</th>
                         <th>Kayıt Tarihi</th>
-                        <th></th>
+                        <th class="text-end">İşlem</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -70,27 +73,27 @@
                         <tr>
                             <td>
                                 <div class="fw-semibold text-dark">@user.DisplayName</div>
-                                <div class="small text-muted">@(user.Email ?? "Misafir")</div>
+                                <div class="small text-muted">@(user.Email ?? "Misafir (E-posta yok)")</div>
                             </td>
                             <td>
                                 @if (user.IsGuest)
                                 {
-                                    <span class="badge bg-light text-secondary border">Misafir</span>
+                                    <span class="badge rounded-pill badge-status-guest">Misafir</span>
                                 }
                                 else
                                 {
-                                    <span class="badge bg-light text-dark border">Kayıtlı</span>
+                                    <span class="badge rounded-pill badge-status-registered">Kayıtlı</span>
                                 }
                             </td>
                             <td>
-                                <span class="badge bg-light text-primary border">Lvl @user.Level</span>
+                                <span class="badge rounded-pill badge-status-level">Lvl @user.Level</span>
                                 <span class="small text-muted ms-1">@user.Xp XP</span>
                             </td>
                             <td class="text-muted small">
                                 @user.CreatedAt.ToString("dd.MM.yyyy HH:mm")
                             </td>
                             <td class="text-end">
-                                <a asp-page="/Users/Index" asp-route-Search="@user.DisplayName" class="btn btn-sm btn-outline-secondary">
+                                <a asp-page="/Users/Index" asp-route-Search="@user.DisplayName" class="btn btn-sm btn-outline-secondary py-1 px-2">
                                     Detay
                                 </a>
                             </td>

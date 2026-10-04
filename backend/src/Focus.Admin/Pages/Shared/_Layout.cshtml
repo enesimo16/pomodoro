@@ -3,71 +3,65 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Focus</title>
+    <title>@ViewData["Title"] - Yönetim Paneli</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <style>
-        body {
-            background-color: #f8fafc;
-            color: #0f172a;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-        }
         .navbar-custom {
             background-color: #ffffff;
             border-bottom: 1px solid #e2e8f0;
+            min-height: 60px;
         }
         .navbar-custom .navbar-brand {
             font-weight: 700;
             color: #0f172a;
-            font-size: 1.1rem;
+            font-size: 1.05rem;
             letter-spacing: -0.02em;
         }
         .navbar-custom .nav-link {
             color: #64748b;
             font-weight: 500;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             padding: 0.5rem 0.85rem;
-        }
-        .navbar-custom .nav-link:hover,
-        .navbar-custom .nav-link.active {
-            color: #0f172a;
-        }
-        .card-custom {
-            background-color: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-        }
-        .terminal-box {
-            background-color: #f8fafc;
-            border: 1px solid #e2e8f0;
-            color: #1e293b;
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-            font-size: 0.825rem;
             border-radius: 6px;
-            padding: 12px;
-            max-height: 380px;
-            overflow-y: auto;
-            white-space: pre-wrap;
-            word-break: break-all;
+            transition: all 0.15s ease-in-out;
+        }
+        .navbar-custom .nav-link:hover {
+            color: #0f172a;
+            background-color: #f8fafc;
+        }
+        .navbar-custom .nav-link.active {
+            color: #2563eb;
+            background-color: #eff6ff;
+            font-weight: 600;
         }
         .footer-custom {
             background-color: #ffffff;
             border-top: 1px solid #e2e8f0;
-            color: #94a3b8;
+            color: #64748b;
+            font-size: 0.825rem;
+        }
+        .footer-custom a {
+            color: #64748b;
+            text-decoration: none;
+            transition: color 0.15s ease;
+        }
+        .footer-custom a:hover {
+            color: #0f172a;
         }
     </style>
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-lg navbar-custom mb-4 py-2">
+        <nav class="navbar navbar-expand-lg navbar-custom py-2 shadow-none">
             <div class="container">
-                <a class="navbar-brand" asp-page="/Index">Focus</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                <a class="navbar-brand" asp-page="/Index">Yönetim Paneli</a>
+                <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                         aria-expanded="false" aria-label="Menüyü aç">
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="navbar-collapse collapse justify-content-between">
-                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-3 gap-1">
                         <li class="nav-item">
                             <a class="nav-link" asp-page="/Index">Dashboard</a>
                         </li>
@@ -80,7 +74,7 @@
                     </ul>
                     <div class="d-flex align-items-center gap-2">
                         <a href="http://localhost:5000/swagger" target="_blank" class="btn btn-outline-secondary btn-sm">
-                            Swagger
+                            Swagger API
                         </a>
                     </div>
                 </div>
@@ -88,20 +82,42 @@
         </nav>
     </header>
 
-    <div class="container mb-5">
+    <div class="container main-content py-4">
         <main role="main">
             @RenderBody()
         </main>
     </div>
 
-    <footer class="footer-custom py-3 text-center small">
-        <div class="container">
-            Focus &copy; 2026
+    <footer class="footer-custom py-3 mt-auto">
+        <div class="container d-flex flex-wrap justify-content-between align-items-center">
+            <div>
+                <span>Sistem Yönetim & Test Portalı &copy; 2026</span>
+            </div>
+            <div class="d-flex gap-3">
+                <a asp-page="/Index">Dashboard</a>
+                <a asp-page="/Users/Index">Kullanıcılar</a>
+                <a asp-page="/ApiLab/Index">API Test</a>
+                <a href="http://localhost:5000/swagger" target="_blank">Swagger</a>
+            </div>
         </div>
     </footer>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Sayfa adresine gore aktif nav-link belirleme
+        document.addEventListener('DOMContentLoaded', () => {
+            const currentPath = window.location.pathname.toLowerCase();
+            document.querySelectorAll('.navbar-custom .nav-link').forEach(link => {
+                const href = link.getAttribute('href')?.toLowerCase() || '';
+                if (href === currentPath || (currentPath.startsWith(href) && href !== '/')) {
+                    link.classList.add('active');
+                } else if (currentPath === '/' && href === '/') {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
