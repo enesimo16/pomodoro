@@ -267,7 +267,7 @@ namespace Focus.Infrastructure.Persistence.Migrations
                 table: "users",
                 column: "Email",
                 unique: true,
-                filter: "deleted_at IS NULL AND email IS NOT NULL");
+                filter: "\"DeletedAt\" IS NULL AND \"Email\" IS NOT NULL");
         }
 
         /// <inheritdoc />

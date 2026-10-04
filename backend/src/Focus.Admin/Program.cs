@@ -1,5 +1,10 @@
+using Focus.Application;
+using Focus.Infrastructure;
+
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddApplication();
+builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddRazorPages();
 
 var app = builder.Build();
@@ -10,10 +15,10 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthorization();
 
-app.MapStaticAssets();
-app.MapRazorPages().WithStaticAssets();
+app.MapRazorPages();
 
 app.Run();

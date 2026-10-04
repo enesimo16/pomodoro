@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Focus.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20261003190909_InitialAuth")]
+    [Migration("20261004092606_InitialAuth")]
     partial class InitialAuth
     {
         /// <inheritdoc />
@@ -234,7 +234,7 @@ namespace Focus.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("Email")
                         .IsUnique()
-                        .HasFilter("deleted_at IS NULL AND email IS NOT NULL");
+                        .HasFilter("\"DeletedAt\" IS NULL AND \"Email\" IS NOT NULL");
 
                     b.ToTable("users", (string)null);
                 });

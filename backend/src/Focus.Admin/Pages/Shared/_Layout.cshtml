@@ -1,49 +1,96 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="tr" data-bs-theme="dark">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Focus.Admin</title>
-    <script type="importmap"></script>
+    <title>@ViewData["Title"] - Focus Admin & Testbed</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/Focus.Admin.styles.css" asp-append-version="true" />
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        .navbar-brand-badge {
+            font-size: 0.75rem;
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            padding: 3px 8px;
+            border-radius: 6px;
+            margin-left: 6px;
+        }
+        .card-custom {
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+        }
+        .terminal-box {
+            background-color: #090d16;
+            border: 1px solid #1e293b;
+            color: #38bdf8;
+            font-family: 'Consolas', 'Courier New', monospace;
+            border-radius: 8px;
+            padding: 12px;
+            max-height: 380px;
+            overflow-y: auto;
+        }
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+    </style>
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom border-secondary mb-4 shadow-sm" style="background-color: #111827 !important;">
             <div class="container">
-                <a class="navbar-brand" asp-area="" asp-page="/Index">Focus.Admin</a>
+                <a class="navbar-brand fw-bold text-white d-flex align-items-center" asp-page="/Index">
+                    <i class="bi bi-clock-history text-primary me-2"></i>
+                    Focus <span class="navbar-brand-badge text-white">Yönetim & Test Lab</span>
+                </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
+                        aria-expanded="false" aria-label="Menüyü aç">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
+                <div class="navbar-collapse collapse justify-content-between">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Index">Home</a>
+                            <a class="nav-link text-light" asp-page="/Index"><i class="bi bi-speedometer2 me-1"></i> Dashboard</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-light" asp-page="/Users/Index"><i class="bi bi-people me-1"></i> Kullanıcılar</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-light" asp-page="/ApiLab/Index"><i class="bi bi-terminal me-1"></i> API Test Alanı</a>
                         </li>
                     </ul>
+                    <div class="d-flex align-items-center gap-2">
+                        <a href="http://localhost:5000/swagger" target="_blank" class="btn btn-outline-info btn-sm">
+                            <i class="bi bi-box-arrow-up-right me-1"></i> Swagger API (5000)
+                        </a>
+                    </div>
                 </div>
             </div>
         </nav>
     </header>
-    <div class="container">
-        <main role="main" class="pb-3">
+
+    <div class="container mb-5">
+        <main role="main">
             @RenderBody()
         </main>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - Focus.Admin
+    <footer class="border-top border-secondary footer py-3 text-muted text-center" style="background-color: #0b0f19;">
+        <div class="container small">
+            Focus Platform &copy; 2026 - Clean Architecture & Habbo Pixel Room Engine
         </div>
     </footer>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
-
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

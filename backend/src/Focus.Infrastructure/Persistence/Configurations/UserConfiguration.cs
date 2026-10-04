@@ -21,7 +21,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
 
         builder.HasIndex(u => u.Email)
             .IsUnique()
-            .HasFilter("deleted_at IS NULL AND email IS NOT NULL");
+            .HasFilter("\"DeletedAt\" IS NULL AND \"Email\" IS NOT NULL");
 
         builder.Property(u => u.Locale)
             .HasMaxLength(20)

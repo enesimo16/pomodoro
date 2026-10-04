@@ -231,7 +231,7 @@ namespace Focus.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("Email")
                         .IsUnique()
-                        .HasFilter("deleted_at IS NULL AND email IS NOT NULL");
+                        .HasFilter("\"DeletedAt\" IS NULL AND \"Email\" IS NOT NULL");
 
                     b.ToTable("users", (string)null);
                 });

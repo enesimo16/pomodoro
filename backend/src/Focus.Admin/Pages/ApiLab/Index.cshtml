@@ -1,0 +1,306 @@
+@page
+@model Focus.Admin.Pages.ApiLab.IndexModel
+@{
+    ViewData["Title"] = "API Test Alanı";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-1"><i class="bi bi-terminal text-primary me-2"></i>API Test Laboratuvarı</h2>
+        <p class="text-secondary mb-0">Frontend olmadan WebAPI uçlarını doğrudan tarayıcıdan test edin.</p>
+    </div>
+    <span class="badge bg-secondary p-2">
+        Hedef API: <span class="text-info fw-semibold">@Model.WebApiBaseUrl</span>
+    </span>
+</div>
+
+<div class="row g-4">
+    <!-- Sol Kolon: Test Butonlari ve Formlar -->
+    <div class="col-lg-5">
+        <div class="card card-custom p-4 shadow-sm mb-4">
+            <h5 class="fw-bold text-white mb-3"><i class="bi bi-play-circle text-primary me-2"></i>1. Misafir Girişi Testi</h5>
+            <p class="small text-secondary mb-3">Tek tıkla sıfır sürtünmeli misafir hesabı, piksel oda ve avatar oluşturur.</p>
+
+            <div class="mb-3">
+                <label class="form-label small text-secondary">Kullanıcı Adı (İsteğe bağlı):</label>
+                <input type="text" id="guestDisplayName" class="form-control bg-dark text-white border-secondary" placeholder="Örn: EnesMisafir (boş bırakılabilir)" />
+            </div>
+
+            <button id="btnCreateGuest" class="btn btn-primary w-100 fw-semibold">
+                <i class="bi bi-person-plus me-1"></i> Tek Tıkla Misafir Hesabı Aç (POST /auth/guest)
+            </button>
+        </div>
+
+        <div class="card card-custom p-4 shadow-sm mb-4">
+            <h5 class="fw-bold text-white mb-3"><i class="bi bi-person-check text-success me-2"></i>2. Aktif Kullanıcı & Oda Bilgisi</h5>
+            <p class="small text-secondary mb-3">HttpOnly çerez veya Access Token ile kullanıcının profilini, odasını ve coin bakiyesini çeker.</p>
+
+            <button id="btnGetMe" class="btn btn-success w-100 fw-semibold mb-2">
+                <i class="bi bi-shield-lock me-1"></i> Kimliğimi Doğrula (GET /auth/me)
+            </button>
+            <button id="btnRefreshToken" class="btn btn-outline-warning w-100 fw-semibold">
+                <i class="bi bi-arrow-repeat me-1"></i> Token Yenile (POST /auth/refresh)
+            </button>
+        </div>
+
+        <div class="card card-custom p-4 shadow-sm">
+            <h5 class="fw-bold text-white mb-3"><i class="bi bi-shield-slash text-danger me-2"></i>3. Güvenlik & Çıkış</h5>
+            <p class="small text-secondary mb-3">Token iptali ve Replay Attack savunma simülasyonu.</p>
+
+            <div class="d-flex gap-2">
+                <button id="btnLogout" class="btn btn-outline-secondary w-50">
+                    <i class="bi bi-box-arrow-right me-1"></i> Çıkış (Logout)
+                </button>
+                <button id="btnTestReplay" class="btn btn-outline-danger w-50">
+                    <i class="bi bi-bug me-1"></i> Replay Testi
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sag Kolon: Canli Oturum Detayi & Terminal Konsolu -->
+    <div class="col-lg-7">
+        <!-- Canli Oturum Karti -->
+        <div class="card card-custom p-4 shadow-sm mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold text-white mb-0"><i class="bi bi-person-vcard text-info me-2"></i>Canlı Oturum Durumu</h5>
+                <span id="sessionStatusBadge" class="badge bg-secondary">Oturum Açılmadı</span>
+            </div>
+
+            <div id="sessionEmptyAlert" class="alert alert-secondary mb-0 bg-dark text-secondary border-secondary">
+                Henüz oturum açılmadı. Soldaki "Misafir Hesabı Aç" butonuna tıklayarak ilk oturumunuzu başlatabilirsiniz.
+            </div>
+
+            <div id="sessionContent" style="display: none;">
+                <div class="row g-3 mb-3">
+                    <div class="col-6">
+                        <div class="p-2 rounded bg-dark border border-secondary">
+                            <span class="small text-secondary">Kullanıcı:</span>
+                            <div id="lblDisplayName" class="fw-bold text-white"></div>
+                            <span id="lblUserType" class="badge bg-warning text-dark mt-1"></span>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-2 rounded bg-dark border border-secondary">
+                            <span class="small text-secondary">Seviye & Coin:</span>
+                            <div class="fw-bold text-warning"><i class="bi bi-coin me-1"></i><span id="lblCoins"></span> Coin</div>
+                            <span id="lblLevel" class="badge bg-primary mt-1"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-3 rounded bg-dark border border-secondary mb-3">
+                    <h6 class="fw-bold text-white mb-2"><i class="bi bi-house-door text-info me-1"></i>Piksel Oda ve Mobilyalar:</h6>
+                    <div class="small text-secondary mb-2">Oda: <strong id="lblRoomName" class="text-white"></strong></div>
+                    <ul id="listRoomItems" class="small text-light mb-0 ps-3"></ul>
+                </div>
+
+                <div class="p-2 rounded bg-dark border border-secondary small text-truncate">
+                    <span class="text-secondary">Access Token (Özet):</span>
+                    <code id="lblTokenPreview" class="d-block text-info mt-1"></code>
+                </div>
+            </div>
+        </div>
+
+        <!-- Terminal Konsolu -->
+        <div class="card card-custom p-3 shadow-sm">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="small text-uppercase fw-bold text-secondary"><i class="bi bi-terminal-fill text-warning me-1"></i>Canlı İstek Konsolu</span>
+                <button id="btnClearLog" class="btn btn-sm btn-link text-secondary text-decoration-none p-0">Temizle</button>
+            </div>
+            <div id="terminalLog" class="terminal-box">
+                [Sistem] API Test Alanı hazır. WebAPI: @Model.WebApiBaseUrl
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const apiBase = '@Model.WebApiBaseUrl';
+    let currentTokens = {
+        accessToken: null,
+        refreshToken: null
+    };
+
+    function log(message, type = 'info') {
+        const box = document.getElementById('terminalLog');
+        const time = new Date().toLocaleTimeString();
+        let color = '#38bdf8';
+        if (type === 'success') color = '#4ade80';
+        if (type === 'error') color = '#f87171';
+        if (type === 'warn') color = '#fbbf24';
+
+        const line = document.createElement('div');
+        line.style.color = color;
+        line.innerHTML = `[${time}] ${message}`;
+        box.appendChild(line);
+        box.scrollTop = box.scrollHeight;
+    }
+
+    function updateSessionUI(authData) {
+        document.getElementById('sessionEmptyAlert').style.display = 'none';
+        document.getElementById('sessionContent').style.display = 'block';
+
+        const user = authData.user;
+        const room = authData.room;
+
+        document.getElementById('sessionStatusBadge').className = 'badge bg-success';
+        document.getElementById('sessionStatusBadge').innerText = 'Aktif Oturum';
+
+        document.getElementById('lblDisplayName').innerText = user.displayName;
+        document.getElementById('lblUserType').innerText = user.isGuest ? 'Misafir' : 'Kayıtlı';
+        document.getElementById('lblUserType').className = user.isGuest ? 'badge bg-warning text-dark' : 'badge bg-success';
+
+        document.getElementById('lblLevel').innerText = `Seviye ${user.level} (${user.currentXp} XP)`;
+        document.getElementById('lblCoins').innerText = authData.totalCoins !== undefined ? authData.totalCoins : (user.currentXp >= 0 ? '50 (Başlangıç)' : '0');
+
+        if (room) {
+            document.getElementById('lblRoomName').innerText = room.name;
+            const itemsList = document.getElementById('listRoomItems');
+            itemsList.innerHTML = '';
+            (room.items || []).forEach(item => {
+                const li = document.createElement('li');
+                li.innerText = `${item.catalogItemId} (Izgara: [${item.gridX}, ${item.gridY}], Yön: ${item.rotation}°)`;
+                itemsList.appendChild(li);
+            });
+        }
+
+        if (authData.accessToken) {
+            document.getElementById('lblTokenPreview').innerText = authData.accessToken.substring(0, 45) + '...';
+        }
+    }
+
+    // 1. Misafir Girisi Testi
+    document.getElementById('btnCreateGuest').addEventListener('click', async () => {
+        const name = document.getElementById('guestDisplayName').value.trim();
+        log(`POST ${apiBase}/api/v1/auth/guest çağrılıyor...`);
+
+        try {
+            const res = await fetch(`${apiBase}/api/v1/auth/guest`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ displayName: name || null })
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                log(`HTTP 200 OK: Misafir başarıyla oluşturuldu! ID: ${data.user.id}`, 'success');
+                log(`HttpOnly çerezler yazıldı: focus_at, focus_rt`, 'success');
+                currentTokens.accessToken = data.accessToken;
+                currentTokens.refreshToken = data.refreshToken;
+                updateSessionUI(data);
+            } else {
+                log(`Hata (${res.status}): ${JSON.stringify(data)}`, 'error');
+            }
+        } catch (err) {
+            log(`Bağlantı Hatası: ${err.message}. WebAPI (5000) çalışıyor mu?`, 'error');
+        }
+    });
+
+    // 2. Profilimi Getir (/me) Testi
+    document.getElementById('btnGetMe').addEventListener('click', async () => {
+        log(`GET ${apiBase}/api/v1/auth/me çağrılıyor...`);
+
+        const headers = {};
+        if (currentTokens.accessToken) {
+            headers['Authorization'] = `Bearer ${currentTokens.accessToken}`;
+        }
+
+        try {
+            const res = await fetch(`${apiBase}/api/v1/auth/me`, {
+                method: 'GET',
+                headers: headers,
+                credentials: 'include'
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                log(`HTTP 200 OK: Kimlik başarıyla doğrulandı! Kullanıcı: ${data.user.displayName}`, 'success');
+                updateSessionUI(data);
+            } else {
+                log(`HTTP ${res.status}: Yetkisiz veya geçersiz token.`, 'error');
+            }
+        } catch (err) {
+            log(`Bağlantı Hatası: ${err.message}`, 'error');
+        }
+    });
+
+    // 3. Token Refresh Testi
+    document.getElementById('btnRefreshToken').addEventListener('click', async () => {
+        log(`POST ${apiBase}/api/v1/auth/refresh çağrılıyor...`);
+
+        try {
+            const res = await fetch(`${apiBase}/api/v1/auth/refresh`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ refreshToken: currentTokens.refreshToken })
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                log(`HTTP 200 OK: Token başarıyla yenilendi (Rotated)!`, 'success');
+                currentTokens.accessToken = data.accessToken;
+                currentTokens.refreshToken = data.refreshToken;
+                updateSessionUI(data);
+            } else {
+                log(`HTTP ${res.status}: ${JSON.stringify(data)}`, 'error');
+            }
+        } catch (err) {
+            log(`Bağlantı Hatası: ${err.message}`, 'error');
+        }
+    });
+
+    // 4. Logout Testi
+    document.getElementById('btnLogout').addEventListener('click', async () => {
+        log(`POST ${apiBase}/api/v1/auth/logout çağrılıyor...`);
+
+        try {
+            const res = await fetch(`${apiBase}/api/v1/auth/logout`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ refreshToken: currentTokens.refreshToken })
+            });
+
+            if (res.ok) {
+                log(`HTTP 204 No Content: Başarıyla çıkış yapıldı. Çerezler temizlendi.`, 'warn');
+                currentTokens.accessToken = null;
+                currentTokens.refreshToken = null;
+                document.getElementById('sessionStatusBadge').className = 'badge bg-secondary';
+                document.getElementById('sessionStatusBadge').innerText = 'Çıkış Yapıldı';
+                document.getElementById('sessionContent').style.display = 'none';
+                document.getElementById('sessionEmptyAlert').style.display = 'block';
+            }
+        } catch (err) {
+            log(`Bağlantı Hatası: ${err.message}`, 'error');
+        }
+    });
+
+    // 5. Replay Attack Simülasyonu
+    document.getElementById('btnTestReplay').addEventListener('click', async () => {
+        const dummyStolenToken = "stolen_compromised_token_xyz_999";
+        log(`Replay Saldırısı Simülasyonu: İptal edilmiş/sahte token gönderiliyor...`, 'warn');
+
+        try {
+            const res = await fetch(`${apiBase}/api/v1/auth/refresh`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ refreshToken: dummyStolenToken })
+            });
+
+            const data = await res.json();
+            log(`HTTP ${res.status} [Beklenen Savunma]: ${data.message || 'Yetkisiz erişim engellendi.'}`, res.status === 401 ? 'success' : 'error');
+        } catch (err) {
+            log(`Bağlantı Hatası: ${err.message}`, 'error');
+        }
+    });
+
+    document.getElementById('btnClearLog').addEventListener('click', () => {
+        document.getElementById('terminalLog').innerHTML = '';
+    });
+</script>
+}
