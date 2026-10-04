@@ -24,8 +24,11 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // PostgreSQL pgvector eklentisi
-        modelBuilder.HasPostgresExtension("vector");
+        // PostgreSQL pgvector eklentisi (sadece Npgsql saglayicisinda)
+        if (Database.IsNpgsql())
+        {
+            modelBuilder.HasPostgresExtension("vector");
+        }
 
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
     }
