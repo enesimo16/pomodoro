@@ -91,6 +91,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapHub<TimerHub>("/hubs/timer");
+app.MapHub<RoomHub>("/hubs/room");
 
 app.Run();
 

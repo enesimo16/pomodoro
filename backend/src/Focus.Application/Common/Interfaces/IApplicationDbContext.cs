@@ -17,6 +17,9 @@ public interface IApplicationDbContext
     DbSet<CatalogItem> CatalogItems { get; }
     DbSet<UserInventoryItem> UserInventoryItems { get; }
     DbSet<UserStreak> UserStreaks { get; }
+    DbSet<StudyRoom> StudyRooms { get; }
+    DbSet<RoomMember> RoomMembers { get; }
+    DbSet<RoomInvitation> RoomInvitations { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

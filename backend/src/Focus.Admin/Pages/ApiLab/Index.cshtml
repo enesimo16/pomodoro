@@ -7,7 +7,7 @@
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
     <div>
         <h4 class="fw-bold mb-0 text-dark">API Test Konsolu</h4>
-        <span class="text-muted small">Faz 0 (Auth), Faz 1 (Avatar & Piksel Oda) ve Faz 2 (Sayaç, Atmosferik Video, Lo-Fi Müzik & Hava Durumu)</span>
+        <span class="text-muted small">Faz 0-3 (Auth, Oda, Sayaç, Medya, Mağaza) ve Faz 4 (Sosyal Birlikte Çalışma, Kütüphane & Mobil Davet)</span>
     </div>
     <div class="d-flex align-items-center gap-2">
         <span class="badge bg-light text-secondary border px-3 py-2">
@@ -44,6 +44,9 @@
             </li>
             <li class="nav-item flex-fill" role="presentation">
                 <button class="nav-link w-100 text-center py-2 small" id="tab-stats-btn" data-bs-toggle="pill" data-bs-target="#tab-stats" type="button" role="tab">7. İstatistik</button>
+            </li>
+            <li class="nav-item flex-fill" role="presentation">
+                <button class="nav-link w-100 text-center py-2 small" id="tab-social-btn" data-bs-toggle="pill" data-bs-target="#tab-social" type="button" role="tab">8. Sosyal</button>
             </li>
         </ul>
 
@@ -551,6 +554,115 @@
                     </div>
                 </div>
             </div>
+
+            <!-- TAB 8: SOSYAL ÇALIŞMA & KÜTÜPHANELER (FAZ 4) -->
+            <div class="tab-pane fade" id="tab-social" role="tabpanel">
+                <!-- Bölüm 1: Genel Kütüphaneler & Çarşı -->
+                <div class="card card-custom p-3 mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="fw-bold text-dark mb-0">Halka Açık Kütüphaneler & Piksel Çarşı</h6>
+                        <span class="badge bg-primary-subtle text-primary border">Ortak Alan</span>
+                    </div>
+                    <button id="btnGetPublicRooms" class="btn btn-outline-primary btn-sm w-100 mb-2">
+                        Genel Odaları Getir (GET /study-rooms/public)
+                    </button>
+                    <div id="publicRoomsContainer" class="d-flex flex-column gap-2" style="max-height: 240px; overflow-y: auto;">
+                        <div class="text-center py-3 text-muted small">Genel kütüphaneleri listelemek için butona tıklayın.</div>
+                    </div>
+                </div>
+
+                <!-- Bölüm 2: Arkadaşını Odaya Çağır (Mobil & Link) -->
+                <div class="card card-custom p-3 mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="fw-bold text-dark mb-0">Arkadaşını Odaya Çağır</h6>
+                        <span class="badge bg-success-subtle text-success border">Mobil Paylaşım</span>
+                    </div>
+                    
+                    <button id="btnCreateInvite" class="btn btn-primary btn-sm w-100 mb-2">
+                        Özel Oda Davet Linki Oluştur
+                    </button>
+
+                    <div id="inviteLinksCard" class="p-2 bg-light rounded border mb-3" style="display: none;">
+                        <span class="text-muted small fw-semibold d-block mb-1">Oda Kodu: <strong id="lblInviteRoomCode" class="text-dark"></strong></span>
+                        <div class="input-group input-group-sm mb-2">
+                            <input type="text" id="txtDirectLink" class="form-control" readonly />
+                            <button id="btnCopyDirectLink" class="btn btn-outline-secondary">Kopyala</button>
+                        </div>
+                        <div class="d-flex flex-wrap gap-1">
+                            <a id="linkWhatsApp" href="#" target="_blank" class="btn btn-sm btn-success flex-fill py-1 small">
+                                🟢 WhatsApp ile Paylaş
+                            </a>
+                            <a id="linkTelegram" href="#" target="_blank" class="btn btn-sm btn-info text-white flex-fill py-1 small">
+                                🔵 Telegram ile Paylaş
+                            </a>
+                            <button id="btnWebShare" class="btn btn-sm btn-dark flex-fill py-1 small">
+                                📱 Mobil Paylaşım Menüsü
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Kullanıcı Adıyla Çağır -->
+                    <label class="form-label small text-muted mb-1">Kullanıcı Adıyla Çağır:</label>
+                    <div class="input-group input-group-sm">
+                        <input type="text" id="txtInviteUsername" class="form-control" placeholder="Örn: Mehmet veya Misafir#1234" />
+                        <button id="btnInviteUsername" class="btn btn-outline-dark">Davet Et</button>
+                    </div>
+                </div>
+
+                <!-- Bölüm 3: Canlı Oda & Masalar -->
+                <div class="card card-custom p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                            <h6 class="fw-bold text-dark mb-0">Canlı Çalışma Masaları</h6>
+                            <span class="text-muted small" id="lblCurrentRoomName">Oda: Katılınmadı</span>
+                        </div>
+                        <span id="lblCoWorkingBonusBadge" class="badge bg-warning-subtle text-dark border">Ortak Bonus: %0</span>
+                    </div>
+
+                    <!-- Masa Seçimi -->
+                    <span class="text-muted small fw-semibold d-block mb-1">Oda İçi Masalar (Tıklayarak Oturun):</span>
+                    <div class="row g-2 mb-3">
+                        <div class="col-3">
+                            <button class="btn btn-outline-secondary btn-sm w-100 py-2 btn-seat" data-seat="1">
+                                <span class="d-block fs-5">🪑</span>
+                                <span class="small">Masa 1</span>
+                            </button>
+                        </div>
+                        <div class="col-3">
+                            <button class="btn btn-outline-secondary btn-sm w-100 py-2 btn-seat" data-seat="2">
+                                <span class="d-block fs-5">🪑</span>
+                                <span class="small">Masa 2</span>
+                            </button>
+                        </div>
+                        <div class="col-3">
+                            <button class="btn btn-outline-secondary btn-sm w-100 py-2 btn-seat" data-seat="3">
+                                <span class="d-block fs-5">🪑</span>
+                                <span class="small">Masa 3</span>
+                            </button>
+                        </div>
+                        <div class="col-3">
+                            <button class="btn btn-outline-secondary btn-sm w-100 py-2 btn-seat" data-seat="4">
+                                <span class="d-block fs-5">🪑</span>
+                                <span class="small">Masa 4</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Sessiz Piksel Emojiler / Reaksiyonlar -->
+                    <span class="text-muted small fw-semibold d-block mb-1">Sessiz Piksel Reaksiyon Gönder:</span>
+                    <div class="d-flex gap-1">
+                        <button class="btn btn-sm btn-light border flex-fill btn-reaction" data-reaction="🎉">🎉 Tebrik</button>
+                        <button class="btn btn-sm btn-light border flex-fill btn-reaction" data-reaction="☕">☕ Kahve</button>
+                        <button class="btn btn-sm btn-light border flex-fill btn-reaction" data-reaction="🔥">🔥 Harika</button>
+                        <button class="btn btn-sm btn-light border flex-fill btn-reaction" data-reaction="💪">💪 Odak</button>
+                    </div>
+
+                    <!-- Canlı Reaksiyon Banner'ı -->
+                    <div id="liveReactionBanner" class="alert alert-info py-2 px-3 small text-center mt-2 mb-0" style="display: none;">
+                        <span id="lblLiveReactionText"></span>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -729,6 +841,7 @@
 </div>
 
 @section Scripts {
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
 <script>
     const apiBase = '@Model.WebApiBaseUrl';
 
@@ -736,6 +849,10 @@
         accessToken: sessionStorage.getItem('focus_test_at') || null,
         refreshToken: sessionStorage.getItem('focus_test_rt') || null
     };
+
+    let currentUserId = null;
+    let currentRoomCode = null;
+    let roomHubConn = null;
 
     let activeSession = null;
     let timerInterval = null;
@@ -792,6 +909,7 @@
         document.getElementById('sessionContent').style.display = 'block';
 
         if (data.user) {
+            currentUserId = data.user.id;
             document.getElementById('lblDisplayName').textContent = data.user.displayName;
             document.getElementById('lblCoins').textContent = data.user.totalCoins;
             document.getElementById('lblLevel').textContent = `Seviye ${data.user.level} (${data.user.currentXp} XP)`;
@@ -854,6 +972,9 @@
 
     function clearSessionUI() {
         saveTokens(null, null);
+        currentUserId = null;
+        currentRoomCode = null;
+        if (roomHubConn) { try { roomHubConn.stop(); } catch(e){} }
         activeSession = null;
         clearInterval(timerInterval);
         document.getElementById('sessionEmptyAlert').style.display = 'block';
@@ -1917,6 +2038,334 @@
         } catch (err) {
             log(`Bağlantı Hatası: ${err.message}`, 'error');
         }
+    });
+
+    // 8. SOSYAL ÇALIŞMA & ORTAK ODALAR (FAZ 4)
+    async function connectToRoomHub(roomCode) {
+        if (typeof signalR === 'undefined') {
+            log(`SignalR kütüphanesi yüklenemedi.`, 'warn');
+            return;
+        }
+
+        if (roomHubConn) {
+            try {
+                await roomHubConn.stop();
+            } catch (e) { }
+        }
+
+        roomHubConn = new signalR.HubConnectionBuilder()
+            .withUrl(`${apiBase}/hubs/room`, {
+                accessTokenFactory: () => currentTokens.accessToken || ''
+            })
+            .withAutomaticReconnect()
+            .build();
+
+        roomHubConn.on("UserJoinedRoom", (member) => {
+            log(`SignalR: ${member.displayName} odaya katıldı. (Seviye ${member.level})`, 'info');
+            if (member.seatIndex) {
+                markSeat(member.seatIndex, member.userId === currentUserId, member.displayName);
+            }
+        });
+
+        roomHubConn.on("UserLeftRoom", (userId) => {
+            log(`SignalR: Bir kullanıcı odadan ayrıldı.`, 'info');
+            document.querySelectorAll('.btn-seat').forEach(btn => {
+                if (btn.dataset.userId === userId) {
+                    resetSeatBtn(btn);
+                }
+            });
+        });
+
+        roomHubConn.on("SeatOccupied", (userId, seatIndex) => {
+            log(`SignalR: Masa ${seatIndex} tutuldu.`, 'info');
+            markSeat(seatIndex, userId === currentUserId, userId === currentUserId ? 'Siz' : 'Kullanıcı');
+        });
+
+        roomHubConn.on("SeatVacated", (userId, seatIndex) => {
+            log(`SignalR: Masa ${seatIndex} boşaldı.`, 'info');
+            const btn = document.querySelector(`.btn-seat[data-seat="${seatIndex}"]`);
+            if (btn) resetSeatBtn(btn);
+        });
+
+        roomHubConn.on("CoWorkingBonusUpdated", (bonusPercent) => {
+            log(`SignalR: Ortak çalışma odak bonusu güncellendi: %${bonusPercent}`, 'success');
+            const badge = document.getElementById('lblCoWorkingBonusBadge');
+            badge.textContent = `Ortak Bonus: %${bonusPercent}`;
+            badge.className = bonusPercent > 0 ? 'badge bg-success text-white border' : 'badge bg-warning-subtle text-dark border';
+        });
+
+        roomHubConn.on("ReactionBroadcasted", (r) => {
+            log(`SignalR Reaksiyon: ${r.displayName} -> ${r.reaction}`, 'info');
+            const banner = document.getElementById('liveReactionBanner');
+            const bannerText = document.getElementById('lblLiveReactionText');
+            bannerText.textContent = `${r.displayName}: ${r.reaction}`;
+            banner.style.display = 'block';
+            setTimeout(() => { banner.style.display = 'none'; }, 4000);
+        });
+
+        try {
+            await roomHubConn.start();
+            await roomHubConn.invoke("JoinRoomGroup", roomCode);
+            log(`SignalR: '${roomCode}' odası canlı akışına bağlandı.`, 'success');
+        } catch (err) {
+            log(`SignalR Bağlantı Hatası: ${err.message}`, 'error');
+        }
+    }
+
+    function resetSeatBtn(btn) {
+        const s = btn.dataset.seat;
+        btn.className = 'btn btn-outline-secondary btn-sm w-100 py-2 btn-seat';
+        btn.innerHTML = `<span class="d-block fs-5">🪑</span><span class="small">Masa ${s}</span>`;
+        delete btn.dataset.userId;
+    }
+
+    function markSeat(seatIndex, isSelf, label) {
+        const btn = document.querySelector(`.btn-seat[data-seat="${seatIndex}"]`);
+        if (!btn) return;
+
+        if (isSelf) {
+            btn.className = 'btn btn-success btn-sm w-100 py-2 btn-seat';
+            btn.innerHTML = `<span class="d-block fs-5">🧑‍💻</span><span class="small">Masa ${seatIndex} (Siz)</span>`;
+        } else {
+            btn.className = 'btn btn-secondary btn-sm w-100 py-2 btn-seat';
+            btn.innerHTML = `<span class="d-block fs-5">👤</span><span class="small">Masa ${seatIndex} (${label})</span>`;
+        }
+    }
+
+    window.joinStudyRoom = async function(roomCode, inviteCode = null) {
+        if (!currentTokens.accessToken) {
+            log(`Odaya katılmak için oturum açmalısınız.`, 'warning');
+            return;
+        }
+
+        log(`POST ${apiBase}/api/v1/study-rooms/join (${roomCode})...`);
+        try {
+            const res = await fetch(`${apiBase}/api/v1/study-rooms/join`, {
+                method: 'POST',
+                headers: getAuthHeaders(true),
+                body: JSON.stringify({ roomCode, inviteCode })
+            });
+
+            const data = await res.json();
+            if (res.ok && data.success) {
+                currentRoomCode = data.room.code;
+                log(`HTTP 200 OK: '${data.room.name}' (${data.room.code}) odasına girildi!`, 'success');
+
+                document.getElementById('lblCurrentRoomName').textContent = `Oda: ${data.room.name} (${data.room.code})`;
+                const bonusBadge = document.getElementById('lblCoWorkingBonusBadge');
+                bonusBadge.textContent = `Ortak Bonus: %${data.room.coWorkingBonusPercent}`;
+                bonusBadge.className = data.room.coWorkingBonusPercent > 0 ? 'badge bg-success text-white border' : 'badge bg-warning-subtle text-dark border';
+
+                // Masaları temizle ve mevcut oturanları işaretle
+                document.querySelectorAll('.btn-seat').forEach(btn => resetSeatBtn(btn));
+                if (data.room.members) {
+                    data.room.members.forEach(m => {
+                        if (m.seatIndex) {
+                            markSeat(m.seatIndex, m.userId === currentUserId, m.displayName);
+                        }
+                    });
+                }
+
+                // Canlı SignalR bağlantısı kur
+                await connectToRoomHub(currentRoomCode);
+            } else {
+                log(`Odaya Giriş Başarısız: ${data.message || 'Hata'}`, 'error');
+                if (data.message && data.message.includes('Pro')) {
+                    alert(`Oda Kapasite Uyarısı: ${data.message}`);
+                }
+            }
+        } catch (err) {
+            log(`Bağlantı Hatası: ${err.message}`, 'error');
+        }
+    };
+
+    document.getElementById('btnGetPublicRooms').addEventListener('click', async () => {
+        log(`GET ${apiBase}/api/v1/study-rooms/public gönderiliyor...`);
+        try {
+            const res = await fetch(`${apiBase}/api/v1/study-rooms/public`, { headers: getAuthHeaders(false) });
+            if (res.ok) {
+                const rooms = await res.json();
+                log(`HTTP 200 OK: ${rooms.length} genel oda listelendi.`, 'success');
+
+                const container = document.getElementById('publicRoomsContainer');
+                container.innerHTML = '';
+
+                rooms.forEach(r => {
+                    const card = document.createElement('div');
+                    card.className = 'p-2 bg-light rounded border d-flex justify-content-between align-items-center';
+                    const isShop = r.type === 'ShopMarket';
+                    const icon = isShop ? '🛍️' : '📚';
+
+                    card.innerHTML = `
+                        <div>
+                            <div class="d-flex align-items-center gap-1">
+                                <span class="fs-5">${icon}</span>
+                                <strong class="small text-dark">${r.name}</strong>
+                                <span class="badge bg-secondary-subtle text-secondary font-monospace" style="font-size: 10px;">${r.code}</span>
+                            </div>
+                            <span class="text-muted small d-block" style="font-size: 11px;">
+                                ${r.description || ''} • Kapasite: ${r.currentMemberCount}/${r.maxCapacity} • Bonus: +%${r.coWorkingBonusPercent}
+                            </span>
+                        </div>
+                        <button class="btn btn-sm btn-outline-primary py-1 px-3" onclick="joinStudyRoom('${r.code}')">
+                            Katıl
+                        </button>
+                    `;
+                    container.appendChild(card);
+                });
+            } else {
+                log(`HTTP ${res.status}: Genel odalar alınamadı.`, 'error');
+            }
+        } catch (err) {
+            log(`Bağlantı Hatası: ${err.message}`, 'error');
+        }
+    });
+
+    document.getElementById('btnCreateInvite').addEventListener('click', async () => {
+        if (!currentTokens.accessToken) {
+            log(`Davet linki oluşturmak için oturum açmalısınız.`, 'warning');
+            return;
+        }
+
+        log(`POST ${apiBase}/api/v1/study-rooms/create-invite gönderiliyor...`);
+        try {
+            const res = await fetch(`${apiBase}/api/v1/study-rooms/create-invite`, {
+                method: 'POST',
+                headers: getAuthHeaders(true)
+            });
+
+            if (res.ok) {
+                const inv = await res.json();
+                log(`HTTP 200 OK: Davet oluşturuldu! Kod: ${inv.inviteCode}`, 'success');
+
+                document.getElementById('inviteLinksCard').style.display = 'block';
+                document.getElementById('lblInviteRoomCode').textContent = `${inv.roomName} (${inv.roomCode})`;
+                document.getElementById('txtDirectLink').value = inv.directLink;
+                document.getElementById('linkWhatsApp').href = inv.whatsAppLink;
+                document.getElementById('linkTelegram').href = inv.telegramLink;
+
+                document.getElementById('btnWebShare').onclick = () => {
+                    if (navigator.share) {
+                        navigator.share({
+                            title: inv.roomName,
+                            text: inv.shareMessage,
+                            url: inv.directLink
+                        }).catch(() => {});
+                    } else {
+                        navigator.clipboard.writeText(inv.directLink);
+                        log(`Web Share desteklenmiyor, link panoya kopyalandı!`, 'info');
+                    }
+                };
+
+                // Kendi odamıza otomatik bağlanalım
+                joinStudyRoom(inv.roomCode, inv.inviteCode);
+            } else {
+                log(`HTTP ${res.status}: Davet linki oluşturulamadı.`, 'error');
+            }
+        } catch (err) {
+            log(`Bağlantı Hatası: ${err.message}`, 'error');
+        }
+    });
+
+    document.getElementById('btnCopyDirectLink').addEventListener('click', () => {
+        const link = document.getElementById('txtDirectLink').value;
+        if (link) {
+            navigator.clipboard.writeText(link).then(() => {
+                log(`Davet linki panoya kopyalandı: ${link}`, 'info');
+            });
+        }
+    });
+
+    document.getElementById('btnInviteUsername').addEventListener('click', async () => {
+        if (!currentTokens.accessToken) {
+            log(`Kullanıcı davet etmek için oturum açmalısınız.`, 'warning');
+            return;
+        }
+
+        const username = document.getElementById('txtInviteUsername').value.trim();
+        if (!username) {
+            log(`Lütfen davet edilecek bir kullanıcı adı girin.`, 'warning');
+            return;
+        }
+
+        log(`POST ${apiBase}/api/v1/study-rooms/invite-username (${username}) gönderiliyor...`);
+        try {
+            const res = await fetch(`${apiBase}/api/v1/study-rooms/invite-username`, {
+                method: 'POST',
+                headers: getAuthHeaders(true),
+                body: JSON.stringify({ targetUsername: username })
+            });
+
+            if (res.ok) {
+                const inv = await res.json();
+                log(`HTTP 200 OK: '${username}' için davet hazırlandı! Link: ${inv.directLink}`, 'success');
+                document.getElementById('txtInviteUsername').value = '';
+            } else {
+                const err = await res.json();
+                log(`HTTP ${res.status}: ${err.message || 'Davet gönderilemedi.'}`, 'error');
+            }
+        } catch (err) {
+            log(`Bağlantı Hatası: ${err.message}`, 'error');
+        }
+    });
+
+    // Masa seçimi / Oturma
+    document.querySelectorAll('.btn-seat').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            if (!currentRoomCode) {
+                log(`Lütfen önce bir odaya katılın.`, 'warning');
+                return;
+            }
+
+            const seatIndex = parseInt(btn.dataset.seat);
+            log(`POST ${apiBase}/api/v1/study-rooms/sit (Masa ${seatIndex})...`);
+            try {
+                const res = await fetch(`${apiBase}/api/v1/study-rooms/sit`, {
+                    method: 'POST',
+                    headers: getAuthHeaders(true),
+                    body: JSON.stringify({ roomCode: currentRoomCode, seatIndex })
+                });
+
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    log(`HTTP 200 OK: Masa ${seatIndex}'e oturdunuz!`, 'success');
+                    markSeat(seatIndex, true, 'Siz');
+                } else {
+                    log(`Masa Tutulamadı: ${data.message || 'Dolu veya geçersiz masa'}`, 'warn');
+                }
+            } catch (err) {
+                log(`Bağlantı Hatası: ${err.message}`, 'error');
+            }
+        });
+    });
+
+    // Sessiz Piksel Reaksiyon Gönder
+    document.querySelectorAll('.btn-reaction').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            if (!currentRoomCode) {
+                log(`Reaksiyon göndermek için önce bir odaya katılmalısınız.`, 'warning');
+                return;
+            }
+
+            const reaction = btn.dataset.reaction;
+            log(`POST ${apiBase}/api/v1/study-rooms/reaction (${reaction})...`);
+            try {
+                const res = await fetch(`${apiBase}/api/v1/study-rooms/reaction`, {
+                    method: 'POST',
+                    headers: getAuthHeaders(true),
+                    body: JSON.stringify({ roomCode: currentRoomCode, reaction })
+                });
+
+                if (res.ok) {
+                    const r = await res.json();
+                    log(`HTTP 200 OK: Reaksiyon iletildi (${r.reaction})`, 'success');
+                } else {
+                    log(`HTTP ${res.status}: Reaksiyon iletilemedi.`, 'error');
+                }
+            } catch (err) {
+                log(`Bağlantı Hatası: ${err.message}`, 'error');
+            }
+        });
     });
 
     // Kopyalama & Sıfırlama

@@ -12,6 +12,7 @@ public class User : BaseEntity<Guid>, IAggregateRoot
     public string DisplayName { get; private set; } = null!;
     public string? Email { get; private set; }
     public bool IsGuest { get; private set; }
+    public bool IsPro { get; private set; }
     public int Level { get; private set; } = 1;
     public long CurrentXp { get; private set; }
     public string Locale { get; private set; } = "tr-TR";
@@ -111,6 +112,12 @@ public class User : BaseEntity<Guid>, IAggregateRoot
     public void AddRefreshToken(string tokenHash, DateTime expiresAt, string? createdByIp)
     {
         _refreshTokens.Add(new RefreshToken(Id, tokenHash, expiresAt, createdByIp));
+    }
+
+    public void SetPro(bool isPro)
+    {
+        IsPro = isPro;
+        UpdatedAt = DateTime.UtcNow;
     }
 
     public void SoftDelete()

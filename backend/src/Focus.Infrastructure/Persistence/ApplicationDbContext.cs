@@ -23,6 +23,9 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<CatalogItem> CatalogItems => Set<CatalogItem>();
     public DbSet<UserInventoryItem> UserInventoryItems => Set<UserInventoryItem>();
     public DbSet<UserStreak> UserStreaks => Set<UserStreak>();
+    public DbSet<StudyRoom> StudyRooms => Set<StudyRoom>();
+    public DbSet<RoomMember> RoomMembers => Set<RoomMember>();
+    public DbSet<RoomInvitation> RoomInvitations => Set<RoomInvitation>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -38,5 +41,8 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
 
         // Baslangic esya katalog verileri
         CatalogSeeder.SeedCatalogItems(modelBuilder);
+
+        // Genel kutuphaneler ve piksel carsi
+        PublicRoomSeeder.SeedPublicRooms(modelBuilder);
     }
 }

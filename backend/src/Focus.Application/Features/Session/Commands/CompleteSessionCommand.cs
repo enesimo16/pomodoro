@@ -55,6 +55,24 @@ public class CompleteSessionCommandHandler : IRequestHandler<CompleteSessionComm
             xpEarned = minutes * 10;
             coinsEarned = minutes * 1;
             reason = CoinTransactionReason.SessionReward;
+
+            // Birlikte Odaklanma Bonusu (Faz 4 - 2 kisi: +%10, 3 kisi: +%15, 4+ kisi: +%20)
+            var currentMember = await _context.RoomMembers
+                .Include(m => m.Room)
+                    .ThenInclude(r => r.Members)
+                .FirstOrDefaultAsync(m => m.UserId == request.UserId, cancellationToken);
+
+            if (currentMember != null)
+            {
+                var bonusPercent = currentMember.Room.CalculateCoWorkingBonusPercent();
+                if (bonusPercent > 0)
+                {
+                    var extraXp = (int)Math.Round(xpEarned * (bonusPercent / 100.0));
+                    var extraCoins = Math.Max(1, (int)Math.Round(coinsEarned * (bonusPercent / 100.0)));
+                    xpEarned += extraXp;
+                    coinsEarned += extraCoins;
+                }
+            }
         }
         else
         {
