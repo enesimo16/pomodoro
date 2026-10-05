@@ -48,6 +48,9 @@
             <li class="nav-item flex-fill" role="presentation">
                 <button class="nav-link w-100 text-center py-2 small" id="tab-social-btn" data-bs-toggle="pill" data-bs-target="#tab-social" type="button" role="tab">8. Sosyal</button>
             </li>
+            <li class="nav-item flex-fill" role="presentation">
+                <button class="nav-link w-100 text-center py-2 small" id="tab-coach-btn" data-bs-toggle="pill" data-bs-target="#tab-coach" type="button" role="tab">9. AI Koc</button>
+            </li>
         </ul>
 
         <div class="tab-content" id="pills-tabContent">
@@ -322,11 +325,11 @@
                         <button id="btnSearchThemes" class="btn btn-primary px-3">Ara</button>
                     </div>
                     <div class="d-flex flex-wrap gap-1 mb-2">
-                        <button type="button" class="btn btn-sm btn-light border text-secondary px-2 py-0 btn-theme-chip" data-q="rain window">🌧️ Yağmur</button>
-                        <button type="button" class="btn btn-sm btn-light border text-secondary px-2 py-0 btn-theme-chip" data-q="cozy cafe coffee">☕ Sıcak Kafe</button>
-                        <button type="button" class="btn btn-sm btn-light border text-secondary px-2 py-0 btn-theme-chip" data-q="fireplace burning">🔥 Şömine</button>
-                        <button type="button" class="btn btn-sm btn-light border text-secondary px-2 py-0 btn-theme-chip" data-q="night city tokyo">🌃 Gece Şehri</button>
-                        <button type="button" class="btn btn-sm btn-light border text-secondary px-2 py-0 btn-theme-chip" data-q="forest nature calm">🌲 Doğa & Orman</button>
+                        <button type="button" class="btn btn-sm btn-light border text-secondary px-2 py-0 btn-theme-chip" data-q="rain window">Yağmur</button>
+                        <button type="button" class="btn btn-sm btn-light border text-secondary px-2 py-0 btn-theme-chip" data-q="cozy cafe coffee">Sıcak Kafe</button>
+                        <button type="button" class="btn btn-sm btn-light border text-secondary px-2 py-0 btn-theme-chip" data-q="fireplace burning">Şömine</button>
+                        <button type="button" class="btn btn-sm btn-light border text-secondary px-2 py-0 btn-theme-chip" data-q="night city tokyo">Gece Şehri</button>
+                        <button type="button" class="btn btn-sm btn-light border text-secondary px-2 py-0 btn-theme-chip" data-q="forest nature calm">Doğa & Orman</button>
                     </div>
                     <div id="themesContainer" class="d-flex flex-column gap-2" style="max-height: 250px; overflow-y: auto;">
                         <span class="text-muted small text-center p-3 bg-light rounded">Aramak için yukarıdan "Ara" butonuna tıklayınız.</span>
@@ -344,11 +347,11 @@
                         <button id="btnSearchMusic" class="btn btn-outline-primary px-3">Parça Ara</button>
                     </div>
                     <div class="d-flex flex-wrap gap-1 mb-2">
-                        <button type="button" class="btn btn-sm btn-light border text-secondary px-2 py-0 btn-music-chip" data-q="lofi">🎧 Lo-Fi</button>
-                        <button type="button" class="btn btn-sm btn-light border text-secondary px-2 py-0 btn-music-chip" data-q="piano">🎹 Piyano</button>
-                        <button type="button" class="btn btn-sm btn-light border text-secondary px-2 py-0 btn-music-chip" data-q="chillhop">☕ Chillhop</button>
-                        <button type="button" class="btn btn-sm btn-light border text-secondary px-2 py-0 btn-music-chip" data-q="ambient">🌿 Ambiyans</button>
-                        <button type="button" class="btn btn-sm btn-light border text-secondary px-2 py-0 btn-music-chip" data-q="jazz">🎷 Caz</button>
+                        <button type="button" class="btn btn-sm btn-light border text-secondary px-2 py-0 btn-music-chip" data-q="lofi">Lo-Fi</button>
+                        <button type="button" class="btn btn-sm btn-light border text-secondary px-2 py-0 btn-music-chip" data-q="piano">Piyano</button>
+                        <button type="button" class="btn btn-sm btn-light border text-secondary px-2 py-0 btn-music-chip" data-q="chillhop">Chillhop</button>
+                        <button type="button" class="btn btn-sm btn-light border text-secondary px-2 py-0 btn-music-chip" data-q="ambient">Ambiyans</button>
+                        <button type="button" class="btn btn-sm btn-light border text-secondary px-2 py-0 btn-music-chip" data-q="jazz">Caz</button>
                     </div>
                     <div id="tracksContainer" class="d-flex flex-column gap-2" style="max-height: 250px; overflow-y: auto;">
                         <span class="text-muted small text-center p-3 bg-light rounded">Parçaları listelemek için "Parça Ara"ya basınız.</span>
@@ -375,13 +378,13 @@
                     <!-- Farklı Hava Durumu Tepkisi Simülatörü -->
                     <label class="form-label small text-muted mb-1">Tüm Hava Durumu Tepkilerini Canlı Test Edin:</label>
                     <div class="d-flex flex-wrap gap-1 mb-2">
-                        <button type="button" class="btn btn-sm btn-outline-warning btn-weather-sim" data-code="0">☀️ Güneşli</button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary btn-weather-sim" data-code="2">⛅ Parçalı</button>
-                        <button type="button" class="btn btn-sm btn-outline-dark btn-weather-sim" data-code="3">☁️ Kapalı</button>
-                        <button type="button" class="btn btn-sm btn-outline-primary btn-weather-sim" data-code="61">🌧️ Yağmurlu</button>
-                        <button type="button" class="btn btn-sm btn-outline-danger btn-weather-sim" data-code="95">⛈️ Fırtınalı</button>
-                        <button type="button" class="btn btn-sm btn-outline-info btn-weather-sim" data-code="71">❄️ Karlı</button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary btn-weather-sim" data-code="45">🌫️ Sisli</button>
+                        <button type="button" class="btn btn-sm btn-outline-warning btn-weather-sim" data-code="0">Güneşli</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary btn-weather-sim" data-code="2">Parçalı</button>
+                        <button type="button" class="btn btn-sm btn-outline-dark btn-weather-sim" data-code="3">Kapalı</button>
+                        <button type="button" class="btn btn-sm btn-outline-primary btn-weather-sim" data-code="61">Yağmurlu</button>
+                        <button type="button" class="btn btn-sm btn-outline-danger btn-weather-sim" data-code="95">Fırtınalı</button>
+                        <button type="button" class="btn btn-sm btn-outline-info btn-weather-sim" data-code="71">Karlı</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary btn-weather-sim" data-code="45">Sisli</button>
                     </div>
 
                     <div class="row g-2 mb-2">
@@ -437,11 +440,11 @@
                     <!-- Dondurucu Satın Alma Kartı -->
                     <div class="p-2 border rounded bg-light d-flex justify-content-between align-items-center mt-2">
                         <div>
-                            <strong class="small d-block text-dark">❄️ Seri Dondurucu (Streak Freeze)</strong>
+                            <strong class="small d-block text-dark">Seri Dondurucu (Streak Freeze)</strong>
                             <span class="text-muted small">100 Coin • Max 2 adet saklanabilir</span>
                         </div>
                         <button id="btnBuyFreeze" class="btn btn-sm btn-info text-white px-3">
-                            Satın Al (100 🪙)
+                            Satın Al (100 Coin)
                         </button>
                     </div>
                 </div>
@@ -465,7 +468,7 @@
                 <div class="card card-custom p-3 mb-3">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <h6 class="fw-bold text-dark mb-0">Odaklanma Serisi & Başarılar</h6>
-                        <span class="badge bg-danger-subtle text-danger border">🔥 Streak Sistemi</span>
+                        <span class="badge bg-danger-subtle text-danger border">Streak Sistemi</span>
                     </div>
                     <div class="d-flex gap-2">
                         <button id="btnGetStreak" class="btn btn-outline-danger btn-sm flex-fill">
@@ -590,13 +593,13 @@
                         </div>
                         <div class="d-flex flex-wrap gap-1">
                             <a id="linkWhatsApp" href="#" target="_blank" class="btn btn-sm btn-success flex-fill py-1 small">
-                                🟢 WhatsApp ile Paylaş
+                                WhatsApp ile Paylas
                             </a>
                             <a id="linkTelegram" href="#" target="_blank" class="btn btn-sm btn-info text-white flex-fill py-1 small">
-                                🔵 Telegram ile Paylaş
+                                Telegram ile Paylas
                             </a>
                             <button id="btnWebShare" class="btn btn-sm btn-dark flex-fill py-1 small">
-                                📱 Mobil Paylaşım Menüsü
+                                Mobil Paylasim Menusu
                             </button>
                         </div>
                     </div>
@@ -624,42 +627,182 @@
                     <div class="row g-2 mb-3">
                         <div class="col-3">
                             <button class="btn btn-outline-secondary btn-sm w-100 py-2 btn-seat" data-seat="1">
-                                <span class="d-block fs-5">🪑</span>
-                                <span class="small">Masa 1</span>
+                                <span class="d-block small fw-bold">Masa 1</span>
+                                <span class="small text-muted">Bos</span>
                             </button>
                         </div>
                         <div class="col-3">
                             <button class="btn btn-outline-secondary btn-sm w-100 py-2 btn-seat" data-seat="2">
-                                <span class="d-block fs-5">🪑</span>
-                                <span class="small">Masa 2</span>
+                                <span class="d-block small fw-bold">Masa 2</span>
+                                <span class="small text-muted">Bos</span>
                             </button>
                         </div>
                         <div class="col-3">
                             <button class="btn btn-outline-secondary btn-sm w-100 py-2 btn-seat" data-seat="3">
-                                <span class="d-block fs-5">🪑</span>
-                                <span class="small">Masa 3</span>
+                                <span class="d-block small fw-bold">Masa 3</span>
+                                <span class="small text-muted">Bos</span>
                             </button>
                         </div>
                         <div class="col-3">
                             <button class="btn btn-outline-secondary btn-sm w-100 py-2 btn-seat" data-seat="4">
-                                <span class="d-block fs-5">🪑</span>
-                                <span class="small">Masa 4</span>
+                                <span class="d-block small fw-bold">Masa 4</span>
+                                <span class="small text-muted">Bos</span>
                             </button>
                         </div>
                     </div>
 
-                    <!-- Sessiz Piksel Emojiler / Reaksiyonlar -->
+                    <!-- Sessiz Piksel Reaksiyonlar -->
                     <span class="text-muted small fw-semibold d-block mb-1">Sessiz Piksel Reaksiyon Gönder:</span>
                     <div class="d-flex gap-1">
-                        <button class="btn btn-sm btn-light border flex-fill btn-reaction" data-reaction="🎉">🎉 Tebrik</button>
-                        <button class="btn btn-sm btn-light border flex-fill btn-reaction" data-reaction="☕">☕ Kahve</button>
-                        <button class="btn btn-sm btn-light border flex-fill btn-reaction" data-reaction="🔥">🔥 Harika</button>
-                        <button class="btn btn-sm btn-light border flex-fill btn-reaction" data-reaction="💪">💪 Odak</button>
+                        <button class="btn btn-sm btn-light border flex-fill btn-reaction" data-reaction="Tebrik">Tebrik</button>
+                        <button class="btn btn-sm btn-light border flex-fill btn-reaction" data-reaction="Kahve">Kahve</button>
+                        <button class="btn btn-sm btn-light border flex-fill btn-reaction" data-reaction="Harika">Harika</button>
+                        <button class="btn btn-sm btn-light border flex-fill btn-reaction" data-reaction="Odak">Odak</button>
                     </div>
 
                     <!-- Canlı Reaksiyon Banner'ı -->
                     <div id="liveReactionBanner" class="alert alert-info py-2 px-3 small text-center mt-2 mb-0" style="display: none;">
                         <span id="lblLiveReactionText"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 9: AI KOÇ & TERMİNAL (FAZ 5) -->
+            <div class="tab-pane fade" id="tab-coach" role="tabpanel">
+                <!-- Bölüm 1: Masaüstü Retro Terminali -->
+                <div class="card card-custom p-3 mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="fw-bold text-dark mb-0">Masaüstü Retro Terminali</h6>
+                        <span id="badgeCoachAnomaly" class="badge bg-secondary-subtle text-secondary border">Durum: Normal</span>
+                    </div>
+
+                    <!-- Terminal Sohbet Kutusu -->
+                    <div id="coachTerminalBox" class="p-3 rounded mb-2 border font-monospace" style="background-color: #090d16; color: #10b981; min-height: 180px; max-height: 240px; overflow-y: auto; font-size: 13px; line-height: 1.5;">
+                        <div class="text-secondary">[Sistem] Focus Terminali hazir. Odaya hos geldiniz.</div>
+                        <div class="text-success mt-1">Koc: Merhaba! Masadasin, zihnini sakinlestir ve ritmini yakala. Nasil hissediyorsun?</div>
+                    </div>
+
+                    <div class="input-group input-group-sm mb-2">
+                        <input type="text" id="txtCoachMessage" class="form-control" placeholder="Kocla konusun (Orn: Cok daginik hissediyorum...)" />
+                        <button id="btnSendCoachChat" class="btn btn-primary px-3">Gonder</button>
+                    </div>
+
+                    <!-- Hafıza İçgörüleri Rozeti -->
+                    <div id="boxUsedMemories" class="p-2 bg-light rounded border small text-muted" style="display: none;">
+                        <span class="fw-semibold d-block text-dark mb-1">Cevapta Kullanilan Hafiza Baglami:</span>
+                        <div id="listUsedMemories" class="d-flex flex-column gap-1"></div>
+                    </div>
+                </div>
+
+                <!-- Bölüm 2: Seans Başı Check-In & Seans Sonu Reflection -->
+                <div class="card card-custom p-3 mb-3">
+                    <h6 class="fw-bold text-dark mb-2">Seans Degerlendirmeleri (Profil Toplama)</h6>
+
+                    <!-- Check-In (Seans Başı) -->
+                    <div class="p-2 bg-light rounded border mb-2">
+                        <span class="fw-semibold small text-dark d-block mb-1">1. Seans Basi Check-In (Ruh Hali & Hedef)</span>
+                        <div class="row g-2 mb-2">
+                            <div class="col-6">
+                                <label class="form-label small text-muted mb-0">Ruh Hali:</label>
+                                <select id="checkInMood" class="form-select form-select-sm">
+                                    <option value="Energized">Enerjik (Energized)</option>
+                                    <option value="Calm" selected>Sakin (Calm)</option>
+                                    <option value="Tired">Yorgun (Tired)</option>
+                                    <option value="Stressed">Stresli (Stressed)</option>
+                                    <option value="Distracted">Dalgin (Distracted)</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small text-muted mb-0">Enerji Seviyesi (1-5):</label>
+                                <select id="checkInEnergy" class="form-select form-select-sm">
+                                    <option value="1">1 - Bitkin</option>
+                                    <option value="2">2 - Dusuk</option>
+                                    <option value="3">3 - Orta</option>
+                                    <option value="4" selected>4 - Iyi</option>
+                                    <option value="5">5 - Zirve</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="input-group input-group-sm">
+                            <input type="text" id="checkInIntent" class="form-control" placeholder="Hedef niyetiniz (Orn: Algoritma vizesi hazirligi)" />
+                            <button id="btnSubmitCheckIn" class="btn btn-outline-primary">Check-In Gonder</button>
+                        </div>
+                    </div>
+
+                    <!-- Reflection (Seans Sonu) -->
+                    <div class="p-2 bg-light rounded border">
+                        <span class="fw-semibold small text-dark d-block mb-1">2. Seans Sonu Degerlendirme (Odak Kalitesi)</span>
+                        <div class="row g-2 mb-2">
+                            <div class="col-6">
+                                <label class="form-label small text-muted mb-0">Odak Kalitesi (1-5):</label>
+                                <select id="refFocusQuality" class="form-select form-select-sm">
+                                    <option value="5" selected>5 - Mukemmel Derin Odak</option>
+                                    <option value="4">4 - Verimli ve Iyi</option>
+                                    <option value="3">3 - Orta Seviye</option>
+                                    <option value="2">2 - Dikkatim Dagildi</option>
+                                    <option value="1">1 - Verimsiz</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small text-muted mb-0">Seans Sonu Hissiyat:</label>
+                                <select id="refMoodAfter" class="form-select form-select-sm">
+                                    <option value="Accomplished" selected>Basarmis (Accomplished)</option>
+                                    <option value="Refreshed">Yenilenmis (Refreshed)</option>
+                                    <option value="Neutral">Notr (Neutral)</option>
+                                    <option value="Exhausted">Tukenmis (Exhausted)</option>
+                                    <option value="Frustrated">Bunalmis (Frustrated)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="input-group input-group-sm">
+                            <input type="text" id="refNote" class="form-control" placeholder="Not/Ogrenilen strateji (Orn: Yagmur sesi iyi geldi)" />
+                            <button id="btnSubmitReflection" class="btn btn-outline-success">Degerlendirme Gonder</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bölüm 3: Anomali & Yorgunluk Durumu -->
+                <div class="card card-custom p-3 mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="fw-bold text-dark mb-0">Anomali & Yorgunluk Tanisi</h6>
+                        <button id="btnCheckAnomaly" class="btn btn-outline-primary btn-sm">Durumu Kontrol Et</button>
+                    </div>
+                    <div class="row g-2 text-center mb-2">
+                        <div class="col-4">
+                            <div class="p-2 rounded bg-light border">
+                                <span class="text-muted small d-block">Gunluk Yorgunluk</span>
+                                <strong class="fs-6 text-dark" id="lblDailyFatigueScore">0 / 100</strong>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-2 rounded bg-light border">
+                                <span class="text-muted small d-block">Haftalik Odak</span>
+                                <strong class="fs-6 text-dark" id="lblWeeklyFocusHours">0 Saat</strong>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-2 rounded bg-light border">
+                                <span class="text-muted small d-block">Son Seanstan Beri</span>
+                                <strong class="fs-6 text-dark" id="lblDaysSinceLastSession">0 Gun</strong>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="boxAnomalyNotice" class="alert alert-secondary py-2 px-3 small mb-0">
+                        Tani bilgisi almak icin yukaridaki butona tiklayin.
+                    </div>
+                </div>
+
+                <!-- Bölüm 4: Çift Katmanlı Vektör Hafızası (Kişisel vs. Global) -->
+                <div class="card card-custom p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                            <h6 class="fw-bold text-dark mb-0">Cift Katmanli Vektor Hafizasi</h6>
+                            <span class="text-muted small">Kisisel Havuz + Kolektif Global Havuz</span>
+                        </div>
+                        <button id="btnListMemories" class="btn btn-outline-secondary btn-sm">Hafizayi Getir</button>
+                    </div>
+                    <div id="memoriesContainer" class="d-flex flex-column gap-2" style="max-height: 260px; overflow-y: auto;">
+                        <div class="text-center py-3 text-muted small">Hafiza kayitlarini listelemek icin butona tiklayin.</div>
                     </div>
                 </div>
             </div>
@@ -677,7 +820,7 @@
                 </div>
                 <div class="d-flex align-items-center gap-2">
                     <span id="deskLampBadge" class="badge px-3 py-2 border rounded-pill bg-light text-secondary">
-                        🌙 Masa Lambası Sönük
+                        Masa Lambası: Sönük
                     </span>
                 </div>
             </div>
@@ -695,8 +838,8 @@
                 <div class="position-absolute top-0 start-0 p-3 text-white" style="background: linear-gradient(180deg, rgba(0,0,0,0.6) 0%, transparent 100%); width: 100%;">
                     <div class="d-flex justify-content-between align-items-center">
                         <div class="d-flex align-items-center gap-2">
-                            <span id="previewWeatherBadge" class="badge bg-dark bg-opacity-75 border border-secondary px-2 py-1">🌧️ Yağmurlu • 18.5°C</span>
-                            <span id="previewWindowEffectBadge" class="badge bg-primary bg-opacity-75 border px-2 py-1">💧 Camda Yağmur Damlaları</span>
+                            <span id="previewWeatherBadge" class="badge bg-dark bg-opacity-75 border border-secondary px-2 py-1">Yağmurlu • 18.5°C</span>
+                            <span id="previewWindowEffectBadge" class="badge bg-primary bg-opacity-75 border px-2 py-1">Camda Yağmur Damlaları</span>
                         </div>
                         <div class="d-flex gap-1">
                             <button id="btnToggleVideoPlay" class="btn btn-sm btn-dark bg-opacity-75 border text-white py-0 px-2">Durdur</button>
@@ -708,7 +851,7 @@
                 <!-- Video Üzeri Alt Bilgi: Atmosfer Açıklaması -->
                 <div class="position-absolute bottom-0 start-0 p-3 text-white" style="background: linear-gradient(0deg, rgba(0,0,0,0.7) 0%, transparent 100%); width: 100%;">
                     <div id="previewAtmosphereDesc" class="small fw-light text-white-50">Dışarıda sağanak yağmur var. Masa lambasının altında çalışmak harika hissettiriyor.</div>
-                    <div id="previewSoundscapeDesc" class="small fw-semibold text-warning mt-1">🎵 Önerilen Ambiyans: Pencereye Vuran Yağmur & Lo-Fi Piyano</div>
+                    <div id="previewSoundscapeDesc" class="small fw-semibold text-warning mt-1">Önerilen Ambiyans: Pencereye Vuran Yağmur & Lo-Fi Piyano</div>
                 </div>
             </div>
 
@@ -788,14 +931,14 @@
                     <div class="col-sm-6">
                         <div class="p-3 rounded bg-light border">
                             <span class="text-muted small d-block mb-1">Odaklanma Serisi</span>
-                            <div class="fw-bold text-danger fs-6" id="lblLiveStreak">🔥 0 Gün</div>
+                            <div class="fw-bold text-danger fs-6" id="lblLiveStreak">0 Gün</div>
                             <span id="lblStreakStatusBadge" class="badge bg-secondary-subtle text-secondary small mt-1">Bugün Yapılmadı</span>
                         </div>
                     </div>
                     <div class="col-sm-6">
                         <div class="p-3 rounded bg-light border">
                             <span class="text-muted small d-block mb-1">Seri Dondurucu (Freeze)</span>
-                            <div class="fw-bold text-info fs-6" id="lblLiveFreezes">❄️ 1 / 2 Hak</div>
+                            <div class="fw-bold text-info fs-6" id="lblLiveFreezes">1 / 2 Hak</div>
                             <span class="badge bg-light text-secondary border small mt-1">Oto-Koruma Aktif</span>
                         </div>
                     </div>
@@ -981,8 +1124,8 @@
         document.getElementById('sessionContent').style.display = 'none';
         document.getElementById('sessionStatusBadge').textContent = 'Oturum Yok';
         document.getElementById('sessionStatusBadge').className = 'badge rounded-pill badge-status-guest';
-        document.getElementById('lblLiveStreak').textContent = '🔥 0 Gün';
-        document.getElementById('lblLiveFreezes').textContent = '❄️ 1 / 2 Hak';
+        document.getElementById('lblLiveStreak').textContent = '0 Gün';
+        document.getElementById('lblLiveFreezes').textContent = '1 / 2 Hak';
         document.getElementById('lblStreakStatusBadge').textContent = 'Bugün Yapılmadı';
         updateTimerDisplay(48 * 60, 48 * 60, 'Beklemede', 'Hazır', 'Tur 1 / 4', false);
     }
@@ -1030,14 +1173,14 @@
         const lamp = document.getElementById('deskLampBadge');
         if (isDeskLightOn) {
             lamp.className = 'badge px-3 py-2 border rounded-pill bg-warning-subtle text-warning-emphasis border-warning shadow-sm';
-            lamp.innerHTML = '💡 Masa Lambası Yanıyor (Karakter Masada)';
+            lamp.innerHTML = 'Masa Lambası: Yanıyor (Karakter Masada)';
         } else {
             lamp.className = 'badge px-3 py-2 border rounded-pill bg-light text-secondary';
-            lamp.innerHTML = '🌙 Masa Lambası Sönük (Dinlenme Modu)';
+            lamp.innerHTML = 'Masa Lambası: Sönük (Dinlenme Modu)';
         }
 
         const badgeMode = document.getElementById('badgeTimerMode');
-        badgeMode.textContent = isFocus ? '🎯 Odaklanma Modu' : '☕ Mola Modu';
+        badgeMode.textContent = isFocus ? 'Odaklanma Modu' : 'Mola Modu';
         badgeMode.className = isFocus
             ? 'badge bg-primary-subtle text-primary border border-primary-subtle'
             : 'badge bg-success-subtle text-success border border-success-subtle';
@@ -1088,10 +1231,10 @@
         const lamp = document.getElementById('deskLampBadge');
         if (lampOn) {
             lamp.className = 'badge px-3 py-2 border rounded-pill bg-warning-subtle text-warning-emphasis border-warning shadow-sm';
-            lamp.innerHTML = '💡 Masa Lambası Yanıyor';
+            lamp.innerHTML = 'Masa Lambası: Yanıyor';
         } else {
             lamp.className = 'badge px-3 py-2 border rounded-pill bg-light text-secondary';
-            lamp.innerHTML = '🌙 Masa Lambası Sönük';
+            lamp.innerHTML = 'Masa Lambası: Sönük';
         }
     }
 
@@ -1668,10 +1811,10 @@
                 log(`HTTP 200 OK: Hava Durumu: ${w.temperature}°C, ${w.weatherCondition} • Önerilen Tema: ${w.suggestedTheme}`, 'success');
 
                 // Sağdaki Önizleme Stüdyosunu Güncelle
-                document.getElementById('previewWeatherBadge').textContent = `${w.isDay ? '☀️' : '🌙'} ${w.weatherCondition} • ${w.temperature}°C`;
+                document.getElementById('previewWeatherBadge').textContent = `${w.weatherCondition} • ${w.temperature}°C`;
                 document.getElementById('previewWindowEffectBadge').textContent = w.windowEffect;
                 document.getElementById('previewAtmosphereDesc').textContent = w.description;
-                document.getElementById('previewSoundscapeDesc').textContent = `🎵 Ambiyans Tavsiyesi: ${w.soundscapeRecommendation}`;
+                document.getElementById('previewSoundscapeDesc').textContent = `Ambiyans Tavsiyesi: ${w.soundscapeRecommendation}`;
 
                 // Odanın aydınlatma rengini uygula (border glow)
                 const studioCard = document.getElementById('studioPreviewCard');
@@ -1734,14 +1877,14 @@
             });
             if (res.ok) {
                 const s = await res.json();
-                document.getElementById('lblLiveStreak').textContent = `🔥 ${s.currentStreak} Gün`;
-                document.getElementById('lblLiveFreezes').textContent = `❄️ ${s.freezesAvailable} / 2 Hak`;
+                document.getElementById('lblLiveStreak').textContent = `${s.currentStreak} Gün`;
+                document.getElementById('lblLiveFreezes').textContent = `${s.freezesAvailable} / 2 Hak`;
                 const badge = document.getElementById('lblStreakStatusBadge');
                 if (s.isActiveToday) {
-                    badge.textContent = 'Bugün Tamamlandı ✓';
+                    badge.textContent = 'Bugün Tamamlandı';
                     badge.className = 'badge bg-success-subtle text-success small mt-1';
                 } else if (s.isStreakAtRisk) {
-                    badge.textContent = '⚠️ Seri Tehlikede!';
+                    badge.textContent = 'Seri Tehlikede!';
                     badge.className = 'badge bg-danger-subtle text-danger small mt-1';
                 } else {
                     badge.textContent = 'Bugün Yapılmadı';
@@ -1783,13 +1926,13 @@
 
                     let actionBtn = '';
                     if (item.isOwned) {
-                        actionBtn = '<span class="badge bg-success-subtle text-success border px-3 py-2">Sahipsiniz ✓</span>';
+                        actionBtn = '<span class="badge bg-success-subtle text-success border px-3 py-2">Sahipsiniz</span>';
                     } else if (!item.canUnlock) {
                         actionBtn = `<button class="btn btn-sm btn-secondary" disabled>Kilitli (Sv. ${item.requiredLevel})</button>`;
                     } else if (!item.canAfford) {
-                        actionBtn = `<button class="btn btn-sm btn-outline-danger" disabled>Yetersiz Bakiye (${item.coinPrice} 🪙)</button>`;
+                        actionBtn = `<button class="btn btn-sm btn-outline-danger" disabled>Yetersiz Bakiye (${item.coinPrice} Coin)</button>`;
                     } else {
-                        actionBtn = `<button class="btn btn-sm btn-primary" onclick="buyShopItem('${item.id}', '${escapeHtml(item.name)}', ${item.coinPrice})">Satın Al (${item.coinPrice === 0 ? 'Ücretsiz' : item.coinPrice + ' 🪙'})</button>`;
+                        actionBtn = `<button class="btn btn-sm btn-primary" onclick="buyShopItem('${item.id}', '${escapeHtml(item.name)}', ${item.coinPrice})">Satın Al (${item.coinPrice === 0 ? 'Ücretsiz' : item.coinPrice + ' Coin'})</button>`;
                     }
 
                     card.innerHTML = `
@@ -1937,14 +2080,14 @@
 
     function getItemIcon(category) {
         const c = String(category).toLowerCase();
-        if (c.includes('desk') || c === '1') return '🪑';
-        if (c.includes('chair') || c === '2') return '🛋️';
-        if (c.includes('furniture') || c === '3') return '🪴';
-        if (c.includes('clothing') || c === '4') return '👕';
-        if (c.includes('accessory') || c === '5') return '🧢';
-        if (c.includes('wallpaper') || c === '6') return '🧱';
-        if (c.includes('floor') || c === '7') return '🪵';
-        return '📦';
+        if (c.includes('desk') || c === '1') return '[Masa]';
+        if (c.includes('chair') || c === '2') return '[Koltuk]';
+        if (c.includes('furniture') || c === '3') return '[Mobilya]';
+        if (c.includes('clothing') || c === '4') return '[Kıyafet]';
+        if (c.includes('accessory') || c === '5') return '[Aksesuar]';
+        if (c.includes('wallpaper') || c === '6') return '[Duvar]';
+        if (c.includes('floor') || c === '7') return '[Zemin]';
+        return '[Eşya]';
     }
 
     // 7. SERİ & İSTATİSTİKLER (FAZ 3)
@@ -1978,8 +2121,8 @@
                     alertBox.innerHTML = 'Yeni bir odaklanma seansı başlatarak serinizi büyütün!';
                 }
 
-                document.getElementById('lblLiveStreak').textContent = `🔥 ${s.currentStreak} Gün`;
-                document.getElementById('lblLiveFreezes').textContent = `❄️ ${s.freezesAvailable} / 2 Hak`;
+                document.getElementById('lblLiveStreak').textContent = `${s.currentStreak} Gün`;
+                document.getElementById('lblLiveFreezes').textContent = `${s.freezesAvailable} / 2 Hak`;
             } else {
                 log(`HTTP ${res.status}: Seri bilgisi alınamadı.`, 'error');
             }
@@ -2115,7 +2258,7 @@
     function resetSeatBtn(btn) {
         const s = btn.dataset.seat;
         btn.className = 'btn btn-outline-secondary btn-sm w-100 py-2 btn-seat';
-        btn.innerHTML = `<span class="d-block fs-5">🪑</span><span class="small">Masa ${s}</span>`;
+        btn.innerHTML = `<span class="d-block small fw-bold">Masa ${s}</span><span class="small text-muted">Boş</span>`;
         delete btn.dataset.userId;
     }
 
@@ -2125,10 +2268,10 @@
 
         if (isSelf) {
             btn.className = 'btn btn-success btn-sm w-100 py-2 btn-seat';
-            btn.innerHTML = `<span class="d-block fs-5">🧑‍💻</span><span class="small">Masa ${seatIndex} (Siz)</span>`;
+            btn.innerHTML = `<span class="d-block small fw-bold">Masa ${seatIndex}</span><span class="small">Siz</span>`;
         } else {
             btn.className = 'btn btn-secondary btn-sm w-100 py-2 btn-seat';
-            btn.innerHTML = `<span class="d-block fs-5">👤</span><span class="small">Masa ${seatIndex} (${label})</span>`;
+            btn.innerHTML = `<span class="d-block small fw-bold">Masa ${seatIndex}</span><span class="small">${label}</span>`;
         }
     }
 
@@ -2194,12 +2337,12 @@
                     const card = document.createElement('div');
                     card.className = 'p-2 bg-light rounded border d-flex justify-content-between align-items-center';
                     const isShop = r.type === 'ShopMarket';
-                    const icon = isShop ? '🛍️' : '📚';
+                    const typeLabel = isShop ? '[Çarşı]' : '[Kütüphane]';
 
                     card.innerHTML = `
                         <div>
                             <div class="d-flex align-items-center gap-1">
-                                <span class="fs-5">${icon}</span>
+                                <span class="badge bg-light text-secondary border">${typeLabel}</span>
                                 <strong class="small text-dark">${r.name}</strong>
                                 <span class="badge bg-secondary-subtle text-secondary font-monospace" style="font-size: 10px;">${r.code}</span>
                             </div>
@@ -2366,6 +2509,261 @@
                 log(`Bağlantı Hatası: ${err.message}`, 'error');
             }
         });
+    });
+
+    // ==========================================
+    // 9. AI KOÇ & ÇİFT KATMANLI VEKTÖR HAFIZASI (FAZ 5)
+    // ==========================================
+    const coachTerminalBox = document.getElementById('coachTerminalBox');
+
+    function appendCoachTerminalMessage(sender, text, isAi = false) {
+        const line = document.createElement('div');
+        line.className = isAi ? 'mb-3' : 'mb-2 text-white';
+        if (isAi) {
+            line.style.color = '#4ade80';
+            line.innerHTML = `<span class="fw-bold text-success">[Masa Asistanı]:</span> ${escapeHtml(text)}`;
+        } else {
+            line.innerHTML = `<span class="text-secondary">[Siz]:</span> ${escapeHtml(text)}`;
+        }
+        coachTerminalBox.appendChild(line);
+        coachTerminalBox.scrollTop = coachTerminalBox.scrollHeight;
+    }
+
+    // Chat Gönder
+    document.getElementById('btnSendCoachChat').addEventListener('click', async () => {
+        if (!currentTokens.accessToken) {
+            log(`Masa Asistanı ile konuşmak için oturum açmalısınız.`, 'warning');
+            return;
+        }
+
+        const input = document.getElementById('txtCoachMessage');
+        const message = input.value.trim();
+        if (!message) return;
+
+        appendCoachTerminalMessage('Siz', message, false);
+        input.value = '';
+
+        log(`POST ${apiBase}/api/v1/coach/chat...`);
+        try {
+            const res = await fetch(`${apiBase}/api/v1/coach/chat`, {
+                method: 'POST',
+                headers: getAuthHeaders(true),
+                body: JSON.stringify({
+                    message: message,
+                    sessionId: activeSession ? activeSession.id : null
+                })
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                appendCoachTerminalMessage('Koç', data.reply, true);
+                log(`HTTP 200 OK: Masa Asistanı yanıtladı.`, 'success');
+
+                // Anomali Rozeti
+                const anomalyBadge = document.getElementById('badgeCoachAnomaly');
+                if (data.anomalyDetected) {
+                    anomalyBadge.className = 'badge bg-danger text-white border';
+                    anomalyBadge.textContent = `Anomali: ${data.anomalyType}`;
+                } else {
+                    anomalyBadge.className = 'badge bg-success-subtle text-success border';
+                    anomalyBadge.textContent = 'Durum: Normal';
+                }
+
+                // Kullanılan Hafıza Parçacıkları (RAG)
+                const usedList = document.getElementById('listUsedMemories');
+                usedList.innerHTML = '';
+                if (data.usedMemories && data.usedMemories.length > 0) {
+                    data.usedMemories.forEach(m => {
+                        const li = document.createElement('li');
+                        li.className = 'list-group-item list-group-item-dark p-2 small';
+                        const badgeType = m.isGlobal
+                            ? '<span class="badge bg-success-subtle text-success border me-1">Kolektif Global</span>'
+                            : '<span class="badge bg-primary-subtle text-primary border me-1">Kişisel</span>';
+                        li.innerHTML = `
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <div>${badgeType}<strong class="text-white">${escapeHtml(m.category)}</strong></div>
+                                <span class="badge bg-secondary">Önem: ${m.importance}</span>
+                            </div>
+                            <div class="text-light" style="font-size: 11px;">${escapeHtml(m.content)}</div>
+                        `;
+                        usedList.appendChild(li);
+                    });
+                } else {
+                    usedList.innerHTML = '<li class="list-group-item list-group-item-dark text-muted small p-2">RAG bağlamında ek hafıza çağrılmadı.</li>';
+                }
+            } else {
+                appendCoachTerminalMessage('Sistem', `Hata: ${res.status} yanıt alınamadı.`, true);
+                log(`HTTP ${res.status}: Koç servisi hata verdi.`, 'error');
+            }
+        } catch (err) {
+            appendCoachTerminalMessage('Sistem', `Bağlantı Hatası: ${err.message}`, true);
+            log(`Bağlantı Hatası: ${err.message}`, 'error');
+        }
+    });
+
+    document.getElementById('txtCoachMessage').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            document.getElementById('btnSendCoachChat').click();
+        }
+    });
+
+    // Seans Başı Check-In Gönder
+    document.getElementById('btnSubmitCheckIn').addEventListener('click', async () => {
+        if (!currentTokens.accessToken) {
+            log(`Check-In yapmak için oturum açmalısınız.`, 'warning');
+            return;
+        }
+
+        const mood = document.getElementById('checkInMood').value;
+        const energy = parseInt(document.getElementById('checkInEnergy').value);
+        const target = document.getElementById('checkInTarget').value.trim();
+
+        log(`POST ${apiBase}/api/v1/coach/check-in (${mood}, Enerji: ${energy})...`);
+        try {
+            const res = await fetch(`${apiBase}/api/v1/coach/check-in`, {
+                method: 'POST',
+                headers: getAuthHeaders(true),
+                body: JSON.stringify({
+                    sessionId: activeSession ? activeSession.id : null,
+                    mood: mood,
+                    energyLevel: energy,
+                    targetIntent: target || null
+                })
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                log(`HTTP 200 OK: Check-In kaydedildi (ID: ${data.id})`, 'success');
+                appendCoachTerminalMessage('Masa Asistanı', `Seans başı niyetin alındı (${mood}, Enerji: ${energy}/5). İyi odaklanmalar!`, true);
+                document.getElementById('checkInTarget').value = '';
+            } else {
+                log(`HTTP ${res.status}: Check-In kaydedilemedi.`, 'error');
+            }
+        } catch (err) {
+            log(`Bağlantı Hatası: ${err.message}`, 'error');
+        }
+    });
+
+    // Seans Sonu Değerlendirme (Reflection) Gönder
+    document.getElementById('btnSubmitReflection').addEventListener('click', async () => {
+        if (!currentTokens.accessToken) {
+            log(`Değerlendirme göndermek için oturum açmalısınız.`, 'warning');
+            return;
+        }
+
+        const quality = parseInt(document.getElementById('refFocusQuality').value);
+        const moodAfter = document.getElementById('refMoodAfter').value;
+        const note = document.getElementById('refNote').value.trim();
+
+        log(`POST ${apiBase}/api/v1/coach/reflection (Kalite: ${quality}, ${moodAfter})...`);
+        try {
+            const res = await fetch(`${apiBase}/api/v1/coach/reflection`, {
+                method: 'POST',
+                headers: getAuthHeaders(true),
+                body: JSON.stringify({
+                    sessionId: activeSession ? activeSession.id : null,
+                    focusQuality: quality,
+                    moodAfter: moodAfter,
+                    distractionOrLearningNotes: note || null
+                })
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                log(`HTTP 200 OK: Değerlendirme kaydedildi, kişisel hafızaya işlendi.`, 'success');
+                appendCoachTerminalMessage('Masa Asistanı', `Seans tamamlandı! Notların kişisel hafızana ve anonimleştirilerek kolektif deneyim havuzuna işlendi.`, true);
+                document.getElementById('refNote').value = '';
+                // Hafızayı otomatik yenile
+                document.getElementById('btnListMemories').click();
+            } else {
+                log(`HTTP ${res.status}: Değerlendirme kaydedilemedi.`, 'error');
+            }
+        } catch (err) {
+            log(`Bağlantı Hatası: ${err.message}`, 'error');
+        }
+    });
+
+    // Anomali ve Yorgunluk Durumu Sorgula
+    document.getElementById('btnCheckAnomaly').addEventListener('click', async () => {
+        if (!currentTokens.accessToken) {
+            log(`Anomali tanısı için oturum açmalısınız.`, 'warning');
+            return;
+        }
+
+        log(`GET ${apiBase}/api/v1/coach/anomaly-status...`);
+        try {
+            const res = await fetch(`${apiBase}/api/v1/coach/anomaly-status`, { headers: getAuthHeaders(false) });
+            if (res.ok) {
+                const s = await res.json();
+                log(`HTTP 200 OK: Yorgunluk: ${s.dailyFatigueScore}/100, Haftalık: ${(s.weeklyFocusMinutes / 60).toFixed(1)} saat, Anomali: ${s.hasAnomaly}`, 'success');
+
+                document.getElementById('lblDailyFatigueScore').textContent = `${s.dailyFatigueScore} / 100`;
+                document.getElementById('lblWeeklyFocusHours').textContent = `${(s.weeklyFocusMinutes / 60).toFixed(1)} Saat`;
+                document.getElementById('lblDaysSinceLastSession').textContent = `${s.daysSinceLastSession} Gün`;
+
+                const box = document.getElementById('boxAnomalyNotice');
+                if (s.hasAnomaly) {
+                    box.className = 'alert alert-warning py-2 px-3 small mb-0';
+                    box.innerHTML = `<strong>Anomali Tespit Edildi (${escapeHtml(s.anomalyType)}):</strong> ${escapeHtml(s.guidancePrompt || s.recommendedAction || '')}`;
+                } else {
+                    box.className = 'alert alert-success py-2 px-3 small mb-0';
+                    box.innerHTML = '<strong>Ritim Dengeli:</strong> Çalışma yükü ve dinlenme periyotları optimal seviyede.';
+                }
+            } else {
+                log(`HTTP ${res.status}: Anomali durumu alınamadı.`, 'error');
+            }
+        } catch (err) {
+            log(`Bağlantı Hatası: ${err.message}`, 'error');
+        }
+    });
+
+    // Çift Katmanlı Vektör Hafızasını Listele
+    document.getElementById('btnListMemories').addEventListener('click', async () => {
+        if (!currentTokens.accessToken) {
+            log(`Hafıza kayıtlarını görmek için oturum açmalısınız.`, 'warning');
+            return;
+        }
+
+        log(`GET ${apiBase}/api/v1/coach/memories?limit=15...`);
+        try {
+            const res = await fetch(`${apiBase}/api/v1/coach/memories?limit=15`, { headers: getAuthHeaders(false) });
+            if (res.ok) {
+                const list = await res.json();
+                log(`HTTP 200 OK: ${list.length} adet hafıza girdisi listelendi.`, 'success');
+
+                const container = document.getElementById('memoriesContainer');
+                container.innerHTML = '';
+                if (list.length === 0) {
+                    container.innerHTML = '<div class="text-center py-3 text-muted small">Henüz hafıza kaydı bulunmuyor.</div>';
+                    return;
+                }
+
+                list.forEach(m => {
+                    const card = document.createElement('div');
+                    card.className = 'p-2 bg-light rounded border';
+                    const badgeLayer = m.isGlobal
+                        ? '<span class="badge bg-success-subtle text-success border me-1">Kolektif Global</span>'
+                        : '<span class="badge bg-primary-subtle text-primary border me-1">Kişisel</span>';
+
+                    card.innerHTML = `
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <div>
+                                ${badgeLayer}
+                                <strong class="small text-dark">${escapeHtml(m.category)}</strong>
+                            </div>
+                            <span class="badge bg-secondary small">Önem: ${m.importance}/10</span>
+                        </div>
+                        <div class="small text-secondary mb-1" style="font-size: 12px;">${escapeHtml(m.content)}</div>
+                        <div class="text-muted text-end" style="font-size: 10px;">${new Date(m.createdAt).toLocaleString()}</div>
+                    `;
+                    container.appendChild(card);
+                });
+            } else {
+                log(`HTTP ${res.status}: Hafıza listesi alınamadı.`, 'error');
+            }
+        } catch (err) {
+            log(`Bağlantı Hatası: ${err.message}`, 'error');
+        }
     });
 
     // Kopyalama & Sıfırlama

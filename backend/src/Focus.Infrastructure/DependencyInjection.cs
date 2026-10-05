@@ -51,6 +51,12 @@ public static class DependencyInjection
         services.AddHttpClient<IMusicTrackService, JamendoMusicService>();
         services.AddHttpClient<IWeatherService, OpenMeteoWeatherService>();
 
+        // Faz 5: Yapay Zeka Koc & Cift Katmanli Hafiza Servisleri
+        services.AddSingleton<IAnonymizationService, AnonymizationService>();
+        services.AddScoped<IFocusCoachEngine, FocusCoachEngine>();
+        services.AddHttpClient<IVectorMemoryService, VectorMemoryService>();
+        services.AddHttpClient<ICoachChatService, CoachChatService>();
+
         // JWT Kimlik Dogrulama
         var key = Encoding.UTF8.GetBytes(jwtSettings.SigningKey);
 

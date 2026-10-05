@@ -26,15 +26,47 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<StudyRoom> StudyRooms => Set<StudyRoom>();
     public DbSet<RoomMember> RoomMembers => Set<RoomMember>();
     public DbSet<RoomInvitation> RoomInvitations => Set<RoomInvitation>();
+    public DbSet<AgentMemory> AgentMemories => Set<AgentMemory>();
+    public DbSet<SessionCheckIn> SessionCheckIns => Set<SessionCheckIn>();
+    public DbSet<SessionReflection> SessionReflections => Set<SessionReflection>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
         // PostgreSQL pgvector eklentisi (sadece Npgsql saglayicisinda)
+        var valueComparer = new Microsoft.EntityFrameworkCore.ChangeTracking.ValueComparer<float[]>(
+            (c1, c2) => (c1 != null && c2 != null) ? c1.SequenceEqual(c2) : c1 == c2,
+            c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+            c => c.ToArray());
+
         if (Database.IsNpgsql())
         {
             modelBuilder.HasPostgresExtension("vector");
+
+            modelBuilder.Entity<AgentMemory>(b =>
+            {
+                b.Property(m => m.Embedding)
+                    .HasColumnType("vector(768)")
+                    .HasConversion(v => new Pgvector.Vector(v), v => v.ToArray(), valueComparer)
+                    .IsRequired();
+
+                b.HasIndex(m => m.Embedding)
+                    .HasMethod("hnsw")
+                    .HasOperators("vector_cosine_ops");
+            });
+        }
+        else
+        {
+            modelBuilder.Entity<AgentMemory>(b =>
+            {
+                b.Property(m => m.Embedding)
+                    .HasConversion(
+                        v => string.Join(",", v),
+                        s => s.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(float.Parse).ToArray(),
+                        valueComparer)
+                    .IsRequired();
+            });
         }
 
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);

@@ -7,6 +7,14 @@ public class ExternalApiSettings
     public PixabaySettings Pixabay { get; set; } = new();
     public JamendoSettings Jamendo { get; set; } = new();
     public OpenMeteoSettings OpenMeteo { get; set; } = new();
+    public GeminiSettings Gemini { get; set; } = new();
+
+    public string GeminiApiKey => Gemini.ApiKey;
+}
+
+public class GeminiSettings
+{
+    public string ApiKey { get; set; } = string.Empty;
 }
 
 public class PixabaySettings

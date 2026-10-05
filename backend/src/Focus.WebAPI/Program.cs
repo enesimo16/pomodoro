@@ -93,6 +93,19 @@ app.MapControllers();
 app.MapHub<TimerHub>("/hubs/timer");
 app.MapHub<RoomHub>("/hubs/room");
 
+using (var scope = app.Services.CreateScope())
+{
+    try
+    {
+        var context = scope.ServiceProvider.GetRequiredService<Focus.Infrastructure.Persistence.ApplicationDbContext>();
+        await Focus.Infrastructure.Persistence.GlobalMemorySeeder.SeedGlobalMemoriesAsync(context);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[Seeder Error]: {ex.Message} -> {ex.InnerException?.Message}");
+    }
+}
+
 app.Run();
 
 public partial class Program { }

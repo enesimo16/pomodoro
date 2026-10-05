@@ -20,6 +20,9 @@ public interface IApplicationDbContext
     DbSet<StudyRoom> StudyRooms { get; }
     DbSet<RoomMember> RoomMembers { get; }
     DbSet<RoomInvitation> RoomInvitations { get; }
+    DbSet<AgentMemory> AgentMemories { get; }
+    DbSet<SessionCheckIn> SessionCheckIns { get; }
+    DbSet<SessionReflection> SessionReflections { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
