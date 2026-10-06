@@ -48,6 +48,8 @@ html, body {
   font-size: 13px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 /* Evrensel Monokrom Link ve Odak Standartları */
@@ -75,6 +77,9 @@ a:hover {
 .admin-wrapper {
   display: flex;
   min-height: 100vh;
+  max-width: 100%;
+  overflow-x: hidden;
+  width: 100%;
 }
 
 /* -------------------------------------------------------------
@@ -587,24 +592,157 @@ a:hover {
   border: 1px solid #d2d5d8;
 }
 
-/* Responsive adjustments */
+/* -------------------------------------------------------------
+   MOBİL YAN MENÜ, KARARTMA VE RESPONSIVE KONTROLLER
+   ------------------------------------------------------------- */
+.admin-sidebar-backdrop {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(2px);
+  z-index: 1045;
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+}
+.admin-sidebar-backdrop.show {
+  display: block;
+  opacity: 1;
+}
+
+.sidebar-toggle-btn {
+  background: #ffffff;
+  border: 1px solid #d2d5d8;
+  color: #202223;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--p-radius-btn);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  margin-right: 8px;
+  flex-shrink: 0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+.sidebar-toggle-btn:hover {
+  background-color: #f6f6f7;
+  border-color: #c4c7cb;
+}
+
+.sidebar-close-btn {
+  background: transparent;
+  border: none;
+  color: #8c9196;
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.sidebar-close-btn:hover {
+  background-color: #2b2c2f;
+  color: #ffffff;
+}
+
+/* Kartlar ve Tablolar İçin Taşma Koruması */
+.polaris-card {
+  max-width: 100%;
+  overflow: hidden;
+}
+.table-responsive {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.polaris-table {
+  min-width: 580px;
+}
+.polaris-metric-card {
+  max-width: 100%;
+}
+
+/* -------------------------------------------------------------
+   RESPONSIVE BREAKPOINTS (Tablet & Mobil Uyumluluk)
+   ------------------------------------------------------------- */
 @media (max-width: 991px) {
+  body.sidebar-open {
+    overflow: hidden;
+  }
   .admin-sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 270px;
+    max-width: 82vw;
+    z-index: 1050;
     transform: translateX(-100%);
-    transition: transform 0.25s ease-in-out;
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45);
   }
   .admin-sidebar.show {
     transform: translateX(0);
   }
   .admin-header {
     left: 0;
+    padding: 0 14px;
+    height: 52px;
   }
   .admin-main {
     margin-left: 0;
-    padding: 16px;
+    margin-top: 52px;
+    padding: 14px 14px 50px 14px;
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
   }
-  .header-search-container {
-    width: 200px;
+  .header-actions-right {
+    gap: 6px;
+  }
+  .header-actions-right .polaris-btn {
+    padding: 4px 8px;
+    font-size: 11.5px;
+  }
+  .admin-page-header {
+    margin-bottom: 14px;
+    gap: 8px;
+  }
+  .admin-page-title {
+    font-size: 17px;
+  }
+  .admin-page-subtitle {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 576px) {
+  .admin-main {
+    padding: 12px 10px 48px 10px;
+  }
+  .polaris-metric-card {
+    padding: 12px 14px;
+  }
+  .polaris-metric-value {
+    font-size: 20px;
+  }
+  .polaris-card-header {
+    padding: 10px 14px;
+    font-size: 12.5px;
+  }
+  .polaris-card-body {
+    padding: 12px 14px;
+  }
+  .polaris-metric-subtext {
+    font-size: 11px;
+    flex-wrap: wrap;
   }
 }
 
