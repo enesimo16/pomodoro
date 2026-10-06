@@ -87,10 +87,6 @@
                         <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                         <span>Cron Görevleri</span>
                     </a>
-                    <a href="/hangfire" target="_blank" class="sidebar-nav-item">
-                        <svg viewBox="0 0 24 24" fill="none"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-                        <span>Hangfire Panel</span>
-                    </a>
                     <a asp-page="/Audit/Index" class="sidebar-nav-item">
                         <svg viewBox="0 0 24 24" fill="none"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
                         <span>Oturum Logları</span>
@@ -100,13 +96,26 @@
                 <!-- Grup: Geliştirici -->
                 <div class="sidebar-nav-group">
                     <div class="sidebar-group-title">GELİŞTİRİCİ</div>
+                    <a asp-page="/ApiDocs/Index" class="sidebar-nav-item">
+                        <svg viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                        <span>API Dokümanı</span>
+                    </a>
                     <a asp-page="/ApiLab/Index" class="sidebar-nav-item">
                         <svg viewBox="0 0 24 24" fill="none"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
-                        <span>API Test</span>
+                        <span>API Test (Lab)</span>
                     </a>
+                </div>
+
+                <!-- Grup: Yan Araçlar (Harici Paneller) -->
+                <div class="sidebar-nav-group">
+                    <div class="sidebar-group-title">YAN ARAÇLAR</div>
                     <a href="http://localhost:5000/swagger" target="_blank" class="sidebar-nav-item">
                         <svg viewBox="0 0 24 24" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-                        <span>Swagger</span>
+                        <span>Swagger UI ↗</span>
+                    </a>
+                    <a href="/hangfire" target="_blank" class="sidebar-nav-item">
+                        <svg viewBox="0 0 24 24" fill="none"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                        <span>Hangfire Panel ↗</span>
                     </a>
                 </div>
             </div>
@@ -140,8 +149,8 @@
 
             <!-- Sağ: Hızlı Bağlantılar -->
             <div class="header-actions-right flex-shrink-0">
-                <a href="http://localhost:5000/swagger" target="_blank" class="polaris-btn polaris-btn-secondary polaris-btn-sm d-none d-sm-inline-flex">
-                    Swagger
+                <a asp-page="/ApiDocs/Index" class="polaris-btn polaris-btn-secondary polaris-btn-sm d-none d-sm-inline-flex">
+                    API Dokümanı
                 </a>
                 <a asp-page="/ApiLab/Index" class="polaris-btn polaris-btn-primary polaris-btn-sm">
                     API Lab

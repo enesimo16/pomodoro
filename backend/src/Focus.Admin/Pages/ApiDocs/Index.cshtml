@@ -1,0 +1,314 @@
+@page
+@model Focus.Admin.Pages.ApiDocs.IndexModel
+@{
+    ViewData["Title"] = "API Dokümantasyonu";
+}
+
+<!-- ÜST BAŞLIK -->
+<div class="admin-page-header">
+    <div>
+        <h1 class="admin-page-title">API Dokümantasyonu & Frontend Sözleşmesi</h1>
+        <p class="admin-page-subtitle">Next.js geliştiricisi için hazır REST uçları, TypeScript tipleri ve SignalR canlı olayları</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a asp-page="/ApiLab/Index" class="polaris-btn polaris-btn-primary">
+            Canlı API Test Konsolu (Lab) ↗
+        </a>
+        <a href="@Model.WebApiBaseUrl/swagger" target="_blank" class="polaris-btn polaris-btn-secondary">
+            Ham Swagger UI ↗
+        </a>
+    </div>
+</div>
+
+<!-- GLOBAL AYARLAR & TABAN BİLGİ KARTI -->
+<div class="polaris-card mb-4">
+    <div class="polaris-card-body p-3">
+        <div class="row g-3 align-items-center">
+            <div class="col-md-5">
+                <span class="text-muted small d-block">WebAPI Taban Adresi</span>
+                <div class="d-flex align-items-center gap-2 mt-1">
+                    <code class="bg-light px-2 py-1 border rounded text-dark font-monospace fw-bold" id="lblApiBase">@Model.WebApiBaseUrl</code>
+                    <button type="button" class="polaris-btn polaris-btn-secondary polaris-btn-sm" onclick="copyText('@Model.WebApiBaseUrl', this)">
+                        Kopyala
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <span class="text-muted small d-block">Kimlik Doğrulama Standardı</span>
+                <span class="badge bg-dark text-white mt-1">Bearer &lt;AccessToken&gt;</span>
+                <span class="text-muted small ms-1">(Header: Authorization)</span>
+            </div>
+            <div class="col-md-3">
+                <span class="text-muted small d-block">İçerik & Hata Formatı</span>
+                <span class="fw-semibold text-dark small mt-1 d-block">application/json • RFC 9457</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ARAMA VE KATEGORİ FİLTRELEME ÇUBUĞU -->
+<div class="polaris-card mb-4">
+    <div class="p-3 border-bottom d-flex flex-wrap gap-2 justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-2 flex-grow-1" style="max-width: 380px;">
+            <input type="text" id="docSearchInput" class="form-control form-control-sm" placeholder="Uç nokta, yol veya başlık ara... (örn: avatar, token)" oninput="filterEndpoints()" />
+        </div>
+        <div class="d-flex gap-1 flex-wrap">
+            <button type="button" class="polaris-btn polaris-btn-secondary polaris-btn-sm filter-pill active" onclick="setCategoryFilter('all', this)">
+                Tümü
+            </button>
+            @foreach (var cat in Model.Categories)
+            {
+                <button type="button" class="polaris-btn polaris-btn-secondary polaris-btn-sm filter-pill" onclick="setCategoryFilter('@cat.Id', this)">
+                    @cat.Title.Split('(')[0].Trim()
+                </button>
+            }
+            <button type="button" class="polaris-btn polaris-btn-secondary polaris-btn-sm filter-pill" onclick="setCategoryFilter('signalr', this)">
+                ⚡ SignalR Hub'lar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- REST ENDPOINT KATEGORİLERİ -->
+<div id="endpointSections">
+    @foreach (var cat in Model.Categories)
+    {
+        <div class="mb-4 category-section" data-cat-id="@cat.Id">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <h6 class="fw-bold text-dark m-0">@cat.Title</h6>
+                <span class="text-muted small">@cat.Endpoints.Count Uç Nokta</span>
+            </div>
+            <p class="text-muted small mb-3">@cat.Description</p>
+
+            <div class="d-flex flex-column gap-3">
+                @foreach (var ep in cat.Endpoints)
+                {
+                    <div class="polaris-card endpoint-card" data-cat="@cat.Id" data-search="@(ep.Method + " " + ep.Path + " " + ep.Title + " " + ep.Description)">
+                        <div class="polaris-card-header py-2 px-3 d-flex flex-wrap justify-content-between align-items-center gap-2 bg-light border-bottom">
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                @if (ep.Method == "POST")
+                                {
+                                    <span class="badge bg-dark text-white font-monospace px-2 py-1">POST</span>
+                                }
+                                else if (ep.Method == "GET")
+                                {
+                                    <span class="badge border border-dark text-dark bg-white font-monospace px-2 py-1">GET</span>
+                                }
+                                else if (ep.Method == "PUT")
+                                {
+                                    <span class="badge bg-secondary text-white font-monospace px-2 py-1">PUT</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger text-white font-monospace px-2 py-1">@ep.Method</span>
+                                }
+
+                                <span class="font-monospace fw-bold text-dark" style="font-size: 13.5px;">@ep.Path</span>
+                                <span class="text-muted small">— @ep.Title</span>
+                            </div>
+
+                            <div class="d-flex align-items-center gap-2">
+                                @if (ep.RequiresAuth)
+                                {
+                                    <span class="polaris-badge" title="Bearer Token Gönderilmesi Zorunludur">Token Gerekli</span>
+                                }
+                                else
+                                {
+                                    <span class="polaris-badge polaris-badge-neutral">Herkese Açık</span>
+                                }
+
+                                @if (!string.IsNullOrEmpty(ep.TestLabTab))
+                                {
+                                    <a asp-page="/ApiLab/Index" class="polaris-btn polaris-btn-secondary polaris-btn-sm" title="Bu ucu API Test Konsolunda canlı dene">
+                                        Test Et ↗
+                                    </a>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="polaris-card-body p-3">
+                            <p class="text-secondary small mb-3">@ep.Description</p>
+
+                            <div class="row g-3">
+                                <!-- TypeScript Tipi -->
+                                <div class="col-lg-6">
+                                    <div class="border rounded p-2 bg-white h-100">
+                                        <div class="d-flex justify-content-between align-items-center mb-1 pb-1 border-bottom">
+                                            <span class="fw-bold text-muted small" style="font-size: 11px;">TypeScript Gövde Modeli</span>
+                                            @if (!string.IsNullOrEmpty(ep.TypeScriptRequest))
+                                            {
+                                                <button type="button" class="btn btn-link btn-sm text-dark p-0 text-decoration-none" style="font-size: 11px;" onclick="copyCode(this)">
+                                                    Kopyala
+                                                </button>
+                                            }
+                                        </div>
+                                        <pre class="m-0 p-2 text-dark font-monospace small bg-light rounded" style="font-size: 11.5px; max-height: 160px; overflow-y: auto; white-space: pre-wrap;"><code>@(ep.TypeScriptRequest ?? "// İstek gövdesi bulunmuyor")</code></pre>
+                                    </div>
+                                </div>
+
+                                <!-- JSON Yanıt Örneği -->
+                                <div class="col-lg-6">
+                                    <div class="border rounded p-2 bg-white h-100">
+                                        <div class="d-flex justify-content-between align-items-center mb-1 pb-1 border-bottom">
+                                            <span class="fw-bold text-muted small" style="font-size: 11px;">Başarılı Yanıt (200 OK)</span>
+                                            @if (!string.IsNullOrEmpty(ep.JsonSuccessResponse))
+                                            {
+                                                <button type="button" class="btn btn-link btn-sm text-dark p-0 text-decoration-none" style="font-size: 11px;" onclick="copyCode(this)">
+                                                    Kopyala
+                                                </button>
+                                            }
+                                        </div>
+                                        <pre class="m-0 p-2 text-dark font-monospace small bg-light rounded" style="font-size: 11.5px; max-height: 160px; overflow-y: auto; white-space: pre-wrap;"><code>@(ep.JsonSuccessResponse ?? "{\n  \"success\": true\n}")</code></pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+<!-- SIGNALR REAL-TIME HUBS SÖZLEŞMESİ (SWAGGER'DA BULUNMAYAN ÖZEL REHBER) -->
+<div class="mb-5 category-section" data-cat-id="signalr" id="signalrSection">
+    <div class="d-flex align-items-center justify-content-between mb-2">
+        <h6 class="fw-bold text-dark m-0">⚡ SignalR Canlı WebSocket Hub Sözleşmesi</h6>
+        <span class="badge bg-dark text-white">Canlı Etkileşim</span>
+    </div>
+    <p class="text-muted small mb-3">
+        Next.js tarafında <code>@@microsoft/signalr</code> paketi ile bağlanılan sunucu olayları ve istemci metodları.
+    </p>
+
+    <div class="row g-4">
+        @foreach (var hub in Model.Hubs)
+        {
+            <div class="col-lg-6">
+                <div class="polaris-card h-100">
+                    <div class="polaris-card-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="fw-bold text-dark fs-6">@hub.HubName</span>
+                            <code class="ms-2 text-muted font-monospace">@hub.Path</code>
+                        </div>
+                        <span class="polaris-badge">WebSocket / SSE</span>
+                    </div>
+                    <div class="polaris-card-body p-3">
+                        <p class="text-secondary small mb-3">@hub.Description</p>
+
+                        <!-- İstemcinin Dinlediği Olaylar -->
+                        <h6 class="small fw-bold text-dark mb-2">İstemcinin Dinlediği Olaylar (hubConn.on)</h6>
+                        <div class="d-flex flex-column gap-2 mb-3">
+                            @foreach (var ev in hub.ClientEvents)
+                            {
+                                <div class="border rounded p-2 bg-light">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="fw-bold text-dark font-monospace small">@ev.EventName</span>
+                                        <button type="button" class="btn btn-link btn-sm text-dark p-0 text-decoration-none" style="font-size: 11px;" onclick="copyCode(this)">
+                                            Kopyala
+                                        </button>
+                                    </div>
+                                    <p class="text-muted small m-0 mb-1" style="font-size: 11px;">@ev.Description</p>
+                                    <pre class="m-0 p-1 bg-white border rounded font-monospace small" style="font-size: 11px;"><code>@ev.TypeScriptPayload</code></pre>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- İstemcinin Çağırdığı Metotlar -->
+                        <h6 class="small fw-bold text-dark mb-2">İstemcinin Tetiklediği Metotlar (hubConn.invoke)</h6>
+                        <div class="d-flex flex-column gap-2">
+                            @foreach (var m in hub.ServerMethods)
+                            {
+                                <div class="border rounded p-2 bg-white">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="fw-semibold text-dark font-monospace small">@m.MethodName</span>
+                                        <button type="button" class="btn btn-link btn-sm text-dark p-0 text-decoration-none" style="font-size: 11px;" onclick="copyText('@m.TypeScriptParameters', this)">
+                                            Kopyala
+                                        </button>
+                                    </div>
+                                    <p class="text-muted small m-0 mb-1" style="font-size: 11px;">@m.Description</p>
+                                    <code class="text-dark small font-monospace d-block bg-light p-1 rounded">@m.TypeScriptParameters</code>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    let activeFilter = 'all';
+
+    function setCategoryFilter(catId, btnElement) {
+        activeFilter = catId;
+        document.querySelectorAll('.filter-pill').forEach(btn => {
+            btn.classList.remove('polaris-btn-primary');
+            btn.classList.add('polaris-btn-secondary');
+        });
+        if (btnElement) {
+            btnElement.classList.remove('polaris-btn-secondary');
+            btnElement.classList.add('polaris-btn-primary');
+        }
+        applyFilters();
+    }
+
+    function filterEndpoints() {
+        applyFilters();
+    }
+
+    function applyFilters() {
+        const query = (document.getElementById('docSearchInput')?.value || '').toLowerCase().trim();
+        const sections = document.querySelectorAll('.category-section');
+
+        sections.forEach(sec => {
+            const secCatId = sec.getAttribute('data-cat-id');
+            const matchesCat = (activeFilter === 'all') || (activeFilter === secCatId);
+
+            if (!matchesCat) {
+                sec.style.display = 'none';
+                return;
+            }
+
+            if (secCatId === 'signalr') {
+                sec.style.display = 'block';
+                return;
+            }
+
+            let visibleInSec = 0;
+            const cards = sec.querySelectorAll('.endpoint-card');
+            cards.forEach(card => {
+                const searchData = (card.getAttribute('data-search') || '').toLowerCase();
+                const matchesSearch = !query || searchData.includes(query);
+
+                if (matchesSearch) {
+                    card.style.display = 'block';
+                    visibleInSec++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            sec.style.display = (visibleInSec > 0 || !query) ? 'block' : 'none';
+        });
+    }
+
+    function copyText(text, btn) {
+        if (!text) return;
+        navigator.clipboard.writeText(text).then(() => {
+            const orig = btn.textContent;
+            btn.textContent = 'Kopyalandı!';
+            setTimeout(() => { btn.textContent = orig; }, 1500);
+        });
+    }
+
+    function copyCode(btn) {
+        const parent = btn.closest('.border, .polaris-card-body');
+        const codeEl = parent ? parent.querySelector('code') : null;
+        if (codeEl) {
+            copyText(codeEl.textContent.trim(), btn);
+        }
+    }
+</script>
+}
