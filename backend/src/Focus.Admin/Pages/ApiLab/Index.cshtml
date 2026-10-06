@@ -22,23 +22,36 @@
 <div class="row g-4">
     <!-- Sol Kolon: Kontroller ve Arama Sekmeleri -->
     <div class="col-lg-5">
-        <!-- Modül Seçici (Shopify Polaris Dropdown Seçenek Kutusu) -->
-        <div class="polaris-card mb-3 p-3">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <span class="text-muted small fw-bold text-uppercase" style="letter-spacing: 0.04em;">Test Modülü Seçin</span>
+        <!-- Modül Seçici (Shopify Polaris Dropdown Menüsü) -->
+        <div class="polaris-card mb-3">
+            <div class="polaris-card-header py-2 px-3 d-flex justify-content-between align-items-center">
+                <span class="small fw-bold text-uppercase" style="letter-spacing: 0.05em; font-size: 11px;">Test Modülü</span>
                 <span class="polaris-badge polaris-badge-dark" id="lblActiveModule">1. Kimlik</span>
             </div>
-            <select id="moduleSelectDropdown" class="form-select form-select-sm" style="height: 38px; font-weight: 600; font-size: 13px; color: var(--p-color-text); border-color: var(--p-color-border); background-color: var(--p-color-bg-surface-secondary); cursor: pointer;">
-                <option value="#tab-auth" selected>1. Kimlik & Token Doğrulama (Auth)</option>
-                <option value="#tab-avatar">2. Piksel Karakter & Gardırop (Avatar)</option>
-                <option value="#tab-room">3. İzometrik Piksel Oda & Dekorasyon (Room)</option>
-                <option value="#tab-session">4. Odak Sayacı & Flow Shield (Session)</option>
-                <option value="#tab-media">5. Medya, Canlı Video & Ambiyans (Media)</option>
-                <option value="#tab-shop">6. Mağaza, Katalog & Ekonomi (Shop)</option>
-                <option value="#tab-stats">7. İstatistikler, Seri (Streak) & Heatmap</option>
-                <option value="#tab-social">8. Sosyal Ortak Çalışma Odası (Social)</option>
-                <option value="#tab-coach">9. Masaüstü Yapay Zeka Koç & Vektör Bellek (AI Coach)</option>
-            </select>
+            <div class="p-3">
+                <div class="position-relative">
+                    <select id="moduleSelectDropdown" class="form-select polaris-select w-100" onchange="onModuleTabChange(this)">
+                        <option value="#tab-auth" selected>1. Kimlik & Token Doğrulama (Auth)</option>
+                        <option value="#tab-avatar">2. Piksel Karakter & Gardırop (Avatar)</option>
+                        <option value="#tab-room">3. İzometrik Piksel Oda & Dekorasyon (Room)</option>
+                        <option value="#tab-session">4. Odak Sayacı & Flow Shield (Session)</option>
+                        <option value="#tab-media">5. Medya, Canlı Video & Ambiyans (Media)</option>
+                        <option value="#tab-shop">6. Mağaza, Katalog & Ekonomi (Shop)</option>
+                        <option value="#tab-stats">7. İstatistikler, Seri (Streak) & Heatmap</option>
+                        <option value="#tab-social">8. Sosyal Ortak Çalışma Odası (Social)</option>
+                        <option value="#tab-coach">9. Masaüstü Yapay Zeka Koç & Vektör Bellek (AI Coach)</option>
+                    </select>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
+                    <button type="button" class="polaris-btn polaris-btn-secondary polaris-btn-sm" onclick="navigateModule(-1)">
+                        ← Önceki
+                    </button>
+                    <span class="text-muted" style="font-size: 11px;" id="moduleStepIndicator">Modül 1 / 9</span>
+                    <button type="button" class="polaris-btn polaris-btn-secondary polaris-btn-sm" onclick="navigateModule(1)">
+                        Sonraki →
+                    </button>
+                </div>
+            </div>
         </div>
 
         <div class="tab-content" id="pills-tabContent">
@@ -994,24 +1007,48 @@
     const videoPlayer = document.getElementById('previewVideoPlayer');
     const audioPlayer = document.getElementById('previewAudioPlayer');
 
-    // Modül Seçici Dropdown Senkronizasyonu
-    const moduleDropdown = document.getElementById('moduleSelectDropdown');
-    const lblActiveModule = document.getElementById('lblActiveModule');
-    if (moduleDropdown) {
-        moduleDropdown.addEventListener('change', function () {
-            const targetPaneId = this.value;
-            document.querySelectorAll('#pills-tabContent .tab-pane').forEach(pane => {
-                pane.classList.remove('show', 'active');
-            });
-            const targetPane = document.querySelector(targetPaneId);
-            if (targetPane) {
-                targetPane.classList.add('show', 'active');
-            }
-            if (lblActiveModule) {
-                lblActiveModule.textContent = this.options[this.selectedIndex].text.split('(')[0].trim();
-            }
+    // Modül Seçici Dropdown Fonksiyonları (Shopify Polaris Tab Kontrolü)
+    function onModuleTabChange(selectElement) {
+        if (!selectElement) return;
+        const targetPaneId = selectElement.value;
+        const allPanes = document.querySelectorAll('#pills-tabContent .tab-pane');
+        allPanes.forEach(pane => {
+            pane.classList.remove('active', 'show');
+            pane.style.display = 'none';
         });
+        const targetPane = document.querySelector(targetPaneId);
+        if (targetPane) {
+            targetPane.style.display = 'block';
+            targetPane.classList.add('active', 'show');
+        }
+        const lbl = document.getElementById('lblActiveModule');
+        if (lbl && selectElement.selectedIndex >= 0) {
+            lbl.textContent = selectElement.options[selectElement.selectedIndex].text.split('(')[0].trim();
+        }
+        const step = document.getElementById('moduleStepIndicator');
+        if (step && selectElement.selectedIndex >= 0) {
+            step.textContent = `Modül ${selectElement.selectedIndex + 1} / ${selectElement.options.length}`;
+        }
     }
+    window.onModuleTabChange = onModuleTabChange;
+
+    function navigateModule(delta) {
+        const select = document.getElementById('moduleSelectDropdown');
+        if (!select) return;
+        let nextIdx = select.selectedIndex + delta;
+        if (nextIdx >= 0 && nextIdx < select.options.length) {
+            select.selectedIndex = nextIdx;
+            onModuleTabChange(select);
+        }
+    }
+    window.navigateModule = navigateModule;
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const select = document.getElementById('moduleSelectDropdown');
+        if (select) {
+            onModuleTabChange(select);
+        }
+    });
 
     function saveTokens(accessToken, refreshToken) {
         currentTokens.accessToken = accessToken;

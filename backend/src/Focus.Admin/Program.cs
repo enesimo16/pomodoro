@@ -17,6 +17,7 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseStaticFiles();
+app.UseMiddleware<Focus.Infrastructure.Middleware.AdminStealthModeMiddleware>();
 app.UseRouting();
 app.UseAuthorization();
 app.UseMiddleware<Focus.Infrastructure.Middleware.UserAccessTrackingMiddleware>();
