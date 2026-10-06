@@ -31,6 +31,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<SessionReflection> SessionReflections => Set<SessionReflection>();
     public DbSet<RoomGuestbookEntry> RoomGuestbookEntries => Set<RoomGuestbookEntry>();
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<UserDeviceSession> UserDeviceSessions => Set<UserDeviceSession>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

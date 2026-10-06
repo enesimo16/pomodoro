@@ -1,0 +1,172 @@
+@page
+@model Focus.Admin.Pages.Audit.IndexModel
+@{
+    ViewData["Title"] = "Oturum & Cihaz Logları";
+}
+
+<div class="admin-page-header">
+    <div>
+        <h1 class="admin-page-title">Oturum, Cihaz & IP Logları</h1>
+        <p class="admin-page-subtitle">Kullanıcıların erişim IP'leri, cihaz modelleri, oturum sıklıkları ve aktif geçirilen süreler</p>
+    </div>
+    <div>
+        <a asp-page="/Index" class="polaris-btn polaris-btn-secondary">
+            Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- PANEL 1: Erişim KPI Metrik Kartları -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="polaris-metric-card">
+            <div class="polaris-metric-label">Toplam Oturum Kaydı</div>
+            <div class="polaris-metric-value">@Model.TotalSessions.ToString("N0")</div>
+            <div class="polaris-metric-subtext">Algılanan tekil cihaz profilleri</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="polaris-metric-card">
+            <div class="polaris-metric-label">
+                <span>Tekil IP Adresi</span>
+                <span class="polaris-badge polaris-badge-neutral">Ağ</span>
+            </div>
+            <div class="polaris-metric-value">@Model.UniqueIps.ToString("N0")</div>
+            <div class="polaris-metric-subtext">Farklı internet çıkış noktaları</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="polaris-metric-card">
+            <div class="polaris-metric-label">
+                <span>Canlı Çevrimiçi</span>
+                <span class="polaris-badge polaris-badge-success">Son 5 dk</span>
+            </div>
+            <div class="polaris-metric-value text-success">@Model.ActiveNowCount.ToString("N0")</div>
+            <div class="polaris-metric-subtext">Platformda şu an aktif olanlar</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="polaris-metric-card">
+            <div class="polaris-metric-label">Toplam Aktif Süre</div>
+            <div class="polaris-metric-value">@((Model.TotalActiveMinutes / 60.0).ToString("F1")) Saat</div>
+            <div class="polaris-metric-subtext">Toplam @Model.TotalActiveMinutes.ToString("N0") dakika etkileşim</div>
+        </div>
+    </div>
+</div>
+
+<!-- PANEL 2 & 3: Filtre Barı ve Oturum Logları Tablosu Paneli -->
+<div class="polaris-card">
+    <div class="polaris-filter-bar">
+        <div class="polaris-tabs">
+            <a asp-page="/Audit/Index" asp-route-Search="@Model.Search" class="polaris-tab-item @(string.IsNullOrEmpty(Model.Filter) ? "active" : "")">
+                Tümü (@Model.TotalSessions)
+            </a>
+            <a asp-page="/Audit/Index" asp-route-Filter="online" asp-route-Search="@Model.Search" class="polaris-tab-item @(Model.Filter == "online" ? "active" : "")">
+                Çevrimiçi (@Model.ActiveNowCount)
+            </a>
+            <a asp-page="/Audit/Index" asp-route-Filter="desktop" asp-route-Search="@Model.Search" class="polaris-tab-item @(Model.Filter == "desktop" ? "active" : "")">
+                Masaüstü (@Model.DesktopCount)
+            </a>
+            <a asp-page="/Audit/Index" asp-route-Filter="mobile" asp-route-Search="@Model.Search" class="polaris-tab-item @(Model.Filter == "mobile" ? "active" : "")">
+                Mobil & Tablet (@Model.MobileCount)
+            </a>
+        </div>
+
+        <form method="get" class="d-flex align-items-center gap-2">
+            <input type="hidden" name="Filter" value="@Model.Filter" />
+            <input type="text" name="Search" value="@Model.Search" class="form-control form-control-sm" style="width: 240px;" placeholder="IP, kullanıcı, OS veya tarayıcı ara..." />
+            <button type="submit" class="polaris-btn polaris-btn-primary polaris-btn-sm">Ara</button>
+            @if (!string.IsNullOrEmpty(Model.Search) || !string.IsNullOrEmpty(Model.Filter))
+            {
+                <a asp-page="/Audit/Index" class="polaris-btn polaris-btn-secondary polaris-btn-sm">Temizle</a>
+            }
+        </form>
+    </div>
+
+    @if (!Model.Sessions.Any())
+    {
+        <div class="p-5 text-center text-muted">
+            <div class="fw-semibold">Oturum kaydı bulunamadı</div>
+            <div class="small mt-1">Filtre kriterlerinizi değiştirmeyi deneyin.</div>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="polaris-table">
+                <thead>
+                    <tr>
+                        <th>Kullanıcı</th>
+                        <th>IP Adresi</th>
+                        <th>Cihaz</th>
+                        <th>İşletim Sistemi</th>
+                        <th>Tarayıcı</th>
+                        <th>Giriş Sayısı</th>
+                        <th>Aktif Süre</th>
+                        <th>Son Sayfa</th>
+                        <th>Son Görülme</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var s in Model.Sessions)
+                    {
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="avatar-preview-circle">@s.UserName.Substring(0, 1).ToUpper()</div>
+                                    <div>
+                                        <div class="fw-semibold text-dark">@s.UserName</div>
+                                        @if (s.IsOnlineNow)
+                                        {
+                                            <span class="polaris-badge polaris-badge-success" style="font-size: 10px; padding: 1px 5px;">Çevrimiçi</span>
+                                        }
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border font-monospace">@s.IpAddress</span>
+                            </td>
+                            <td>
+                                @if (s.DeviceType == "Mobil")
+                                {
+                                    <span class="polaris-badge polaris-badge-neutral">Mobil</span>
+                                }
+                                else if (s.DeviceType == "Tablet")
+                                {
+                                    <span class="polaris-badge polaris-badge-neutral">Tablet</span>
+                                }
+                                else
+                                {
+                                    <span class="polaris-badge polaris-badge-neutral">Masaüstü</span>
+                                }
+                            </td>
+                            <td>
+                                <span class="fw-semibold text-dark">@s.OperatingSystem</span>
+                            </td>
+                            <td>
+                                <span class="text-secondary small">@s.Browser</span>
+                            </td>
+                            <td>
+                                <span class="fw-bold text-dark">@s.LoginCount</span>
+                                <span class="text-muted small">kez</span>
+                            </td>
+                            <td>
+                                <span class="fw-semibold @(s.ActiveMinutes >= 30 ? "text-success" : "text-dark")">
+                                    @s.ActiveMinutes dk
+                                </span>
+                            </td>
+                            <td>
+                                <span class="text-muted small font-monospace" style="max-width: 150px; display: inline-block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                    @(s.LastPath ?? "/")
+                                </span>
+                            </td>
+                            <td class="text-muted" style="font-size: 11px;">
+                                @s.LastSeenAt.ToString("dd.MM.yyyy HH:mm:ss")
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

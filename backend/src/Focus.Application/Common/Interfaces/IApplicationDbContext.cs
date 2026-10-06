@@ -25,6 +25,7 @@ public interface IApplicationDbContext
     DbSet<SessionReflection> SessionReflections { get; }
     DbSet<RoomGuestbookEntry> RoomGuestbookEntries { get; }
     DbSet<Notification> Notifications { get; }
+    DbSet<UserDeviceSession> UserDeviceSessions { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

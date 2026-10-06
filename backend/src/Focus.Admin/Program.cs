@@ -18,6 +18,7 @@ if (!app.Environment.IsDevelopment())
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthorization();
+app.UseMiddleware<Focus.Infrastructure.Middleware.UserAccessTrackingMiddleware>();
 
 app.MapRazorPages();
 

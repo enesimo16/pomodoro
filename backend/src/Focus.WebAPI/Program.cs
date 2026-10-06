@@ -96,6 +96,8 @@ app.UseCors("FocusClientCors");
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.UseMiddleware<Focus.Infrastructure.Middleware.UserAccessTrackingMiddleware>();
+
 app.MapControllers();
 app.MapHub<TimerHub>("/hubs/timer");
 app.MapHub<RoomHub>("/hubs/room");

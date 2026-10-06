@@ -64,6 +64,7 @@ public static class DependencyInjection
 
         // Faz 7: Admin Is Zekasi & Sistem Sagligi Servisi
         services.AddScoped<IAdminAnalyticsService, AdminAnalyticsService>();
+        services.AddScoped<IUserAccessTrackingService, UserAccessTrackingService>();
 
         // JWT Kimlik Dogrulama
         var key = Encoding.UTF8.GetBytes(jwtSettings.SigningKey);
