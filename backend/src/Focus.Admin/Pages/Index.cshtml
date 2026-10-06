@@ -38,7 +38,7 @@
         <div class="polaris-metric-card">
             <div class="polaris-metric-label">
                 <span>Günlük Aktif (DAU)</span>
-                <span class="polaris-badge polaris-badge-success">Canlı</span>
+                <span class="polaris-badge">Canlı</span>
             </div>
             <div class="polaris-metric-value">@Model.Overview.ActiveUsersToday.ToString("N0")</div>
             <div class="polaris-metric-subtext">
@@ -50,7 +50,7 @@
         <div class="polaris-metric-card">
             <div class="polaris-metric-label">
                 <span>Seans Başarı Oranı</span>
-                <span class="polaris-badge @(Model.Overview.CompletionRate >= 70 ? "polaris-badge-success" : "polaris-badge-warning")">
+                <span class="polaris-badge">
                     %@Model.Overview.CompletionRate.ToString("F1")
                 </span>
             </div>
@@ -64,7 +64,7 @@
         <div class="polaris-metric-card">
             <div class="polaris-metric-label">
                 <span>Toplam Odaklanma</span>
-                <span class="polaris-badge polaris-badge-neutral">Saat</span>
+                <span class="polaris-badge">Saat</span>
             </div>
             <div class="polaris-metric-value">@((Model.Overview.TotalFocusMinutes / 60.0).ToString("F1"))</div>
             <div class="polaris-metric-subtext">
@@ -78,7 +78,7 @@
 <div class="polaris-card mb-4">
     <div class="polaris-card-header">
         <h6>Platform Sağlığı ve Dağıtık Telemetri</h6>
-        <span class="polaris-badge polaris-badge-success">Sistemler Normal</span>
+        <span class="polaris-badge">Sistemler Normal</span>
     </div>
     <div class="polaris-card-body">
         <div class="row g-3">
@@ -150,11 +150,11 @@
                                     <td>
                                         @if (user.IsGuest)
                                         {
-                                            <span class="polaris-badge polaris-badge-warning">Misafir</span>
+                                            <span class="polaris-badge">Misafir</span>
                                         }
                                         else
                                         {
-                                            <span class="polaris-badge polaris-badge-success">Kayıtlı</span>
+                                            <span class="polaris-badge polaris-badge-dark">Kayıtlı</span>
                                         }
                                     </td>
                                     <td>
@@ -215,19 +215,19 @@
                                         @switch (s.Status)
                                         {
                                             case Focus.Domain.Enums.SessionStatus.Completed:
-                                                <span class="polaris-badge polaris-badge-success">Tamamlandı</span>
+                                                <span class="polaris-badge polaris-badge-dark">Tamamlandı</span>
                                                 break;
                                             case Focus.Domain.Enums.SessionStatus.Running:
-                                                <span class="polaris-badge polaris-badge-neutral">Devam Ediyor</span>
+                                                <span class="polaris-badge">Devam Ediyor</span>
                                                 break;
                                             case Focus.Domain.Enums.SessionStatus.Paused:
-                                                <span class="polaris-badge polaris-badge-warning">Duraklatıldı</span>
+                                                <span class="polaris-badge">Duraklatıldı</span>
                                                 break;
                                             case Focus.Domain.Enums.SessionStatus.Abandoned:
-                                                <span class="polaris-badge polaris-badge-critical">Terk Edildi</span>
+                                                <span class="polaris-badge">Terk Edildi</span>
                                                 break;
                                             default:
-                                                <span class="polaris-badge polaris-badge-warning">@s.Status</span>
+                                                <span class="polaris-badge">@s.Status</span>
                                                 break;
                                         }
                                     </td>

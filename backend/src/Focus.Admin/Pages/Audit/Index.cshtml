@@ -39,9 +39,9 @@
         <div class="polaris-metric-card">
             <div class="polaris-metric-label">
                 <span>Canlı Çevrimiçi</span>
-                <span class="polaris-badge polaris-badge-success">Son 5 dk</span>
+                <span class="polaris-badge">Son 5 dk</span>
             </div>
-            <div class="polaris-metric-value text-success">@Model.ActiveNowCount.ToString("N0")</div>
+            <div class="polaris-metric-value">@Model.ActiveNowCount.ToString("N0")</div>
             <div class="polaris-metric-subtext">Platformda şu an aktif olanlar</div>
         </div>
     </div>
@@ -118,7 +118,7 @@
                                         <div class="fw-semibold text-dark">@s.UserName</div>
                                         @if (s.IsOnlineNow)
                                         {
-                                            <span class="polaris-badge polaris-badge-success" style="font-size: 10px; padding: 1px 5px;">Çevrimiçi</span>
+                                            <span class="polaris-badge polaris-badge-dark" style="font-size: 10px; padding: 1px 5px;">Çevrimiçi</span>
                                         }
                                     </div>
                                 </div>
@@ -151,7 +151,7 @@
                                 <span class="text-muted small">kez</span>
                             </td>
                             <td>
-                                <span class="fw-semibold @(s.ActiveMinutes >= 30 ? "text-success" : "text-dark")">
+                                <span class="fw-semibold text-dark">
                                     @s.ActiveMinutes dk
                                 </span>
                             </td>

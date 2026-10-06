@@ -29,9 +29,9 @@
         <div class="polaris-metric-card">
             <div class="polaris-metric-label">
                 <span>Toplam Kazanılan</span>
-                <span class="polaris-badge polaris-badge-success">Emisyon</span>
+                <span class="polaris-badge">Emisyon</span>
             </div>
-            <div class="polaris-metric-value text-success">+@Model.TotalEarned.ToString("N0")</div>
+            <div class="polaris-metric-value">+@Model.TotalEarned.ToString("N0")</div>
             <div class="polaris-metric-subtext">Seans ve streak ödülleri</div>
         </div>
     </div>
@@ -39,9 +39,9 @@
         <div class="polaris-metric-card">
             <div class="polaris-metric-label">
                 <span>Toplam Harcanan</span>
-                <span class="polaris-badge polaris-badge-critical">Tüketim</span>
+                <span class="polaris-badge">Tüketim</span>
             </div>
-            <div class="polaris-metric-value text-danger">-@Model.TotalSpent.ToString("N0")</div>
+            <div class="polaris-metric-value">-@Model.TotalSpent.ToString("N0")</div>
             <div class="polaris-metric-subtext">Mağaza ve kalkan harcamaları</div>
         </div>
     </div>
@@ -107,11 +107,11 @@
                             <td>
                                 @if (entry.Coins >= 0)
                                 {
-                                    <span class="polaris-badge polaris-badge-success">+@entry.Coins Coin</span>
+                                    <span class="polaris-badge polaris-badge-dark">+@entry.Coins Coin</span>
                                 }
                                 else
                                 {
-                                    <span class="polaris-badge polaris-badge-critical">@entry.Coins Coin</span>
+                                    <span class="polaris-badge">@entry.Coins Coin</span>
                                 }
                             </td>
                             <td>

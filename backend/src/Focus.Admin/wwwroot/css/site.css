@@ -1,9 +1,9 @@
-/* Shopify Polaris Design System - Focus Admin */
+/* Shopify Polaris Design System - Focus Admin (Monochrome Edition) */
 :root {
   --p-color-bg-app: #f1f1f1;
   --p-color-bg-surface: #ffffff;
   --p-color-bg-surface-secondary: #f7f7f8;
-  --p-color-bg-surface-hover: #f1f2f4;
+  --p-color-bg-surface-hover: #ebebeb;
   --p-color-border: #e1e3e5;
   --p-color-border-subdued: #ebebeb;
   
@@ -11,27 +11,25 @@
   --p-color-text-subdued: #6d7175;
   --p-color-text-disabled: #8c9196;
   
+  /* Açık Siyah / Antrasit Sol Panel */
   --p-color-sidebar-bg: #1a1a1a;
   --p-color-sidebar-border: #282828;
-  --p-color-sidebar-text: #999ea4;
+  --p-color-sidebar-text: #8c9196;
   --p-color-sidebar-text-active: #ffffff;
-  --p-color-sidebar-hover: #262729;
-  --p-color-sidebar-active: #2f3133;
+  --p-color-sidebar-hover: #242527;
+  --p-color-sidebar-active: #2a2b2e;
   
+  /* Butonlar & Aksiyonlar (Siyah & Gri) */
   --p-color-primary: #202223;
-  --p-color-primary-hover: #303030;
-  --p-color-success: #008060;
-  --p-color-success-bg: #cbf4c9;
-  --p-color-success-text: #108043;
-  --p-color-warning-bg: #ffea8a;
-  --p-color-warning-text: #826200;
-  --p-color-critical-bg: #fed3d1;
-  --p-color-critical-text: #d72c0d;
-  --p-color-info-bg: #e4e5e7;
-  --p-color-info-text: #4a4d52;
+  --p-color-primary-hover: #202223;
+  
+  /* Rozetler - Saf Siyah, Beyaz ve Gri Tonları */
+  --p-color-badge-bg: #f1f2f4;
+  --p-color-badge-border: #d2d5d8;
+  --p-color-badge-text: #202223;
 
   --p-shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
-  --p-shadow-popover: 0 4px 12px rgba(0, 0, 0, 0.12);
+  --p-shadow-popover: 0 4px 12px rgba(0, 0, 0, 0.10);
   --p-radius-card: 10px;
   --p-radius-btn: 6px;
   --p-radius-input: 6px;
@@ -52,6 +50,27 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Evrensel Monokrom Link ve Odak Standartları */
+a {
+  color: var(--p-color-text);
+  text-decoration: none;
+}
+a:hover {
+  color: #000000;
+}
+:focus-visible {
+  outline: 2px solid #202223 !important;
+  outline-offset: 1px;
+}
+.form-control:focus, .form-select:focus {
+  border-color: #202223 !important;
+  box-shadow: 0 0 0 1px #202223 !important;
+}
+::selection {
+  background-color: #202223;
+  color: #ffffff;
+}
+
 /* Base Layout Container */
 .admin-wrapper {
   display: flex;
@@ -59,7 +78,7 @@ html, body {
 }
 
 /* -------------------------------------------------------------
-   LEFT SIDEBAR (Shopify Polaris Dark Charcoal / Açık Siyah)
+   LEFT SIDEBAR (Shopify Açık Siyah / Koyu Gri)
    ------------------------------------------------------------- */
 .admin-sidebar {
   width: var(--sidebar-width);
@@ -91,27 +110,6 @@ html, body {
   line-height: 1;
 }
 
-.sidebar-env-badge {
-  font-size: 10px;
-  font-weight: 600;
-  background-color: #262729;
-  color: #108043;
-  padding: 2px 7px;
-  border-radius: 12px;
-  border: 1px solid #323538;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.sidebar-env-badge .dot {
-  width: 6px;
-  height: 6px;
-  background-color: #108043;
-  border-radius: 50%;
-  box-shadow: 0 0 6px #108043;
-}
-
 .sidebar-nav-container {
   flex: 1;
   padding: 12px 10px;
@@ -127,11 +125,11 @@ html, body {
 }
 
 .sidebar-group-title {
-  font-size: 10.5px;
+  font-size: 10px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #6d7175;
+  color: #55575a;
   padding: 4px 10px;
   margin-bottom: 2px;
 }
@@ -146,17 +144,18 @@ html, body {
   text-decoration: none;
   font-size: 13px;
   font-weight: 500;
-  transition: all 0.15s ease-in-out;
+  transition: none !important;
 }
 
 .sidebar-nav-item svg {
-  width: 18px;
-  height: 18px;
+  width: 17px;
+  height: 17px;
   stroke: currentColor;
   stroke-width: 1.8;
   flex-shrink: 0;
 }
 
+/* Siyah / Koyu Gri Hover & Aktif - Asla Yeşil Yok */
 .sidebar-nav-item:hover {
   background-color: var(--p-color-sidebar-hover);
   color: #ffffff;
@@ -166,38 +165,30 @@ html, body {
   background-color: var(--p-color-sidebar-active);
   color: #ffffff;
   font-weight: 600;
-  box-shadow: inset 3px 0 0 #008060;
-}
-
-.sidebar-nav-item .badge-count {
-  margin-left: auto;
-  font-size: 11px;
-  background-color: #282a2d;
-  color: #c4c7cb;
-  padding: 1px 6px;
-  border-radius: 10px;
+  box-shadow: none !important;
+  border-left: none !important;
 }
 
 .sidebar-footer {
   padding: 12px 14px;
   border-top: 1px solid var(--p-color-sidebar-border);
-  background-color: #161718;
+  background-color: #141414;
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
 .sidebar-user-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: #2e3033;
+  width: 30px;
+  height: 30px;
+  border-radius: 4px;
+  background: #2b2c2f;
   color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 600;
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .sidebar-user-info {
@@ -205,18 +196,18 @@ html, body {
 }
 
 .sidebar-user-name {
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 600;
   color: #ffffff;
 }
 
 .sidebar-user-role {
   font-size: 11px;
-  color: #8c9196;
+  color: #66686b;
 }
 
 /* -------------------------------------------------------------
-   TOP HEADER (Shopify Clean Off-White / Crisp White)
+   TOP HEADER (Shopify Minimal Header)
    ------------------------------------------------------------- */
 .admin-header {
   position: fixed;
@@ -251,13 +242,12 @@ html, body {
   font-size: 12.5px;
   color: var(--p-color-text);
   outline: none;
-  transition: all 0.15s ease;
 }
 
 .header-search-input:focus {
   background-color: #ffffff;
   border-color: #202223;
-  box-shadow: 0 0 0 2px rgba(32, 34, 35, 0.15);
+  box-shadow: 0 0 0 1px #202223;
 }
 
 .header-search-icon {
@@ -281,46 +271,7 @@ html, body {
 .header-actions-right {
   display: flex;
   align-items: center;
-  gap: 14px;
-}
-
-.header-status-pill {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background-color: #f7f7f8;
-  border: 1px solid var(--p-color-border);
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 11.5px;
-  font-weight: 500;
-  color: var(--p-color-text-subdued);
-}
-
-.header-status-pill .pulse-indicator {
-  width: 7px;
-  height: 7px;
-  background-color: #108043;
-  border-radius: 50%;
-  animation: pulse-green 2s infinite;
-}
-
-@keyframes pulse-green {
-  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 128, 67, 0.7); }
-  70% { transform: scale(1); box-shadow: 0 0 0 5px rgba(16, 128, 67, 0); }
-  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 128, 67, 0); }
-}
-
-.header-kpi-chip {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  color: var(--p-color-text-subdued);
-}
-
-.header-kpi-chip strong {
-  color: var(--p-color-text);
+  gap: 10px;
 }
 
 /* -------------------------------------------------------------
@@ -358,7 +309,7 @@ html, body {
 }
 
 /* -------------------------------------------------------------
-   SHOPIFY POLARIS CARD SYSTEM ("Panel Panel" Tasarım)
+   SHOPIFY POLARIS CARDS ("Panel Panel" Sade Tasarım)
    ------------------------------------------------------------- */
 .polaris-card {
   background-color: var(--p-color-bg-surface);
@@ -459,38 +410,28 @@ html, body {
 }
 
 .polaris-btn-primary {
-  background-color: var(--p-color-primary);
+  background-color: var(--p-color-primary) !important;
   color: #ffffff !important;
-  border-color: var(--p-color-primary);
+  border-color: var(--p-color-primary) !important;
 }
 
 .polaris-btn-primary:hover {
-  background-color: var(--p-color-primary);
+  background-color: #333333 !important;
   color: #ffffff !important;
-  box-shadow: none;
+  box-shadow: none !important;
 }
 
 .polaris-btn-secondary {
-  background-color: #ffffff;
+  background-color: #ffffff !important;
   color: var(--p-color-text) !important;
-  border-color: #babfc3;
+  border-color: #d2d5d8 !important;
 }
 
 .polaris-btn-secondary:hover {
-  background-color: #ffffff;
+  background-color: #f6f6f7 !important;
   color: var(--p-color-text) !important;
-  border-color: #babfc3;
-  box-shadow: none;
-}
-
-.polaris-btn-success {
-  background-color: var(--p-color-success);
-  color: #ffffff !important;
-  border-color: var(--p-color-success);
-}
-
-.polaris-btn-success:hover {
-  background-color: var(--p-color-success);
+  border-color: #c4c7cb !important;
+  box-shadow: none !important;
 }
 
 .polaris-btn-sm {
@@ -499,36 +440,58 @@ html, body {
 }
 
 /* -------------------------------------------------------------
-   SHOPIFY POLARIS BADGES
+   SAF MONOKROM POLARIS ROZETLERİ (ASLA RENKLENDİRME YOK)
    ------------------------------------------------------------- */
-.polaris-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 1.35;
-}
-
-.polaris-badge-success {
-  background-color: var(--p-color-success-bg);
-  color: var(--p-color-success-text);
-}
-
-.polaris-badge-warning {
-  background-color: var(--p-color-warning-bg);
-  color: var(--p-color-warning-text);
-}
-
-.polaris-badge-critical {
-  background-color: var(--p-color-critical-bg);
-  color: var(--p-color-critical-text);
-}
-
+.polaris-badge,
+.polaris-badge-success,
+.polaris-badge-warning,
+.polaris-badge-critical,
 .polaris-badge-neutral {
-  background-color: var(--p-color-info-bg);
-  color: var(--p-color-info-text);
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 2px 7px !important;
+  border-radius: 4px !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  line-height: 1.35 !important;
+  background-color: #f1f2f4 !important;
+  color: #202223 !important;
+  border: 1px solid #d2d5d8 !important;
+}
+
+.polaris-badge-dark {
+  background-color: #202223 !important;
+  color: #ffffff !important;
+  border: 1px solid #202223 !important;
+}
+
+/* Bootstrap standart renk sınıflarını monokrom griye ezme */
+.badge.bg-success, 
+.badge.bg-danger, 
+.badge.bg-warning, 
+.badge.bg-primary, 
+.badge.bg-info,
+.badge.bg-success-subtle, 
+.badge.bg-danger-subtle, 
+.badge.bg-warning-subtle, 
+.badge.bg-primary-subtle, 
+.badge.bg-info-subtle {
+  background-color: #f1f2f4 !important;
+  color: #202223 !important;
+  border: 1px solid #d2d5d8 !important;
+}
+
+/* Renkli metinleri nötr siyaha ezme */
+.text-success, 
+.text-danger, 
+.text-warning, 
+.text-info, 
+.text-primary {
+  color: #202223 !important;
+}
+
+.progress-bar {
+  background-color: #202223 !important;
 }
 
 /* -------------------------------------------------------------
@@ -557,7 +520,7 @@ html, body {
   color: var(--p-color-text-subdued);
   border-radius: 6px;
   text-decoration: none;
-  transition: all 0.15s ease;
+  transition: none !important;
 }
 
 .polaris-tab-item:hover {
@@ -602,25 +565,26 @@ html, body {
 }
 
 .polaris-table tbody tr:hover {
-  background-color: #fafbfc;
+  background-color: #fafafb;
 }
 
 .polaris-table tbody tr:last-child td {
   border-bottom: none;
 }
 
-/* Avatar preview pill */
+/* Avatar preview square */
 .avatar-preview-circle {
-  width: 30px;
-  height: 30px;
-  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
   background-color: #ebebeb;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-weight: 600;
   font-size: 11px;
-  color: #303030;
+  color: #202223;
+  border: 1px solid #d2d5d8;
 }
 
 /* Responsive adjustments */

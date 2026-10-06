@@ -23,7 +23,7 @@
         <div class="polaris-metric-card">
             <div class="polaris-metric-label">
                 <span>Günlük Aktif (DAU)</span>
-                <span class="polaris-badge polaris-badge-success">Bugün</span>
+                <span class="polaris-badge">Bugün</span>
             </div>
             <div class="polaris-metric-value">@Model.Overview.ActiveUsersToday.ToString("N0")</div>
             <div class="polaris-metric-subtext">Platformda seans veya işlem yapanlar</div>
@@ -53,7 +53,7 @@
         <div class="polaris-metric-card">
             <div class="polaris-metric-label">
                 <span>Aktif Piksel Avatarlar</span>
-                <span class="polaris-badge polaris-badge-success">%@((Model.Overview.TotalUsers > 0 ? (Model.UserAnalytics.TotalAvatars * 100.0 / Model.Overview.TotalUsers) : 0).ToString("F0"))</span>
+                <span class="polaris-badge">%@((Model.Overview.TotalUsers > 0 ? (Model.UserAnalytics.TotalAvatars * 100.0 / Model.Overview.TotalUsers) : 0).ToString("F0"))</span>
             </div>
             <div class="polaris-metric-value">@Model.UserAnalytics.TotalAvatars.ToString("N0")</div>
             <div class="polaris-metric-subtext">Özelleştirilmiş karakter sayısı</div>
@@ -77,11 +77,11 @@
                     </div>
                     <div class="col-sm-4">
                         <div class="text-muted small">Kazanılan Coin</div>
-                        <div class="fs-4 fw-bold text-success mt-1">+@Model.EconomyAnalytics.TotalCoinsEarned.ToString("N0")</div>
+                        <div class="fs-4 fw-bold text-dark mt-1">+@Model.EconomyAnalytics.TotalCoinsEarned.ToString("N0")</div>
                     </div>
                     <div class="col-sm-4">
                         <div class="text-muted small">Harcanan Coin</div>
-                        <div class="fs-4 fw-bold text-danger mt-1">-@Model.EconomyAnalytics.TotalCoinsSpent.ToString("N0")</div>
+                        <div class="fs-4 fw-bold text-dark mt-1">-@Model.EconomyAnalytics.TotalCoinsSpent.ToString("N0")</div>
                     </div>
                 </div>
 
@@ -186,7 +186,7 @@
                             {
                                 <tr>
                                     <td class="fw-semibold">@u.DisplayName</td>
-                                    <td><span class="polaris-badge polaris-badge-success">Lv.@u.Level</span></td>
+                                    <td><span class="polaris-badge polaris-badge-dark">Lv.@u.Level</span></td>
                                     <td>@u.CurrentXp.ToString("N0") XP</td>
                                     <td>@u.FocusCoins.ToString("N0") Coin</td>
                                 </tr>
@@ -225,7 +225,7 @@
                             {
                                 <tr>
                                     <td class="fw-semibold">@u.DisplayName</td>
-                                    <td><span class="polaris-badge polaris-badge-warning">@u.CurrentStreak Gün</span></td>
+                                    <td><span class="polaris-badge polaris-badge-dark">@u.CurrentStreak Gün</span></td>
                                     <td>Lv.@u.Level</td>
                                     <td>@u.FocusCoins.ToString("N0") Coin</td>
                                 </tr>

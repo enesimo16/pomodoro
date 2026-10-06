@@ -677,9 +677,9 @@
                     </div>
 
                     <!-- Terminal Sohbet Kutusu -->
-                    <div id="coachTerminalBox" class="p-3 rounded mb-2 border font-monospace" style="background-color: #090d16; color: #10b981; min-height: 180px; max-height: 240px; overflow-y: auto; font-size: 13px; line-height: 1.5;">
+                    <div id="coachTerminalBox" class="p-3 rounded mb-2 border font-monospace" style="background-color: #1a1a1a; color: #f1f1f1; min-height: 180px; max-height: 240px; overflow-y: auto; font-size: 13px; line-height: 1.5;">
                         <div class="text-secondary">[Sistem] Focus Terminali hazir. Odaya hos geldiniz.</div>
-                        <div class="text-success mt-1">Koc: Merhaba! Masadasin, zihnini sakinlestir ve ritmini yakala. Nasil hissediyorsun?</div>
+                        <div class="text-light mt-1">Koc: Merhaba! Masadasin, zihnini sakinlestir ve ritmini yakala. Nasil hissediyorsun?</div>
                     </div>
 
                     <div class="input-group input-group-sm mb-2">
@@ -812,7 +812,7 @@
     <!-- Sağ Kolon: Canlı Stüdyo & Atmosfer Önizleme, Sayaç, Karakter ve Log Konsolu -->
     <div class="col-lg-7">
         <!-- CANLI STÜDYO VE ATMOSFER ÖNİZLEME ALANI (FAZ 2) -->
-        <div class="card card-custom mb-4 overflow-hidden border shadow-sm" id="studioPreviewCard" style="border-top: 4px solid #2563eb; transition: all 0.3s ease;">
+        <div class="card card-custom mb-4 overflow-hidden border shadow-sm" id="studioPreviewCard" style="border-top: 4px solid #202223; transition: all 0.3s ease;">
             <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center gap-2">
                     <span class="fs-6 fw-bold text-dark mb-0">Canlı Atmosfer & Önizleme Stüdyosu</span>
@@ -1025,14 +1025,14 @@
     function log(message, type = 'info') {
         const box = document.getElementById('terminalLog');
         const time = new Date().toLocaleTimeString();
-        let color = '#0f172a';
-        if (type === 'error') color = '#dc2626';
-        if (type === 'success') color = '#16a34a';
-        if (type === 'warn') color = '#d97706';
+        let color = '#202223';
+        if (type === 'error') color = '#202223';
+        if (type === 'success') color = '#202223';
+        if (type === 'warn') color = '#55575a';
 
         const line = document.createElement('div');
         line.style.color = color;
-        line.innerHTML = `<span style="color: #64748b;">[${time}]</span> ${escapeHtml(message)}`;
+        line.innerHTML = `<span style="color: #8c9196;">[${time}]</span> ${escapeHtml(message)}`;
         box.appendChild(line);
         box.scrollTop = box.scrollHeight;
     }
@@ -1818,8 +1818,8 @@
 
                 // Odanın aydınlatma rengini uygula (border glow)
                 const studioCard = document.getElementById('studioPreviewCard');
-                studioCard.style.borderTopColor = w.roomLightingColor || '#2563eb';
-                studioCard.style.boxShadow = `0 10px 25px -5px ${w.roomLightingColor}40`;
+                studioCard.style.borderTopColor = '#202223';
+                studioCard.style.boxShadow = 'var(--p-shadow-card)';
 
                 // Otomatik olarak uygun temayı arat
                 if (w.suggestedTheme === 'rainy_window') {
@@ -2164,14 +2164,14 @@
                 st.last7Days.forEach(day => {
                     const heightPercent = Math.max(8, Math.round((day.minutes / maxMins) * 100));
                     const isToday = new Date(day.date).toDateString() === new Date().toDateString();
-                    const barColor = isToday ? '#2563eb' : (day.minutes > 0 ? '#10b981' : '#cbd5e1');
+                    const barColor = isToday ? '#202223' : (day.minutes > 0 ? '#454749' : '#d2d5d8');
 
                     const col = document.createElement('div');
                     col.className = 'd-flex flex-column align-items-center flex-fill h-100 justify-content-end';
                     col.innerHTML = `
                         <span class="small text-muted mb-1" style="font-size: 10px;">${day.minutes > 0 ? day.minutes + 'm' : ''}</span>
                         <div style="width: 100%; max-width: 28px; height: ${heightPercent}%; background-color: ${barColor}; border-radius: 4px 4px 0 0; transition: height 0.5s ease;" title="${day.dayName}: ${day.minutes} dk (${day.sessionCount} seans)"></div>
-                        <span class="small fw-semibold mt-1 ${isToday ? 'text-primary' : 'text-secondary'}" style="font-size: 11px;">${day.dayName}</span>
+                        <span class="small fw-semibold mt-1 text-dark" style="font-size: 11px;">${day.dayName}</span>
                     `;
                     chartBox.appendChild(col);
                 });
@@ -2520,8 +2520,8 @@
         const line = document.createElement('div');
         line.className = isAi ? 'mb-3' : 'mb-2 text-white';
         if (isAi) {
-            line.style.color = '#4ade80';
-            line.innerHTML = `<span class="fw-bold text-success">[Masa Asistanı]:</span> ${escapeHtml(text)}`;
+            line.style.color = '#f1f1f1';
+            line.innerHTML = `<span class="fw-bold text-white">[Masa Asistanı]:</span> ${escapeHtml(text)}`;
         } else {
             line.innerHTML = `<span class="text-secondary">[Siz]:</span> ${escapeHtml(text)}`;
         }

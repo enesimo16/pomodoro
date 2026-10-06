@@ -29,7 +29,7 @@
         <div class="polaris-metric-card">
             <div class="polaris-metric-label">
                 <span>Tamamlanan</span>
-                <span class="polaris-badge polaris-badge-success">Başarılı</span>
+                <span class="polaris-badge">Başarılı</span>
             </div>
             <div class="polaris-metric-value">@Model.CompletedSessions.ToString("N0")</div>
             <div class="polaris-metric-subtext">
@@ -41,7 +41,7 @@
         <div class="polaris-metric-card">
             <div class="polaris-metric-label">
                 <span>Terk Edilen</span>
-                <span class="polaris-badge polaris-badge-critical">İptal</span>
+                <span class="polaris-badge">İptal</span>
             </div>
             <div class="polaris-metric-value">@Model.AbandonedSessions.ToString("N0")</div>
             <div class="polaris-metric-subtext">Yarım bırakılan seanslar</div>
@@ -115,7 +115,7 @@
                             <td class="fw-semibold text-dark">@s.UserName</td>
                             <td>@s.FocusMinutes dk</td>
                             <td>
-                                <span class="fw-bold @(s.NetDurationMinutes >= s.FocusMinutes ? "text-success" : "text-dark")">
+                                <span class="fw-bold text-dark">
                                     @s.NetDurationMinutes dk
                                 </span>
                             </td>
@@ -123,16 +123,16 @@
                                 @switch (s.Status)
                                 {
                                     case Focus.Domain.Enums.SessionStatus.Completed:
-                                        <span class="polaris-badge polaris-badge-success">Tamamlandı</span>
+                                        <span class="polaris-badge polaris-badge-dark">Tamamlandı</span>
                                         break;
                                     case Focus.Domain.Enums.SessionStatus.Running:
-                                        <span class="polaris-badge polaris-badge-neutral">Devam Ediyor</span>
+                                        <span class="polaris-badge">Devam Ediyor</span>
                                         break;
                                     case Focus.Domain.Enums.SessionStatus.Paused:
-                                        <span class="polaris-badge polaris-badge-warning">Duraklatıldı</span>
+                                        <span class="polaris-badge">Duraklatıldı</span>
                                         break;
                                     case Focus.Domain.Enums.SessionStatus.Abandoned:
-                                        <span class="polaris-badge polaris-badge-critical">Terk Edildi</span>
+                                        <span class="polaris-badge">Terk Edildi</span>
                                         break;
                                 }
                             </td>

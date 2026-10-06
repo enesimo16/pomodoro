@@ -29,7 +29,7 @@
         <div class="polaris-metric-card">
             <div class="polaris-metric-label">
                 <span>Gönderilen İkramlar</span>
-                <span class="polaris-badge polaris-badge-success">İkram</span>
+                <span class="polaris-badge">İkram</span>
             </div>
             <div class="polaris-metric-value">@Model.TotalGifts.ToString("N0")</div>
             <div class="polaris-metric-subtext">Kahve, çay, kurabiye ve yıldızlar</div>
@@ -97,7 +97,7 @@
                                     <td>
                                         @if (entry.Gift != Focus.Domain.Enums.GiftType.None)
                                         {
-                                            <span class="polaris-badge polaris-badge-success">@entry.Gift</span>
+                                            <span class="polaris-badge polaris-badge-dark">@entry.Gift</span>
                                         }
                                         else
                                         {
@@ -152,11 +152,11 @@
                                     <td>
                                         @if (n.IsRead)
                                         {
-                                            <span class="polaris-badge polaris-badge-neutral">Okundu</span>
+                                            <span class="polaris-badge">Okundu</span>
                                         }
                                         else
                                         {
-                                            <span class="polaris-badge polaris-badge-warning">Yeni</span>
+                                            <span class="polaris-badge polaris-badge-dark">Yeni</span>
                                         }
                                     </td>
                                 </tr>

@@ -29,7 +29,7 @@
         <div class="polaris-metric-card">
             <div class="polaris-metric-label">
                 <span>Global Anonim Havuz</span>
-                <span class="polaris-badge polaris-badge-success">Gizli / Anonim</span>
+                <span class="polaris-badge">Gizli / Anonim</span>
             </div>
             <div class="polaris-metric-value">@Model.GlobalMemories.ToString("N0")</div>
             <div class="polaris-metric-subtext">Kişisel veri içermeyen ortak model hafızası</div>
@@ -108,7 +108,7 @@
                             <td>
                                 @if (m.IsGlobal)
                                 {
-                                    <span class="polaris-badge polaris-badge-success">Global Havuz</span>
+                                    <span class="polaris-badge polaris-badge-dark">Global Havuz</span>
                                 }
                                 else
                                 {

@@ -39,7 +39,7 @@
         <div class="polaris-metric-card">
             <div class="polaris-metric-label">
                 <span>Kütüphane Odaları</span>
-                <span class="polaris-badge polaris-badge-success">Genel</span>
+                <span class="polaris-badge">Genel</span>
             </div>
             <div class="polaris-metric-value">@Model.LibraryRooms.ToString("N0")</div>
             <div class="polaris-metric-subtext">Sabit temalı halka açık salonlar</div>
@@ -118,7 +118,7 @@
                             <td>
                                 @if (r.Type == Focus.Domain.Enums.StudyRoomType.PublicLibrary)
                                 {
-                                    <span class="polaris-badge polaris-badge-success">Kütüphane</span>
+                                    <span class="polaris-badge polaris-badge-dark">Kütüphane</span>
                                 }
                                 else
                                 {
@@ -126,7 +126,7 @@
                                 }
                             </td>
                             <td>
-                                <span class="fw-bold @(r.CurrentMembers >= r.MaxCapacity ? "text-danger" : "text-dark")">
+                                <span class="fw-bold text-dark">
                                     @r.CurrentMembers / @r.MaxCapacity
                                 </span>
                                 <span class="text-muted small">kişi</span>
