@@ -22,36 +22,24 @@
 <div class="row g-4">
     <!-- Sol Kolon: Kontroller ve Arama Sekmeleri -->
     <div class="col-lg-5">
-        <!-- Sekme Başlıkları -->
-        <ul class="nav nav-pills mb-3 gap-1 polaris-nav-pills" id="pills-tab" role="tablist">
-            <li class="nav-item flex-fill" role="presentation">
-                <button class="nav-link active w-100 text-center py-2 small" id="tab-auth-btn" data-bs-toggle="pill" data-bs-target="#tab-auth" type="button" role="tab">1. Kimlik</button>
-            </li>
-            <li class="nav-item flex-fill" role="presentation">
-                <button class="nav-link w-100 text-center py-2 small" id="tab-avatar-btn" data-bs-toggle="pill" data-bs-target="#tab-avatar" type="button" role="tab">2. Avatar</button>
-            </li>
-            <li class="nav-item flex-fill" role="presentation">
-                <button class="nav-link w-100 text-center py-2 small" id="tab-room-btn" data-bs-toggle="pill" data-bs-target="#tab-room" type="button" role="tab">3. Oda</button>
-            </li>
-            <li class="nav-item flex-fill" role="presentation">
-                <button class="nav-link w-100 text-center py-2 small" id="tab-session-btn" data-bs-toggle="pill" data-bs-target="#tab-session" type="button" role="tab">4. Sayaç</button>
-            </li>
-            <li class="nav-item flex-fill" role="presentation">
-                <button class="nav-link w-100 text-center py-2 small" id="tab-media-btn" data-bs-toggle="pill" data-bs-target="#tab-media" type="button" role="tab">5. Medya</button>
-            </li>
-            <li class="nav-item flex-fill" role="presentation">
-                <button class="nav-link w-100 text-center py-2 small" id="tab-shop-btn" data-bs-toggle="pill" data-bs-target="#tab-shop" type="button" role="tab">6. Mağaza</button>
-            </li>
-            <li class="nav-item flex-fill" role="presentation">
-                <button class="nav-link w-100 text-center py-2 small" id="tab-stats-btn" data-bs-toggle="pill" data-bs-target="#tab-stats" type="button" role="tab">7. İstatistik</button>
-            </li>
-            <li class="nav-item flex-fill" role="presentation">
-                <button class="nav-link w-100 text-center py-2 small" id="tab-social-btn" data-bs-toggle="pill" data-bs-target="#tab-social" type="button" role="tab">8. Sosyal</button>
-            </li>
-            <li class="nav-item flex-fill" role="presentation">
-                <button class="nav-link w-100 text-center py-2 small" id="tab-coach-btn" data-bs-toggle="pill" data-bs-target="#tab-coach" type="button" role="tab">9. AI Koc</button>
-            </li>
-        </ul>
+        <!-- Modül Seçici (Shopify Polaris Dropdown Seçenek Kutusu) -->
+        <div class="polaris-card mb-3 p-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-muted small fw-bold text-uppercase" style="letter-spacing: 0.04em;">Test Modülü Seçin</span>
+                <span class="polaris-badge polaris-badge-dark" id="lblActiveModule">1. Kimlik</span>
+            </div>
+            <select id="moduleSelectDropdown" class="form-select form-select-sm" style="height: 38px; font-weight: 600; font-size: 13px; color: var(--p-color-text); border-color: var(--p-color-border); background-color: var(--p-color-bg-surface-secondary); cursor: pointer;">
+                <option value="#tab-auth" selected>1. Kimlik & Token Doğrulama (Auth)</option>
+                <option value="#tab-avatar">2. Piksel Karakter & Gardırop (Avatar)</option>
+                <option value="#tab-room">3. İzometrik Piksel Oda & Dekorasyon (Room)</option>
+                <option value="#tab-session">4. Odak Sayacı & Flow Shield (Session)</option>
+                <option value="#tab-media">5. Medya, Canlı Video & Ambiyans (Media)</option>
+                <option value="#tab-shop">6. Mağaza, Katalog & Ekonomi (Shop)</option>
+                <option value="#tab-stats">7. İstatistikler, Seri (Streak) & Heatmap</option>
+                <option value="#tab-social">8. Sosyal Ortak Çalışma Odası (Social)</option>
+                <option value="#tab-coach">9. Masaüstü Yapay Zeka Koç & Vektör Bellek (AI Coach)</option>
+            </select>
+        </div>
 
         <div class="tab-content" id="pills-tabContent">
             <!-- TAB 1: AUTH -->
@@ -1005,6 +993,25 @@
     // Medya Oynatıcı Referansları
     const videoPlayer = document.getElementById('previewVideoPlayer');
     const audioPlayer = document.getElementById('previewAudioPlayer');
+
+    // Modül Seçici Dropdown Senkronizasyonu
+    const moduleDropdown = document.getElementById('moduleSelectDropdown');
+    const lblActiveModule = document.getElementById('lblActiveModule');
+    if (moduleDropdown) {
+        moduleDropdown.addEventListener('change', function () {
+            const targetPaneId = this.value;
+            document.querySelectorAll('#pills-tabContent .tab-pane').forEach(pane => {
+                pane.classList.remove('show', 'active');
+            });
+            const targetPane = document.querySelector(targetPaneId);
+            if (targetPane) {
+                targetPane.classList.add('show', 'active');
+            }
+            if (lblActiveModule) {
+                lblActiveModule.textContent = this.options[this.selectedIndex].text.split('(')[0].trim();
+            }
+        });
+    }
 
     function saveTokens(accessToken, refreshToken) {
         currentTokens.accessToken = accessToken;
