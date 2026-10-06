@@ -1,0 +1,158 @@
+@page
+@model Focus.Admin.Pages.Sessions.IndexModel
+@{
+    ViewData["Title"] = "Odak Seansları";
+}
+
+<div class="admin-page-header">
+    <div>
+        <h1 class="admin-page-title">Odak Seansları</h1>
+        <p class="admin-page-subtitle">Kullanıcıların Pomodoro / derin odaklanma seans geçmişi ve canlı sayaç durumları</p>
+    </div>
+    <div>
+        <a asp-page="/Index" class="polaris-btn polaris-btn-secondary">
+            Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- PANEL 1: Seans KPI Metrik Kartları -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="polaris-metric-card">
+            <div class="polaris-metric-label">Toplam Seans</div>
+            <div class="polaris-metric-value">@Model.TotalSessions.ToString("N0")</div>
+            <div class="polaris-metric-subtext">Başlatılan tüm oturumlar</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="polaris-metric-card">
+            <div class="polaris-metric-label">
+                <span>Tamamlanan</span>
+                <span class="polaris-badge polaris-badge-success">Başarılı</span>
+            </div>
+            <div class="polaris-metric-value">@Model.CompletedSessions.ToString("N0")</div>
+            <div class="polaris-metric-subtext">
+                Oran: <strong>%@(Model.TotalSessions > 0 ? (Model.CompletedSessions * 100.0 / Model.TotalSessions).ToString("F1") : "0")</strong>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="polaris-metric-card">
+            <div class="polaris-metric-label">
+                <span>Terk Edilen</span>
+                <span class="polaris-badge polaris-badge-critical">İptal</span>
+            </div>
+            <div class="polaris-metric-value">@Model.AbandonedSessions.ToString("N0")</div>
+            <div class="polaris-metric-subtext">Yarım bırakılan seanslar</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="polaris-metric-card">
+            <div class="polaris-metric-label">Toplam Odak Süresi</div>
+            <div class="polaris-metric-value">@((Model.TotalMinutes / 60.0).ToString("F1")) Saat</div>
+            <div class="polaris-metric-subtext">@Model.TotalMinutes.ToString("N0") dakika seans süresi</div>
+        </div>
+    </div>
+</div>
+
+<!-- PANEL 2 & 3: Filtre Barı ve Seans Tablosu Paneli -->
+<div class="polaris-card">
+    <div class="polaris-filter-bar">
+        <div class="polaris-tabs">
+            <a asp-page="/Sessions/Index" asp-route-Search="@Model.Search" class="polaris-tab-item @(string.IsNullOrEmpty(Model.Filter) ? "active" : "")">
+                Tümü (@Model.TotalSessions)
+            </a>
+            <a asp-page="/Sessions/Index" asp-route-Filter="completed" asp-route-Search="@Model.Search" class="polaris-tab-item @(Model.Filter == "completed" ? "active" : "")">
+                Tamamlananlar (@Model.CompletedSessions)
+            </a>
+            <a asp-page="/Sessions/Index" asp-route-Filter="active" asp-route-Search="@Model.Search" class="polaris-tab-item @(Model.Filter == "active" ? "active" : "")">
+                Aktif / Duraklatılmış (@Model.ActiveSessions)
+            </a>
+            <a asp-page="/Sessions/Index" asp-route-Filter="abandoned" asp-route-Search="@Model.Search" class="polaris-tab-item @(Model.Filter == "abandoned" ? "active" : "")">
+                Terk Edilenler (@Model.AbandonedSessions)
+            </a>
+        </div>
+
+        <form method="get" class="d-flex align-items-center gap-2">
+            <input type="hidden" name="Filter" value="@Model.Filter" />
+            <input type="text" name="Search" value="@Model.Search" class="form-control form-control-sm" style="width: 220px;" placeholder="Kullanıcı veya tema ara..." />
+            <button type="submit" class="polaris-btn polaris-btn-primary polaris-btn-sm">Ara</button>
+            @if (!string.IsNullOrEmpty(Model.Search) || !string.IsNullOrEmpty(Model.Filter))
+            {
+                <a asp-page="/Sessions/Index" class="polaris-btn polaris-btn-secondary polaris-btn-sm">Temizle</a>
+            }
+        </form>
+    </div>
+
+    @if (!Model.Sessions.Any())
+    {
+        <div class="p-5 text-center text-muted">
+            <div class="fw-semibold">Seans kaydı bulunamadı</div>
+            <div class="small mt-1">Filtre kriterlerinizi değiştirmeyi deneyin.</div>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="polaris-table">
+                <thead>
+                    <tr>
+                        <th>Kullanıcı</th>
+                        <th>Hedef Süre</th>
+                        <th>Net Süre</th>
+                        <th>Durum</th>
+                        <th>Tür</th>
+                        <th>Ödül (XP / Coin)</th>
+                        <th>Tema</th>
+                        <th>Başlangıç Zamanı</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var s in Model.Sessions)
+                    {
+                        <tr>
+                            <td class="fw-semibold text-dark">@s.UserName</td>
+                            <td>@s.FocusMinutes dk</td>
+                            <td>
+                                <span class="fw-bold @(s.NetDurationMinutes >= s.FocusMinutes ? "text-success" : "text-dark")">
+                                    @s.NetDurationMinutes dk
+                                </span>
+                            </td>
+                            <td>
+                                @switch (s.Status)
+                                {
+                                    case Focus.Domain.Enums.SessionStatus.Completed:
+                                        <span class="polaris-badge polaris-badge-success">Tamamlandı</span>
+                                        break;
+                                    case Focus.Domain.Enums.SessionStatus.Running:
+                                        <span class="polaris-badge polaris-badge-neutral">Devam Ediyor</span>
+                                        break;
+                                    case Focus.Domain.Enums.SessionStatus.Paused:
+                                        <span class="polaris-badge polaris-badge-warning">Duraklatıldı</span>
+                                        break;
+                                    case Focus.Domain.Enums.SessionStatus.Abandoned:
+                                        <span class="polaris-badge polaris-badge-critical">Terk Edildi</span>
+                                        break;
+                                }
+                            </td>
+                            <td>
+                                <span class="polaris-badge polaris-badge-neutral">@s.Kind</span>
+                            </td>
+                            <td>
+                                <span class="small fw-semibold">+@s.XpEarned XP</span>
+                                <span class="small text-muted">/ +@s.CoinsEarned C</span>
+                            </td>
+                            <td>
+                                <span class="text-secondary small">@(s.ThemeId ?? "Standart")</span>
+                            </td>
+                            <td class="text-muted" style="font-size: 11px;">
+                                @s.StartedAt.ToString("dd.MM.yyyy HH:mm")
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

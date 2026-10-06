@@ -1,0 +1,144 @@
+@page
+@model Focus.Admin.Pages.AiCoach.IndexModel
+@{
+    ViewData["Title"] = "AI Koç & Vektör Bellek";
+}
+
+<div class="admin-page-header">
+    <div>
+        <h1 class="admin-page-title">Yapay Zeka Koç & pgvector Bellek</h1>
+        <p class="admin-page-subtitle">Faz 5 Çift vektörlü RAG hafıza mimarisi, kişisel seans koçluğu ve anonim küresel içgörüler</p>
+    </div>
+    <div>
+        <a asp-page="/Index" class="polaris-btn polaris-btn-secondary">
+            Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- PANEL 1: AI KPI Metrik Kartları -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="polaris-metric-card">
+            <div class="polaris-metric-label">Toplam Vektör Bellek</div>
+            <div class="polaris-metric-value">@Model.TotalMemories.ToString("N0")</div>
+            <div class="polaris-metric-subtext">PostgreSQL pgvector hafıza kayıtları</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="polaris-metric-card">
+            <div class="polaris-metric-label">
+                <span>Global Anonim Havuz</span>
+                <span class="polaris-badge polaris-badge-success">Gizli / Anonim</span>
+            </div>
+            <div class="polaris-metric-value">@Model.GlobalMemories.ToString("N0")</div>
+            <div class="polaris-metric-subtext">Kişisel veri içermeyen ortak model hafızası</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="polaris-metric-card">
+            <div class="polaris-metric-label">
+                <span>Kişisel Kullanıcı Belleği</span>
+                <span class="polaris-badge polaris-badge-neutral">İzole</span>
+            </div>
+            <div class="polaris-metric-value">@Model.PrivateMemories.ToString("N0")</div>
+            <div class="polaris-metric-subtext">Her hesaba özel saklanan alışkanlıklar</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="polaris-metric-card">
+            <div class="polaris-metric-label">Seans Değerlendirmeleri</div>
+            <div class="polaris-metric-value">@Model.TotalReflections.ToString("N0")</div>
+            <div class="polaris-metric-subtext">Kullanıcıların seans sonu geri bildirimleri</div>
+        </div>
+    </div>
+</div>
+
+<!-- PANEL 2 & 3: Filtre Barı ve Vektör Bellek Tablosu Paneli -->
+<div class="polaris-card">
+    <div class="polaris-filter-bar">
+        <div class="polaris-tabs">
+            <a asp-page="/AiCoach/Index" asp-route-Search="@Model.Search" class="polaris-tab-item @(string.IsNullOrEmpty(Model.Filter) ? "active" : "")">
+                Tümü (@Model.TotalMemories)
+            </a>
+            <a asp-page="/AiCoach/Index" asp-route-Filter="global" asp-route-Search="@Model.Search" class="polaris-tab-item @(Model.Filter == "global" ? "active" : "")">
+                Global Anonim (@Model.GlobalMemories)
+            </a>
+            <a asp-page="/AiCoach/Index" asp-route-Filter="private" asp-route-Search="@Model.Search" class="polaris-tab-item @(Model.Filter == "private" ? "active" : "")">
+                Kişisel Özel (@Model.PrivateMemories)
+            </a>
+        </div>
+
+        <form method="get" class="d-flex align-items-center gap-2">
+            <input type="hidden" name="Filter" value="@Model.Filter" />
+            <input type="text" name="Search" value="@Model.Search" class="form-control form-control-sm" style="width: 220px;" placeholder="Bellek içeriği ara..." />
+            <button type="submit" class="polaris-btn polaris-btn-primary polaris-btn-sm">Ara</button>
+            @if (!string.IsNullOrEmpty(Model.Search) || !string.IsNullOrEmpty(Model.Filter))
+            {
+                <a asp-page="/AiCoach/Index" class="polaris-btn polaris-btn-secondary polaris-btn-sm">Temizle</a>
+            }
+        </form>
+    </div>
+
+    @if (!Model.Memories.Any())
+    {
+        <div class="p-5 text-center text-muted">
+            <div class="fw-semibold">Vektör bellek kaydı bulunamadı</div>
+            <div class="small mt-1">Kullanıcılar seans yaptıkça ve AI koçla konuştukça hafıza birikir.</div>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="polaris-table">
+                <thead>
+                    <tr>
+                        <th>Bellek Kapsamı</th>
+                        <th>Kategori</th>
+                        <th>İçerik & Anlamsal Çıkarım</th>
+                        <th>Önem Derecesi</th>
+                        <th>Kullanım</th>
+                        <th>Kayıt Tarihi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var m in Model.Memories)
+                    {
+                        <tr>
+                            <td>
+                                @if (m.IsGlobal)
+                                {
+                                    <span class="polaris-badge polaris-badge-success">Global Havuz</span>
+                                }
+                                else
+                                {
+                                    <div>
+                                        <span class="polaris-badge polaris-badge-neutral">Kişisel</span>
+                                        <div class="text-dark small mt-1 fw-semibold">@m.OwnerName</div>
+                                    </div>
+                                }
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border">@m.Category</span>
+                            </td>
+                            <td>
+                                <div class="text-dark" style="max-width: 500px; white-space: normal;">
+                                    @m.Content
+                                </div>
+                            </td>
+                            <td>
+                                <span class="fw-semibold text-dark">@m.Importance / 5</span>
+                            </td>
+                            <td>
+                                <span class="text-secondary small">@m.UsageCount kez</span>
+                            </td>
+                            <td class="text-muted" style="font-size: 11px;">
+                                @m.CreatedAt.ToString("dd.MM.yyyy HH:mm")
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

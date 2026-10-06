@@ -4,103 +4,245 @@
     ViewData["Title"] = "Dashboard";
 }
 
-<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+<!-- Sayfa Başlığı ve Hızlı Butonlar -->
+<div class="admin-page-header">
     <div>
-        <h4 class="fw-bold mb-0 text-dark">Dashboard</h4>
-        <span class="text-muted small">Kullanıcı verileri ve genel sistem durumu</span>
+        <h1 class="admin-page-title">Dashboard</h1>
+        <p class="admin-page-subtitle">Piksel ekosistemi, odak seansları ve canlı platform durumu</p>
     </div>
     <div class="d-flex gap-2">
-        <a asp-page="/Users/Index" class="btn btn-outline-secondary">Kullanıcılar</a>
-        <a asp-page="/ApiLab/Index" class="btn btn-primary">API Test Konsolu</a>
+        <a asp-page="/Users/Index" class="polaris-btn polaris-btn-secondary">
+            Kullanıcıları Yönet
+        </a>
+        <a asp-page="/Analytics/Index" class="polaris-btn polaris-btn-primary">
+            Detaylı Raporlar
+        </a>
     </div>
 </div>
 
+<!-- PANEL 1: Platform KPI Metrik Kartları (Shopify Polaris Metric Panels) -->
 <div class="row g-3 mb-4">
-    <div class="col-sm-6 col-lg-3">
-        <div class="card card-custom p-3 h-100">
-            <div class="text-muted small text-uppercase fw-semibold mb-2">Toplam Kullanıcı</div>
-            <div class="fs-2 fw-bold text-dark lh-1">@Model.TotalUsers</div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="polaris-metric-card">
+            <div class="polaris-metric-label">
+                <span>Toplam Kullanıcı</span>
+                <span class="polaris-badge polaris-badge-neutral">@Model.Overview.RegisteredUsers Kayıtlı</span>
+            </div>
+            <div class="polaris-metric-value">@Model.Overview.TotalUsers.ToString("N0")</div>
+            <div class="polaris-metric-subtext">
+                <span>@Model.Overview.GuestUsers misafir kullanıcı dahil</span>
+            </div>
         </div>
     </div>
-    <div class="col-sm-6 col-lg-3">
-        <div class="card card-custom p-3 h-100">
-            <div class="text-muted small text-uppercase fw-semibold mb-2">Misafir</div>
-            <div class="fs-2 fw-bold text-dark lh-1">@Model.GuestUsers</div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="polaris-metric-card">
+            <div class="polaris-metric-label">
+                <span>Günlük Aktif (DAU)</span>
+                <span class="polaris-badge polaris-badge-success">Canlı</span>
+            </div>
+            <div class="polaris-metric-value">@Model.Overview.ActiveUsersToday.ToString("N0")</div>
+            <div class="polaris-metric-subtext">
+                <span>Bu hafta: <strong>@Model.Overview.ActiveUsersThisWeek</strong> • Bu ay: <strong>@Model.Overview.ActiveUsersThisMonth</strong></span>
+            </div>
         </div>
     </div>
-    <div class="col-sm-6 col-lg-3">
-        <div class="card card-custom p-3 h-100">
-            <div class="text-muted small text-uppercase fw-semibold mb-2">Kayıtlı</div>
-            <div class="fs-2 fw-bold text-dark lh-1">@Model.RegisteredUsers</div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="polaris-metric-card">
+            <div class="polaris-metric-label">
+                <span>Seans Başarı Oranı</span>
+                <span class="polaris-badge @(Model.Overview.CompletionRate >= 70 ? "polaris-badge-success" : "polaris-badge-warning")">
+                    %@Model.Overview.CompletionRate.ToString("F1")
+                </span>
+            </div>
+            <div class="polaris-metric-value">@Model.Overview.CompletedSessions.ToString("N0")</div>
+            <div class="polaris-metric-subtext">
+                <span>Toplam @Model.Overview.TotalSessions seanstan @Model.Overview.AbandonedSessions terk</span>
+            </div>
         </div>
     </div>
-    <div class="col-sm-6 col-lg-3">
-        <div class="card card-custom p-3 h-100">
-            <div class="text-muted small text-uppercase fw-semibold mb-2">Dolaşımdaki Coin</div>
-            <div class="fs-2 fw-bold text-dark lh-1">@Model.TotalCoinsInCirculation</div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="polaris-metric-card">
+            <div class="polaris-metric-label">
+                <span>Toplam Odaklanma</span>
+                <span class="polaris-badge polaris-badge-neutral">Saat</span>
+            </div>
+            <div class="polaris-metric-value">@((Model.Overview.TotalFocusMinutes / 60.0).ToString("F1"))</div>
+            <div class="polaris-metric-subtext">
+                <span>Toplam @Model.Overview.TotalFocusMinutes.ToString("N0") dakika seans</span>
+            </div>
         </div>
     </div>
 </div>
 
-<div class="card card-custom overflow-hidden">
-    <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-white">
-        <h6 class="fw-bold mb-0 text-dark">Son Kullanıcılar</h6>
-        <a asp-page="/Users/Index" class="text-decoration-none small text-muted">Tümünü Gör &rarr;</a>
+<!-- PANEL 2: Sistem Sağlığı & Altyapı Paneli -->
+<div class="polaris-card mb-4">
+    <div class="polaris-card-header">
+        <h6>Platform Sağlığı ve Dağıtık Telemetri</h6>
+        <span class="polaris-badge polaris-badge-success">Sistemler Normal</span>
+    </div>
+    <div class="polaris-card-body">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="text-muted small">PostgreSQL Veritabanı</div>
+                <div class="fw-bold fs-6 text-dark mt-1">@Model.Health.DatabaseStatus</div>
+                <div class="text-secondary small mt-1">Gecikme: <strong>@Model.Health.DatabaseLatencyMs ms</strong></div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">Redis Önbellek & Hub</div>
+                <div class="fw-bold fs-6 text-dark mt-1">@Model.Health.RedisStatus</div>
+                <div class="text-secondary small mt-1">SignalR ve Dağıtık Durum</div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">Yapay Zeka Vektör Bellek (pgvector)</div>
+                <div class="fw-bold fs-6 text-dark mt-1">@Model.Health.TotalAgentMemories Kayıt</div>
+                <div class="text-secondary small mt-1">@Model.Health.PersonalMemoriesCount Kişisel / @Model.Health.GlobalMemoriesCount Global</div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">Çok Kullanıcılı Çalışma Odaları</div>
+                <div class="fw-bold fs-6 text-dark mt-1">@Model.Health.TotalStudyRooms Toplam</div>
+                <div class="text-secondary small mt-1">@Model.Health.ActiveStudyRooms Oda Aktif</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- PANEL 3 & 4: Son Kullanıcılar & Son Seanslar Tabloları -->
+<div class="row g-4">
+    <!-- Panel 3: Son Kayıt Olan Kullanıcılar -->
+    <div class="col-lg-6">
+        <div class="polaris-card h-100">
+            <div class="polaris-card-header">
+                <h6>Son Kullanıcılar</h6>
+                <a asp-page="/Users/Index" class="polaris-btn polaris-btn-secondary polaris-btn-sm">Tümünü Gör</a>
+            </div>
+            @if (!Model.RecentUsers.Any())
+            {
+                <div class="p-4 text-center text-muted small">
+                    Kayıtlı kullanıcı bulunmuyor.
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="polaris-table">
+                        <thead>
+                            <tr>
+                                <th>Kullanıcı</th>
+                                <th>Tür</th>
+                                <th>Seviye</th>
+                                <th>Coin</th>
+                                <th>Tarih</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var user in Model.RecentUsers)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="avatar-preview-circle">@user.DisplayName.Substring(0, 1).ToUpper()</div>
+                                            <div>
+                                                <div class="fw-semibold">@user.DisplayName</div>
+                                                <div class="text-muted" style="font-size: 11px;">@(user.Email ?? "Misafir Oturumu")</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        @if (user.IsGuest)
+                                        {
+                                            <span class="polaris-badge polaris-badge-warning">Misafir</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="polaris-badge polaris-badge-success">Kayıtlı</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <span class="fw-semibold">Lv.@user.Level</span>
+                                        <span class="text-muted small">(@user.CurrentXp XP)</span>
+                                    </td>
+                                    <td>
+                                        <span class="fw-semibold text-dark">@user.Coins</span>
+                                    </td>
+                                    <td class="text-muted" style="font-size: 11px;">
+                                        @user.CreatedAt.ToString("dd.MM.yyyy HH:mm")
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
     </div>
 
-    @if (!Model.RecentUsers.Any())
-    {
-        <div class="p-4 text-center text-muted small">
-            Henüz kayıtlı bir kullanıcı bulunmuyor.
+    <!-- Panel 4: Son Odak Seansları -->
+    <div class="col-lg-6">
+        <div class="polaris-card h-100">
+            <div class="polaris-card-header">
+                <h6>Son Odak Seansları</h6>
+                <a asp-page="/Sessions/Index" class="polaris-btn polaris-btn-secondary polaris-btn-sm">Tümünü Gör</a>
+            </div>
+            @if (!Model.RecentSessions.Any())
+            {
+                <div class="p-4 text-center text-muted small">
+                    Henüz tamamlanmış veya aktif seans bulunmuyor.
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="polaris-table">
+                        <thead>
+                            <tr>
+                                <th>Kullanıcı</th>
+                                <th>Süre</th>
+                                <th>Durum</th>
+                                <th>Tema</th>
+                                <th>Başlangıç</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var s in Model.RecentSessions)
+                            {
+                                <tr>
+                                    <td class="fw-semibold">@s.UserName</td>
+                                    <td>
+                                        <span>@s.NetDurationMinutes dk</span>
+                                        <span class="text-muted small">/ @s.FocusMinutes dk</span>
+                                    </td>
+                                    <td>
+                                        @switch (s.Status)
+                                        {
+                                            case Focus.Domain.Enums.SessionStatus.Completed:
+                                                <span class="polaris-badge polaris-badge-success">Tamamlandı</span>
+                                                break;
+                                            case Focus.Domain.Enums.SessionStatus.Running:
+                                                <span class="polaris-badge polaris-badge-neutral">Devam Ediyor</span>
+                                                break;
+                                            case Focus.Domain.Enums.SessionStatus.Paused:
+                                                <span class="polaris-badge polaris-badge-warning">Duraklatıldı</span>
+                                                break;
+                                            case Focus.Domain.Enums.SessionStatus.Abandoned:
+                                                <span class="polaris-badge polaris-badge-critical">Terk Edildi</span>
+                                                break;
+                                            default:
+                                                <span class="polaris-badge polaris-badge-warning">@s.Status</span>
+                                                break;
+                                        }
+                                    </td>
+                                    <td>
+                                        <span class="text-muted small">@(s.ThemeId ?? "Standart")</span>
+                                    </td>
+                                    <td class="text-muted" style="font-size: 11px;">
+                                        @s.StartedAt.ToString("dd.MM.yyyy HH:mm")
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
         </div>
-    }
-    else
-    {
-        <div class="table-responsive">
-            <table class="table table-custom mb-0">
-                <thead>
-                    <tr>
-                        <th>Kullanıcı</th>
-                        <th>Hesap Türü</th>
-                        <th>Seviye / XP</th>
-                        <th>Kayıt Tarihi</th>
-                        <th class="text-end">İşlem</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var user in Model.RecentUsers)
-                    {
-                        <tr>
-                            <td>
-                                <div class="fw-semibold text-dark">@user.DisplayName</div>
-                                <div class="small text-muted">@(user.Email ?? "Misafir (E-posta yok)")</div>
-                            </td>
-                            <td>
-                                @if (user.IsGuest)
-                                {
-                                    <span class="badge rounded-pill badge-status-guest">Misafir</span>
-                                }
-                                else
-                                {
-                                    <span class="badge rounded-pill badge-status-registered">Kayıtlı</span>
-                                }
-                            </td>
-                            <td>
-                                <span class="badge rounded-pill badge-status-level">Lvl @user.Level</span>
-                                <span class="small text-muted ms-1">@user.Xp XP</span>
-                            </td>
-                            <td class="text-muted small">
-                                @user.CreatedAt.ToString("dd.MM.yyyy HH:mm")
-                            </td>
-                            <td class="text-end">
-                                <a asp-page="/Users/Index" asp-route-Search="@user.DisplayName" class="btn btn-sm btn-outline-secondary py-1 px-2">
-                                    Detay
-                                </a>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    }
+    </div>
 </div>

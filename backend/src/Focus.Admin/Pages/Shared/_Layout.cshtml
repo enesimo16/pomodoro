@@ -1,119 +1,164 @@
 <!DOCTYPE html>
-<html lang="tr" data-bs-theme="light">
+<html lang="tr">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Yönetim Paneli</title>
+    <title>@ViewData["Title"] - Focus Admin (Shopify Polaris)</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <style>
-        .navbar-custom {
-            background-color: #ffffff;
-            border-bottom: 1px solid #e2e8f0;
-            min-height: 60px;
-        }
-        .navbar-custom .navbar-brand {
-            font-weight: 700;
-            color: #0f172a;
-            font-size: 1.05rem;
-            letter-spacing: -0.02em;
-        }
-        .navbar-custom .nav-link {
-            color: #64748b;
-            font-weight: 500;
-            font-size: 0.9rem;
-            padding: 0.5rem 0.85rem;
-            border-radius: 6px;
-            transition: all 0.15s ease-in-out;
-        }
-        .navbar-custom .nav-link:hover {
-            color: #0f172a;
-            background-color: #f8fafc;
-        }
-        .navbar-custom .nav-link.active {
-            color: #2563eb;
-            background-color: #eff6ff;
-            font-weight: 600;
-        }
-        .footer-custom {
-            background-color: #ffffff;
-            border-top: 1px solid #e2e8f0;
-            color: #64748b;
-            font-size: 0.825rem;
-        }
-        .footer-custom a {
-            color: #64748b;
-            text-decoration: none;
-            transition: color 0.15s ease;
-        }
-        .footer-custom a:hover {
-            color: #0f172a;
-        }
-    </style>
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-lg navbar-custom py-2 shadow-none">
-            <div class="container">
-                <a class="navbar-brand" asp-page="/Index">Yönetim Paneli</a>
-                <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Menüyü aç">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse justify-content-between">
-                    <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-3 gap-1">
-                        <li class="nav-item">
-                            <a class="nav-link" asp-page="/Index">Dashboard</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-page="/Users/Index">Kullanıcılar</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-page="/ApiLab/Index">API Test</a>
-                        </li>
-                    </ul>
-                    <div class="d-flex align-items-center gap-2">
-                        <a href="http://localhost:5000/swagger" target="_blank" class="btn btn-outline-secondary btn-sm">
-                            Swagger API
-                        </a>
-                    </div>
+    <div class="admin-wrapper">
+        <!-- SOL PANEL (Shopify Dark Charcoal Sidebar) -->
+        <aside class="admin-sidebar" id="adminSidebar">
+            <!-- Marka ve Ortam -->
+            <div class="sidebar-brand">
+                <a asp-page="/Index" class="brand-title">
+                    <div class="brand-logo-box">F</div>
+                    <span>FOCUS ADMIN</span>
+                </a>
+                <div class="sidebar-env-badge" title="Sistem Canlı ve Çevrimiçi">
+                    <span class="dot"></span>
+                    <span>CANLI</span>
                 </div>
             </div>
-        </nav>
-    </header>
 
-    <div class="container main-content py-4">
-        <main role="main">
+            <!-- Menü Grupları -->
+            <div class="sidebar-nav-container">
+                <!-- Grup: Genel Bakış -->
+                <div class="sidebar-nav-group">
+                    <div class="sidebar-group-title">GENEL BAKIŞ</div>
+                    <a asp-page="/Index" class="sidebar-nav-item">
+                        <svg viewBox="0 0 24 24" fill="none"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                        <span>Dashboard</span>
+                    </a>
+                    <a asp-page="/Analytics/Index" class="sidebar-nav-item">
+                        <svg viewBox="0 0 24 24" fill="none"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                        <span>Analitik & BI Raporları</span>
+                    </a>
+                </div>
+
+                <!-- Grup: Kullanıcı & Ekosistem -->
+                <div class="sidebar-nav-group">
+                    <div class="sidebar-group-title">KULLANICI & EKOSİSTEM</div>
+                    <a asp-page="/Users/Index" class="sidebar-nav-item">
+                        <svg viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                        <span>Kullanıcı Yönetimi</span>
+                    </a>
+                    <a asp-page="/Sessions/Index" class="sidebar-nav-item">
+                        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        <span>Odak Seansları</span>
+                    </a>
+                    <a asp-page="/StudyRooms/Index" class="sidebar-nav-item">
+                        <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                        <span>Odalar & Kütüphane</span>
+                    </a>
+                    <a asp-page="/Guestbook/Index" class="sidebar-nav-item">
+                        <svg viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                        <span>Ziyaretçi Defteri & İkram</span>
+                    </a>
+                </div>
+
+                <!-- Grup: Ekonomi & Mağaza -->
+                <div class="sidebar-nav-group">
+                    <div class="sidebar-group-title">EKONOMİ & MAĞAZA</div>
+                    <a asp-page="/Shop/Index" class="sidebar-nav-item">
+                        <svg viewBox="0 0 24 24" fill="none"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+                        <span>Mağaza Kataloğu</span>
+                    </a>
+                    <a asp-page="/Economy/Index" class="sidebar-nav-item">
+                        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10"></circle><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"></path><line x1="12" y1="6" x2="12" y2="8"></line><line x1="12" y1="16" x2="12" y2="18"></line></svg>
+                        <span>Coin Muhasebesi</span>
+                    </a>
+                </div>
+
+                <!-- Grup: Yapay Zeka & Hafıza -->
+                <div class="sidebar-nav-group">
+                    <div class="sidebar-group-title">YAPAY ZEKA & İÇGÖRÜ</div>
+                    <a asp-page="/AiCoach/Index" class="sidebar-nav-item">
+                        <svg viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="14" x2="23" y2="14"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="14" x2="4" y2="14"></line></svg>
+                        <span>AI Koç & Vektör Bellek</span>
+                    </a>
+                </div>
+
+                <!-- Grup: Sistem & Araçlar -->
+                <div class="sidebar-nav-group">
+                    <div class="sidebar-group-title">GELİŞTİRİCİ & SİSTEM</div>
+                    <a asp-page="/ApiLab/Index" class="sidebar-nav-item">
+                        <svg viewBox="0 0 24 24" fill="none"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+                        <span>API Test Konsolu</span>
+                    </a>
+                    <a href="http://localhost:5000/swagger" target="_blank" class="sidebar-nav-item">
+                        <svg viewBox="0 0 24 24" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                        <span>Swagger UI API</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Alt Profil Kutusu -->
+            <div class="sidebar-footer">
+                <div class="sidebar-user-avatar">A</div>
+                <div class="sidebar-user-info">
+                    <div class="sidebar-user-name">Sistem Yöneticisi</div>
+                    <div class="sidebar-user-role">admin@focus.local</div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ÜST PANEL (Shopify Crisp Header) -->
+        <header class="admin-header">
+            <!-- Sol: Arama Kutusu -->
+            <div class="header-search-container">
+                <svg class="header-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" class="header-search-input" placeholder="Kullanıcı, oda veya eşya ara..." id="globalSearchInput" />
+                <span class="header-search-shortcut">⌘K</span>
+            </div>
+
+            <!-- Sağ: Canlı Telemetri ve Göstergeler -->
+            <div class="header-actions-right">
+                <!-- Canlı Sistem Göstergesi -->
+                <div class="header-status-pill" title="Sistem bileşenleri sağlıklı ve çalışıyor">
+                    <span class="pulse-indicator"></span>
+                    <span>PostgreSQL & Redis: <strong>Sağlıklı</strong></span>
+                </div>
+
+                <!-- Hızlı Butonlar -->
+                <a href="http://localhost:5000/swagger" target="_blank" class="polaris-btn polaris-btn-secondary polaris-btn-sm">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                    Swagger
+                </a>
+                <a asp-page="/ApiLab/Index" class="polaris-btn polaris-btn-primary polaris-btn-sm">
+                    API Lab
+                </a>
+            </div>
+        </header>
+
+        <!-- ANA İÇERİK ALANI (Shopify Kirli Beyaz Canvas) -->
+        <main class="admin-main" role="main">
             @RenderBody()
         </main>
     </div>
 
-    <footer class="footer-custom py-3 mt-auto">
-        <div class="container d-flex flex-wrap justify-content-between align-items-center">
-            <div>
-                <span>Sistem Yönetim & Test Portalı &copy; 2026</span>
-            </div>
-            <div class="d-flex gap-3">
-                <a asp-page="/Index">Dashboard</a>
-                <a asp-page="/Users/Index">Kullanıcılar</a>
-                <a asp-page="/ApiLab/Index">API Test</a>
-                <a href="http://localhost:5000/swagger" target="_blank">Swagger</a>
-            </div>
-        </div>
-    </footer>
-
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Sayfa adresine gore aktif nav-link belirleme
+        // Aktif Navigasyon Belirleme
         document.addEventListener('DOMContentLoaded', () => {
             const currentPath = window.location.pathname.toLowerCase();
-            document.querySelectorAll('.navbar-custom .nav-link').forEach(link => {
+            document.querySelectorAll('.sidebar-nav-item').forEach(link => {
                 const href = link.getAttribute('href')?.toLowerCase() || '';
                 if (href === currentPath || (currentPath.startsWith(href) && href !== '/')) {
                     link.classList.add('active');
-                } else if (currentPath === '/' && href === '/') {
+                } else if ((currentPath === '/' || currentPath === '/index') && (href === '/' || href === '/index')) {
                     link.classList.add('active');
+                }
+            });
+
+            // Global Arama Kısayolu (Ctrl+K veya Cmd+K)
+            document.addEventListener('keydown', (e) => {
+                if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+                    e.preventDefault();
+                    document.getElementById('globalSearchInput')?.focus();
                 }
             });
         });

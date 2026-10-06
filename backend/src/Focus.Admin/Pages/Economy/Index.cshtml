@@ -1,0 +1,129 @@
+@page
+@model Focus.Admin.Pages.Economy.IndexModel
+@{
+    ViewData["Title"] = "Coin Muhasebesi";
+}
+
+<div class="admin-page-header">
+    <div>
+        <h1 class="admin-page-title">Coin Muhasebe Defteri</h1>
+        <p class="admin-page-subtitle">Focus Coin para basımı, harcamalar, mağaza işlemleri ve enflasyon denetimi</p>
+    </div>
+    <div>
+        <a asp-page="/Index" class="polaris-btn polaris-btn-secondary">
+            Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- PANEL 1: Ekonomi KPI Metrik Kartları -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="polaris-metric-card">
+            <div class="polaris-metric-label">Dolaşımdaki Coin</div>
+            <div class="polaris-metric-value">@Model.CirculatingCoins.ToString("N0")</div>
+            <div class="polaris-metric-subtext">Kullanıcı cüzdanlarındaki aktif para</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="polaris-metric-card">
+            <div class="polaris-metric-label">
+                <span>Toplam Kazanılan</span>
+                <span class="polaris-badge polaris-badge-success">Emisyon</span>
+            </div>
+            <div class="polaris-metric-value text-success">+@Model.TotalEarned.ToString("N0")</div>
+            <div class="polaris-metric-subtext">Seans ve streak ödülleri</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="polaris-metric-card">
+            <div class="polaris-metric-label">
+                <span>Toplam Harcanan</span>
+                <span class="polaris-badge polaris-badge-critical">Tüketim</span>
+            </div>
+            <div class="polaris-metric-value text-danger">-@Model.TotalSpent.ToString("N0")</div>
+            <div class="polaris-metric-subtext">Mağaza ve kalkan harcamaları</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="polaris-metric-card">
+            <div class="polaris-metric-label">Toplam İşlem Adedi</div>
+            <div class="polaris-metric-value">@Model.TotalTransactions.ToString("N0")</div>
+            <div class="polaris-metric-subtext">Deftere kaydedilen işlem sayısı</div>
+        </div>
+    </div>
+</div>
+
+<!-- PANEL 2 & 3: Filtre Barı ve Ledger Tablosu Paneli -->
+<div class="polaris-card">
+    <div class="polaris-filter-bar">
+        <div class="polaris-tabs">
+            <a asp-page="/Economy/Index" asp-route-Search="@Model.Search" class="polaris-tab-item @(string.IsNullOrEmpty(Model.Filter) ? "active" : "")">
+                Tümü (@Model.TotalTransactions)
+            </a>
+            <a asp-page="/Economy/Index" asp-route-Filter="earned" asp-route-Search="@Model.Search" class="polaris-tab-item @(Model.Filter == "earned" ? "active" : "")">
+                Kazanılanlar (+)
+            </a>
+            <a asp-page="/Economy/Index" asp-route-Filter="spent" asp-route-Search="@Model.Search" class="polaris-tab-item @(Model.Filter == "spent" ? "active" : "")">
+                Harcananlar (-)
+            </a>
+        </div>
+
+        <form method="get" class="d-flex align-items-center gap-2">
+            <input type="hidden" name="Filter" value="@Model.Filter" />
+            <input type="text" name="Search" value="@Model.Search" class="form-control form-control-sm" style="width: 220px;" placeholder="Gerekçe ara..." />
+            <button type="submit" class="polaris-btn polaris-btn-primary polaris-btn-sm">Ara</button>
+            @if (!string.IsNullOrEmpty(Model.Search) || !string.IsNullOrEmpty(Model.Filter))
+            {
+                <a asp-page="/Economy/Index" class="polaris-btn polaris-btn-secondary polaris-btn-sm">Temizle</a>
+            }
+        </form>
+    </div>
+
+    @if (!Model.Entries.Any())
+    {
+        <div class="p-5 text-center text-muted">
+            <div class="fw-semibold">Muhasebe kaydı bulunamadı</div>
+            <div class="small mt-1">Filtre kriterlerinizi değiştirmeyi deneyin.</div>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="polaris-table">
+                <thead>
+                    <tr>
+                        <th>Kullanıcı</th>
+                        <th>İşlem Miktarı</th>
+                        <th>Gerekçe / Açıklama</th>
+                        <th>İşlem Tarihi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var entry in Model.Entries)
+                    {
+                        <tr>
+                            <td class="fw-semibold text-dark">@entry.UserName</td>
+                            <td>
+                                @if (entry.Coins >= 0)
+                                {
+                                    <span class="polaris-badge polaris-badge-success">+@entry.Coins Coin</span>
+                                }
+                                else
+                                {
+                                    <span class="polaris-badge polaris-badge-critical">@entry.Coins Coin</span>
+                                }
+                            </td>
+                            <td>
+                                <span class="text-secondary">@entry.Reason</span>
+                            </td>
+                            <td class="text-muted" style="font-size: 11px;">
+                                @entry.CreatedAt.ToString("dd.MM.yyyy HH:mm:ss")
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

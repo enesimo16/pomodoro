@@ -1,0 +1,233 @@
+@page
+@model Focus.Admin.Pages.Shop.IndexModel
+@{
+    ViewData["Title"] = "Mağaza Kataloğu";
+}
+
+<div class="admin-page-header">
+    <div>
+        <h1 class="admin-page-title">Mağaza Kataloğu & Eşyalar</h1>
+        <p class="admin-page-subtitle">Piksel oda dekorasyonları, mobilyalar, kıyafetler ve fiyatlandırma yönetimi</p>
+    </div>
+    <div class="d-flex gap-2">
+        <button type="button" class="polaris-btn polaris-btn-primary" data-bs-toggle="modal" data-bs-target="#createItemModal">
+            + Yeni Eşya Ekle
+        </button>
+        <a asp-page="/Index" class="polaris-btn polaris-btn-secondary">
+            Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- PANEL 1: Mağaza KPI Metrik Kartları -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="polaris-metric-card">
+            <div class="polaris-metric-label">Toplam Katalog Eşyası</div>
+            <div class="polaris-metric-value">@Model.TotalItems.ToString("N0")</div>
+            <div class="polaris-metric-subtext">Listelenen tüm ürünler</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="polaris-metric-card">
+            <div class="polaris-metric-label">
+                <span>Oda Mobilyaları</span>
+                <span class="polaris-badge polaris-badge-neutral">Dekor</span>
+            </div>
+            <div class="polaris-metric-value">@Model.FurnitureCount.ToString("N0")</div>
+            <div class="polaris-metric-subtext">Masa, koltuk, duvar ve zemin</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="polaris-metric-card">
+            <div class="polaris-metric-label">
+                <span>Kıyafet & Aksesuar</span>
+                <span class="polaris-badge polaris-badge-neutral">Avatar</span>
+            </div>
+            <div class="polaris-metric-value">@Model.ClothingCount.ToString("N0")</div>
+            <div class="polaris-metric-subtext">Karakter özelleştirme ürünleri</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="polaris-metric-card">
+            <div class="polaris-metric-label">Toplam Satın Alınan</div>
+            <div class="polaris-metric-value">@Model.TotalPurchasedUnits.ToString("N0") Adet</div>
+            <div class="polaris-metric-subtext">Kullanıcı envanterlerine eklenen</div>
+        </div>
+    </div>
+</div>
+
+<!-- PANEL 2 & 3: Filtre Barı ve Katalog Tablosu Paneli -->
+<div class="polaris-card">
+    <div class="polaris-filter-bar">
+        <div class="polaris-tabs">
+            <a asp-page="/Shop/Index" asp-route-Search="@Model.Search" class="polaris-tab-item @(string.IsNullOrEmpty(Model.Filter) ? "active" : "")">
+                Tümü (@Model.TotalItems)
+            </a>
+            <a asp-page="/Shop/Index" asp-route-Filter="furniture" asp-route-Search="@Model.Search" class="polaris-tab-item @(Model.Filter == "furniture" ? "active" : "")">
+                Mobilyalar (@Model.FurnitureCount)
+            </a>
+            <a asp-page="/Shop/Index" asp-route-Filter="clothing" asp-route-Search="@Model.Search" class="polaris-tab-item @(Model.Filter == "clothing" ? "active" : "")">
+                Kıyafet & Aksesuar (@Model.ClothingCount)
+            </a>
+        </div>
+
+        <form method="get" class="d-flex align-items-center gap-2">
+            <input type="hidden" name="Filter" value="@Model.Filter" />
+            <input type="text" name="Search" value="@Model.Search" class="form-control form-control-sm" style="width: 220px;" placeholder="Eşya adı veya kod ara..." />
+            <button type="submit" class="polaris-btn polaris-btn-primary polaris-btn-sm">Ara</button>
+            @if (!string.IsNullOrEmpty(Model.Search) || !string.IsNullOrEmpty(Model.Filter))
+            {
+                <a asp-page="/Shop/Index" class="polaris-btn polaris-btn-secondary polaris-btn-sm">Temizle</a>
+            }
+        </form>
+    </div>
+
+    @if (!Model.Items.Any())
+    {
+        <div class="p-5 text-center text-muted">
+            <div class="fw-semibold">Eşya bulunamadı</div>
+            <div class="small mt-1">Filtre kriterlerinizi değiştirmeyi deneyin.</div>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="polaris-table">
+                <thead>
+                    <tr>
+                        <th>Eşya Kodu & Adı</th>
+                        <th>Kategori</th>
+                        <th>Tier</th>
+                        <th>Gerekli Seviye</th>
+                        <th>Fiyat</th>
+                        <th>Boyut (Grid)</th>
+                        <th>Satış Adedi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td>
+                                <div>
+                                    <span class="fw-semibold text-dark">@item.Name</span>
+                                    <div class="text-muted small font-monospace">@item.Id</div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="polaris-badge polaris-badge-neutral">@item.Category</span>
+                            </td>
+                            <td>
+                                @switch (item.Tier)
+                                {
+                                    case Focus.Domain.Enums.CatalogTier.Free:
+                                        <span class="polaris-badge polaris-badge-success">Ücretsiz</span>
+                                        break;
+                                    case Focus.Domain.Enums.CatalogTier.LevelLocked:
+                                        <span class="polaris-badge polaris-badge-warning">Seviye Kilitli</span>
+                                        break;
+                                    case Focus.Domain.Enums.CatalogTier.ProOnly:
+                                        <span class="polaris-badge polaris-badge-critical">Pro Özel</span>
+                                        break;
+                                }
+                            </td>
+                            <td>
+                                <span class="fw-semibold text-dark">Lv.@item.RequiredLevel</span>
+                            </td>
+                            <td>
+                                <span class="fw-bold text-dark">@item.CoinPrice.ToString("N0")</span>
+                                <span class="text-muted small">Coin</span>
+                            </td>
+                            <td>
+                                <span class="text-secondary small">@(item.GridWidth)x@(item.GridHeight)</span>
+                            </td>
+                            <td>
+                                <span class="fw-semibold">@item.PurchaseCount</span>
+                                <span class="text-muted small">kez satıldı</span>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+<!-- Yeni Eşya Ekleme Modalı -->
+<div class="modal fade" id="createItemModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom">
+                <h6 class="modal-title fw-bold">Yeni Katalog Eşyası Ekle</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+            </div>
+            <form method="post" asp-page-handler="CreateItem">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Eşya Benzersiz ID (Örn: desk_retro_oak)</label>
+                        <input type="text" name="id" class="form-control form-control-sm font-monospace" required placeholder="desk_oak_01" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Eşya Görünür Adı</label>
+                        <input type="text" name="name" class="form-control form-control-sm" required placeholder="Meşe Çalışma Masası" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Açıklama</label>
+                        <input type="text" name="description" class="form-control form-control-sm" placeholder="Retro ahşap masa..." />
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold">Kategori</label>
+                            <select name="category" class="form-select form-select-sm">
+                                <option value="Desk">Masa (Desk)</option>
+                                <option value="Chair">Sandalye (Chair)</option>
+                                <option value="Furniture">Mobilya (Furniture)</option>
+                                <option value="Clothing">Kıyafet (Clothing)</option>
+                                <option value="Accessory">Aksesuar (Accessory)</option>
+                                <option value="Wallpaper">Duvar Kağıdı</option>
+                                <option value="Floor">Zemin Kaplama</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold">Erişim Türü (Tier)</label>
+                            <select name="tier" class="form-select form-select-sm">
+                                <option value="Free">Ücretsiz (Free)</option>
+                                <option value="LevelLocked" selected>Seviye Kilitli (LevelLocked)</option>
+                                <option value="ProOnly">Yalnızca Pro (ProOnly)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold">Fiyat (Coin)</label>
+                            <input type="number" name="coinPrice" class="form-control form-control-sm" value="50" min="0" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold">Gerekli Seviye (Lv)</label>
+                            <input type="number" name="requiredLevel" class="form-control form-control-sm" value="1" min="1" />
+                        </div>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold">Grid Genişlik (X)</label>
+                            <input type="number" name="gridWidth" class="form-control form-control-sm" value="1" min="1" max="4" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold">Grid Yükseklik (Y)</label>
+                            <input type="number" name="gridHeight" class="form-control form-control-sm" value="1" min="1" max="4" />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Sprite / Görsel Yolu</label>
+                        <input type="text" name="spriteUrl" class="form-control form-control-sm" placeholder="/assets/items/desk_oak.png" />
+                    </div>
+                </div>
+                <div class="modal-footer border-top p-3">
+                    <button type="button" class="polaris-btn polaris-btn-secondary polaris-btn-sm" data-bs-dismiss="modal">İptal</button>
+                    <button type="submit" class="polaris-btn polaris-btn-primary polaris-btn-sm">Kataloğa Ekle</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

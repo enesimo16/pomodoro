@@ -1,0 +1,146 @@
+@page
+@model Focus.Admin.Pages.StudyRooms.IndexModel
+@{
+    ViewData["Title"] = "Odalar & Kütüphaneler";
+}
+
+<div class="admin-page-header">
+    <div>
+        <h1 class="admin-page-title">Çalışma Odaları & Kütüphane</h1>
+        <p class="admin-page-subtitle">Faz 4 Habbo tarzı sosyal çalışma alanları, arkadaş odaları ve genel kütüphaneler</p>
+    </div>
+    <div>
+        <a asp-page="/Index" class="polaris-btn polaris-btn-secondary">
+            Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- PANEL 1: Oda KPI Metrik Kartları -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="polaris-metric-card">
+            <div class="polaris-metric-label">Toplam Oda</div>
+            <div class="polaris-metric-value">@Model.TotalRooms.ToString("N0")</div>
+            <div class="polaris-metric-subtext">Açılmış tüm çalışma odaları</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="polaris-metric-card">
+            <div class="polaris-metric-label">
+                <span>Arkadaş Odaları</span>
+                <span class="polaris-badge polaris-badge-neutral">Özel</span>
+            </div>
+            <div class="polaris-metric-value">@Model.PrivateRooms.ToString("N0")</div>
+            <div class="polaris-metric-subtext">2-4 kişilik odak evleri</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="polaris-metric-card">
+            <div class="polaris-metric-label">
+                <span>Kütüphane Odaları</span>
+                <span class="polaris-badge polaris-badge-success">Genel</span>
+            </div>
+            <div class="polaris-metric-value">@Model.LibraryRooms.ToString("N0")</div>
+            <div class="polaris-metric-subtext">Sabit temalı halka açık salonlar</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="polaris-metric-card">
+            <div class="polaris-metric-label">Oda İçi Aktif Üyeler</div>
+            <div class="polaris-metric-value">@Model.TotalActiveMembers.ToString("N0")</div>
+            <div class="polaris-metric-subtext">Masa işgal eden kullanıcı sayısı</div>
+        </div>
+    </div>
+</div>
+
+<!-- PANEL 2 & 3: Filtre Barı ve Oda Listesi Tablosu Paneli -->
+<div class="polaris-card">
+    <div class="polaris-filter-bar">
+        <div class="polaris-tabs">
+            <a asp-page="/StudyRooms/Index" asp-route-Search="@Model.Search" class="polaris-tab-item @(string.IsNullOrEmpty(Model.Filter) ? "active" : "")">
+                Tümü (@Model.TotalRooms)
+            </a>
+            <a asp-page="/StudyRooms/Index" asp-route-Filter="private" asp-route-Search="@Model.Search" class="polaris-tab-item @(Model.Filter == "private" ? "active" : "")">
+                Özel Odalar (@Model.PrivateRooms)
+            </a>
+            <a asp-page="/StudyRooms/Index" asp-route-Filter="library" asp-route-Search="@Model.Search" class="polaris-tab-item @(Model.Filter == "library" ? "active" : "")">
+                Genel Kütüphaneler (@Model.LibraryRooms)
+            </a>
+        </div>
+
+        <form method="get" class="d-flex align-items-center gap-2">
+            <input type="hidden" name="Filter" value="@Model.Filter" />
+            <input type="text" name="Search" value="@Model.Search" class="form-control form-control-sm" style="width: 220px;" placeholder="Oda kodu veya başlık ara..." />
+            <button type="submit" class="polaris-btn polaris-btn-primary polaris-btn-sm">Ara</button>
+            @if (!string.IsNullOrEmpty(Model.Search) || !string.IsNullOrEmpty(Model.Filter))
+            {
+                <a asp-page="/StudyRooms/Index" class="polaris-btn polaris-btn-secondary polaris-btn-sm">Temizle</a>
+            }
+        </form>
+    </div>
+
+    @if (!Model.Rooms.Any())
+    {
+        <div class="p-5 text-center text-muted">
+            <div class="fw-semibold">Oda bulunamadı</div>
+            <div class="small mt-1">Filtre kriterlerinizi değiştirmeyi deneyin.</div>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="polaris-table">
+                <thead>
+                    <tr>
+                        <th>Oda Kodu</th>
+                        <th>Başlık</th>
+                        <th>Tür</th>
+                        <th>Doluluk Oranı</th>
+                        <th>Oda Sahibi</th>
+                        <th>Açılış Tarihi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var r in Model.Rooms)
+                    {
+                        <tr>
+                            <td>
+                                <span class="badge bg-light text-dark border font-monospace">@r.Code</span>
+                            </td>
+                            <td>
+                                <div class="fw-semibold text-dark">@r.Name</div>
+                                @if (!string.IsNullOrEmpty(r.Description))
+                                {
+                                    <div class="text-muted small">@r.Description</div>
+                                }
+                            </td>
+                            <td>
+                                @if (r.Type == Focus.Domain.Enums.StudyRoomType.PublicLibrary)
+                                {
+                                    <span class="polaris-badge polaris-badge-success">Kütüphane</span>
+                                }
+                                else
+                                {
+                                    <span class="polaris-badge polaris-badge-neutral">Özel Arkadaş Odası</span>
+                                }
+                            </td>
+                            <td>
+                                <span class="fw-bold @(r.CurrentMembers >= r.MaxCapacity ? "text-danger" : "text-dark")">
+                                    @r.CurrentMembers / @r.MaxCapacity
+                                </span>
+                                <span class="text-muted small">kişi</span>
+                            </td>
+                            <td>
+                                <span class="text-secondary small">@r.OwnerName</span>
+                            </td>
+                            <td class="text-muted" style="font-size: 11px;">
+                                @r.CreatedAt.ToString("dd.MM.yyyy HH:mm")
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

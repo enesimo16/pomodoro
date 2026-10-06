@@ -1,55 +1,102 @@
 @page
 @model Focus.Admin.Pages.Users.IndexModel
 @{
-    ViewData["Title"] = "Kullanıcılar";
+    ViewData["Title"] = "Kullanıcı Yönetimi";
 }
 
-<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+<!-- Sayfa Başlığı -->
+<div class="admin-page-header">
     <div>
-        <h4 class="fw-bold mb-0 text-dark">Kullanıcılar</h4>
-        <span class="text-muted small">Tüm misafir ve kayıtlı hesapların detayları</span>
+        <h1 class="admin-page-title">Kullanıcı Yönetimi</h1>
+        <p class="admin-page-subtitle">Piksel ev sakinleri, avatarlar, seviyeler ve coin bakiyeleri</p>
     </div>
-    <a asp-page="/ApiLab/Index" class="btn btn-primary">API Test Konsolu</a>
+    <div>
+        <a asp-page="/Index" class="polaris-btn polaris-btn-secondary">
+            Dashboard
+        </a>
+    </div>
 </div>
 
-<div class="card card-custom p-3 mb-4">
-    <form method="get" class="row g-2 align-items-center">
-        <div class="col-md-6">
-            <input type="text" name="Search" value="@Model.Search" class="form-control" placeholder="Kullanıcı adı veya e-posta ile arayın..." />
+<!-- PANEL 1: Kullanıcı Özet KPI Panelleri -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="polaris-metric-card">
+            <div class="polaris-metric-label">Toplam Hesap</div>
+            <div class="polaris-metric-value">@Model.TotalCount.ToString("N0")</div>
+            <div class="polaris-metric-subtext">Sistemde oluşturulan tüm profiller</div>
         </div>
-        <div class="col-md-3">
-            <select name="Filter" class="form-select">
-                <option value="">Tüm Kullanıcılar</option>
-                <option value="guest" selected="@(Model.Filter == "guest")">Yalnızca Misafirler</option>
-                <option value="registered" selected="@(Model.Filter == "registered")">Yalnızca Kayıtlılar</option>
-            </select>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="polaris-metric-card">
+            <div class="polaris-metric-label">Kayıtlı Kullanıcı</div>
+            <div class="polaris-metric-value">@Model.RegisteredCount.ToString("N0")</div>
+            <div class="polaris-metric-subtext">E-posta ve şifreli hesaplar</div>
         </div>
-        <div class="col-md-3 d-flex gap-2">
-            <button type="submit" class="btn btn-primary flex-fill">Filtrele</button>
-            <a asp-page="/Users/Index" class="btn btn-outline-secondary">Sıfırla</a>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="polaris-metric-card">
+            <div class="polaris-metric-label">Misafir Hesap</div>
+            <div class="polaris-metric-value">@Model.GuestCount.ToString("N0")</div>
+            <div class="polaris-metric-subtext">Anonim oturumlar</div>
         </div>
-    </form>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="polaris-metric-card">
+            <div class="polaris-metric-label">Kullanıcı Bakiyeleri</div>
+            <div class="polaris-metric-value">@Model.TotalCoins.ToString("N0")</div>
+            <div class="polaris-metric-subtext">Kullanıcıların cüzdanlarındaki coin</div>
+        </div>
+    </div>
 </div>
 
-<div class="card card-custom overflow-hidden">
+<!-- PANEL 2 & 3: Filtre Barı ve Kullanıcı Veri Tablosu Paneli -->
+<div class="polaris-card">
+    <!-- Shopify Polaris Filtre Barı -->
+    <div class="polaris-filter-bar">
+        <div class="polaris-tabs">
+            <a asp-page="/Users/Index" asp-route-Search="@Model.Search" class="polaris-tab-item @(string.IsNullOrEmpty(Model.Filter) ? "active" : "")">
+                Tümü (@Model.TotalCount)
+            </a>
+            <a asp-page="/Users/Index" asp-route-Filter="registered" asp-route-Search="@Model.Search" class="polaris-tab-item @(Model.Filter == "registered" ? "active" : "")">
+                Kayıtlılar (@Model.RegisteredCount)
+            </a>
+            <a asp-page="/Users/Index" asp-route-Filter="guest" asp-route-Search="@Model.Search" class="polaris-tab-item @(Model.Filter == "guest" ? "active" : "")">
+                Misafirler (@Model.GuestCount)
+            </a>
+        </div>
+
+        <form method="get" class="d-flex align-items-center gap-2">
+            <input type="hidden" name="Filter" value="@Model.Filter" />
+            <input type="text" name="Search" value="@Model.Search" class="form-control form-control-sm" style="width: 240px;" placeholder="İsim veya e-posta ara..." />
+            <button type="submit" class="polaris-btn polaris-btn-primary polaris-btn-sm">Ara</button>
+            @if (!string.IsNullOrEmpty(Model.Search) || !string.IsNullOrEmpty(Model.Filter))
+            {
+                <a asp-page="/Users/Index" class="polaris-btn polaris-btn-secondary polaris-btn-sm">Temizle</a>
+            }
+        </form>
+    </div>
+
+    <!-- Veri Tablosu -->
     @if (!Model.Users.Any())
     {
-        <div class="p-4 text-center text-muted small">
-            Arama kriterine uygun kullanıcı bulunamadı.
+        <div class="p-5 text-center text-muted">
+            <div class="fw-semibold">Kullanıcı bulunamadı</div>
+            <div class="small mt-1">Arama veya filtre kriterlerinizi değiştirmeyi deneyin.</div>
         </div>
     }
     else
     {
         <div class="table-responsive">
-            <table class="table table-custom mb-0">
+            <table class="polaris-table">
                 <thead>
                     <tr>
                         <th>Kullanıcı</th>
                         <th>Hesap Türü</th>
-                        <th>Oda Adı</th>
                         <th>Seviye / XP</th>
-                        <th>Coin</th>
+                        <th>Focus Coin</th>
+                        <th>Oda Adı</th>
                         <th>Kayıt Tarihi</th>
+                        <th class="text-end">İşlemler</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -57,31 +104,80 @@
                     {
                         <tr>
                             <td>
-                                <div class="fw-semibold text-dark">@user.DisplayName</div>
-                                <div class="small text-muted">@(user.Email ?? "Misafir (E-posta yok)")</div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="avatar-preview-circle">@user.DisplayName.Substring(0, 1).ToUpper()</div>
+                                    <div>
+                                        <div class="fw-semibold text-dark">@user.DisplayName</div>
+                                        <div class="text-muted" style="font-size: 11px;">@(user.Email ?? "Misafir Oturumu")</div>
+                                    </div>
+                                </div>
                             </td>
                             <td>
                                 @if (user.IsGuest)
                                 {
-                                    <span class="badge rounded-pill badge-status-guest">Misafir</span>
+                                    <span class="polaris-badge polaris-badge-warning">Misafir</span>
                                 }
                                 else
                                 {
-                                    <span class="badge rounded-pill badge-status-registered">Kayıtlı</span>
+                                    <span class="polaris-badge polaris-badge-success">Kayıtlı</span>
                                 }
                             </td>
                             <td>
-                                <span class="text-dark">@(user.RoomName ?? "-")</span>
+                                <span class="fw-semibold text-dark">Lv.@user.Level</span>
+                                <span class="text-muted small">(@user.Xp.ToString("N0") XP)</span>
                             </td>
                             <td>
-                                <span class="badge rounded-pill badge-status-level">Lvl @user.Level</span>
-                                <span class="small text-muted ms-1">@user.Xp XP</span>
+                                <span class="fw-bold text-dark">@user.Coins.ToString("N0")</span>
                             </td>
                             <td>
-                                <span class="fw-semibold text-dark">@user.Coins</span>
+                                <span class="text-secondary small">@(user.RoomName ?? "Varsayılan Oda")</span>
                             </td>
-                            <td class="text-muted small">
+                            <td class="text-muted" style="font-size: 11px;">
                                 @user.CreatedAt.ToString("dd.MM.yyyy HH:mm")
+                            </td>
+                            <td class="text-end">
+                                <button type="button" class="polaris-btn polaris-btn-secondary polaris-btn-sm" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#userModal-@user.Id">
+                                    Yönet
+                                </button>
+
+                                <!-- Kullanıcı Yönetim Modalı -->
+                                <div class="modal fade text-start" id="userModal-@user.Id" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content border-0 shadow">
+                                            <div class="modal-header border-bottom">
+                                                <h6 class="modal-title fw-bold">@user.DisplayName Yönetimi</h6>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                                            </div>
+                                            <div class="modal-body p-4">
+                                                <!-- Coin Ekleme Formu -->
+                                                <form method="post" asp-page-handler="GrantCoins" class="mb-4">
+                                                    <input type="hidden" name="userId" value="@user.Id" />
+                                                    <label class="form-label fw-semibold small">Coin Bakiyesi Ayarla (+/-)</label>
+                                                    <div class="input-group mb-2">
+                                                        <input type="number" name="amount" class="form-control form-control-sm" placeholder="Miktar (örn: 100 veya -50)" required />
+                                                        <input type="text" name="reason" class="form-control form-control-sm" placeholder="Gerekçe (İsteğe bağlı)" />
+                                                        <button type="submit" class="polaris-btn polaris-btn-primary polaris-btn-sm">Uygula</button>
+                                                    </div>
+                                                    <div class="form-text small">Mevcut bakiye: <strong>@user.Coins Coin</strong></div>
+                                                </form>
+
+                                                <hr class="my-3" />
+
+                                                <!-- XP Ekleme Formu -->
+                                                <form method="post" asp-page-handler="AddXp">
+                                                    <input type="hidden" name="userId" value="@user.Id" />
+                                                    <label class="form-label fw-semibold small">Deneyim Puanı Ekle (XP)</label>
+                                                    <div class="input-group">
+                                                        <input type="number" name="xp" class="form-control form-control-sm" placeholder="Miktar (örn: 500)" min="1" required />
+                                                        <button type="submit" class="polaris-btn polaris-btn-secondary polaris-btn-sm">XP Tanımla</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </td>
                         </tr>
                     }

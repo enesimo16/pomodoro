@@ -1,0 +1,170 @@
+@page
+@model Focus.Admin.Pages.Guestbook.IndexModel
+@{
+    ViewData["Title"] = "Ziyaretçi Defteri & Bildirimler";
+}
+
+<div class="admin-page-header">
+    <div>
+        <h1 class="admin-page-title">Ziyaretçi Defteri, İkramlar & Bildirimler</h1>
+        <p class="admin-page-subtitle">Faz 6 Odalara bırakılan hatıra notları, sessiz ikramlar ve kullanıcı bildirim akışı</p>
+    </div>
+    <div>
+        <a asp-page="/Index" class="polaris-btn polaris-btn-secondary">
+            Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- PANEL 1: Ziyaretçi Defteri & Bildirim KPI Metrik Kartları -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="polaris-metric-card">
+            <div class="polaris-metric-label">Toplam Ziyaretçi Notu</div>
+            <div class="polaris-metric-value">@Model.TotalGuestbookEntries.ToString("N0")</div>
+            <div class="polaris-metric-subtext">Bırakılan samimi mesajlar</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="polaris-metric-card">
+            <div class="polaris-metric-label">
+                <span>Gönderilen İkramlar</span>
+                <span class="polaris-badge polaris-badge-success">İkram</span>
+            </div>
+            <div class="polaris-metric-value">@Model.TotalGifts.ToString("N0")</div>
+            <div class="polaris-metric-subtext">Kahve, çay, kurabiye ve yıldızlar</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="polaris-metric-card">
+            <div class="polaris-metric-label">Toplam Bildirim</div>
+            <div class="polaris-metric-value">@Model.TotalNotifications.ToString("N0")</div>
+            <div class="polaris-metric-subtext">Gönderilen tüm in-app bildirimler</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="polaris-metric-card">
+            <div class="polaris-metric-label">Okunmamış Bildirim</div>
+            <div class="polaris-metric-value">@Model.UnreadNotifications.ToString("N0")</div>
+            <div class="polaris-metric-subtext">Kullanıcıların henüz açmadığı</div>
+        </div>
+    </div>
+</div>
+
+<!-- PANEL 2 & 3: Ziyaretçi Defteri Akışı ve Bildirimler Tablosu -->
+<div class="row g-4">
+    <!-- Panel 2: Ziyaretçi Defteri Notları -->
+    <div class="col-lg-7">
+        <div class="polaris-card h-100">
+            <div class="polaris-card-header">
+                <h6>Oda Ziyaretçi Defteri ve İkram Akışı</h6>
+                <span class="polaris-badge polaris-badge-neutral">Son 50 Kayıt</span>
+            </div>
+            @if (!Model.GuestbookEntries.Any())
+            {
+                <div class="p-4 text-center text-muted small">
+                    Henüz odalara bırakılmış bir ziyaretçi notu bulunmuyor.
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="polaris-table">
+                        <thead>
+                            <tr>
+                                <th>Oda</th>
+                                <th>Ziyaretçi</th>
+                                <th>Mesaj</th>
+                                <th>İkram</th>
+                                <th>Tarih</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var entry in Model.GuestbookEntries)
+                            {
+                                <tr>
+                                    <td>
+                                        <span class="badge bg-light text-dark border font-monospace">@entry.RoomCode</span>
+                                    </td>
+                                    <td class="fw-semibold text-dark">
+                                        @entry.AuthorName
+                                    </td>
+                                    <td>
+                                        <div class="text-dark small" style="max-width: 300px; white-space: normal;">
+                                            @entry.Message
+                                        </div>
+                                    </td>
+                                    <td>
+                                        @if (entry.Gift != Focus.Domain.Enums.GiftType.None)
+                                        {
+                                            <span class="polaris-badge polaris-badge-success">@entry.Gift</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small">-</span>
+                                        }
+                                    </td>
+                                    <td class="text-muted" style="font-size: 11px;">
+                                        @entry.CreatedAt.ToString("dd.MM.yyyy HH:mm")
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Panel 3: Sistem Bildirimleri -->
+    <div class="col-lg-5">
+        <div class="polaris-card h-100">
+            <div class="polaris-card-header">
+                <h6>Kullanıcı Bildirim Günlüğü</h6>
+                <span class="polaris-badge polaris-badge-neutral">Son 30</span>
+            </div>
+            @if (!Model.RecentNotifications.Any())
+            {
+                <div class="p-4 text-center text-muted small">
+                    Bildirim kaydı bulunmuyor.
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="polaris-table">
+                        <thead>
+                            <tr>
+                                <th>Kime</th>
+                                <th>Başlık & Mesaj</th>
+                                <th>Durum</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var n in Model.RecentNotifications)
+                            {
+                                <tr>
+                                    <td class="fw-semibold text-dark">@n.TargetUserName</td>
+                                    <td>
+                                        <div class="fw-semibold small text-dark">@n.Title</div>
+                                        <div class="text-muted small" style="max-width: 200px; white-space: normal;">@n.Message</div>
+                                    </td>
+                                    <td>
+                                        @if (n.IsRead)
+                                        {
+                                            <span class="polaris-badge polaris-badge-neutral">Okundu</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="polaris-badge polaris-badge-warning">Yeni</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>
