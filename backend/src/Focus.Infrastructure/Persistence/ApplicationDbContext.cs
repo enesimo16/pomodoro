@@ -29,6 +29,8 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<AgentMemory> AgentMemories => Set<AgentMemory>();
     public DbSet<SessionCheckIn> SessionCheckIns => Set<SessionCheckIn>();
     public DbSet<SessionReflection> SessionReflections => Set<SessionReflection>();
+    public DbSet<RoomGuestbookEntry> RoomGuestbookEntries => Set<RoomGuestbookEntry>();
+    public DbSet<Notification> Notifications => Set<Notification>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

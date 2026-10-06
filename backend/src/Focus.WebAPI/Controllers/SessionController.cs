@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Focus.Application.Common.Interfaces;
 using Focus.Application.Features.Session.Commands;
 using Focus.Application.Features.Session.DTOs;
@@ -33,6 +32,9 @@ public class SessionController : BaseApiController
         _hubContext = hubContext;
     }
 
+    /// <summary>
+    /// Kullanıcının varsa devam eden veya duraklatılmış aktif odak/mola seansını getirir.
+    /// </summary>
     [HttpGet("active")]
     [ProducesResponseType(typeof(FocusSessionDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -49,6 +51,9 @@ public class SessionController : BaseApiController
         return Ok(session);
     }
 
+    /// <summary>
+    /// Yeni bir odaklanma veya mola seansı başlatır (sunucu damgalı sayaç çalışır, SignalR ile masa lambası yakılır).
+    /// </summary>
     [HttpPost]
     [ProducesResponseType(typeof(FocusSessionDto), StatusCodes.Status201Created)]
     public async Task<IActionResult> StartSession([FromBody] StartSessionRequest request, CancellationToken cancellationToken)
@@ -69,7 +74,6 @@ public class SessionController : BaseApiController
 
         var result = await Mediator.Send(command, cancellationToken);
 
-        // SignalR bildirimi
         await _hubContext.Clients.Group($"user_{userId}").TimerStarted(result);
         if (result.Kind == SessionKind.Focus.ToString())
         {
@@ -79,6 +83,9 @@ public class SessionController : BaseApiController
         return CreatedAtAction(nameof(GetActiveSession), result);
     }
 
+    /// <summary>
+    /// Aktif odaklanma veya mola seansını duraklatır (zamanlayıcı durdurulur ve duraklatılma süresi ölçülür).
+    /// </summary>
     [HttpPost("pause")]
     [HttpPost("{id:guid}/pause")]
     [ProducesResponseType(typeof(FocusSessionDto), StatusCodes.Status200OK)]
@@ -94,6 +101,9 @@ public class SessionController : BaseApiController
         return Ok(result);
     }
 
+    /// <summary>
+    /// Duraklatılmış olan seansı kaldığı yerden devam ettirir.
+    /// </summary>
     [HttpPost("resume")]
     [HttpPost("{id:guid}/resume")]
     [ProducesResponseType(typeof(FocusSessionDto), StatusCodes.Status200OK)]
@@ -109,6 +119,9 @@ public class SessionController : BaseApiController
         return Ok(result);
     }
 
+    /// <summary>
+    /// Akış koruması (Flow Shield) kapsamında seans süresini ekstra dakikalarla uzatır.
+    /// </summary>
     [HttpPost("extend")]
     [HttpPost("{id:guid}/extend")]
     [ProducesResponseType(typeof(FocusSessionDto), StatusCodes.Status200OK)]
@@ -125,6 +138,9 @@ public class SessionController : BaseApiController
         return Ok(result);
     }
 
+    /// <summary>
+    /// Seansı başarıyla tamamlar, net çalışma süresine göre XP ve Focus Coin ödüllerini hesaba işler.
+    /// </summary>
     [HttpPost("complete")]
     [HttpPost("{id:guid}/complete")]
     [ProducesResponseType(typeof(SessionCompletionResultDto), StatusCodes.Status200OK)]
@@ -142,6 +158,9 @@ public class SessionController : BaseApiController
         return Ok(result);
     }
 
+    /// <summary>
+    /// Devam eden seansı yarıda bırakır (terk eder); masa lambasını söndürür ve seansı iptal eder.
+    /// </summary>
     [HttpPost("abandon")]
     [HttpPost("{id:guid}/abandon")]
     [ProducesResponseType(typeof(FocusSessionDto), StatusCodes.Status200OK)]
@@ -157,12 +176,5 @@ public class SessionController : BaseApiController
         await _hubContext.Clients.Group($"user_{userId}").DeskLightToggled(false);
 
         return Ok(result);
-    }
-
-    private bool TryGetUserId(out Guid userId)
-    {
-        userId = Guid.Empty;
-        var subClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
-        return Guid.TryParse(subClaim, out userId);
     }
 }

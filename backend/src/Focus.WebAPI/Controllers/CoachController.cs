@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Focus.Application.Features.Coach.Commands;
 using Focus.Application.Features.Coach.DTOs;
 using Focus.Application.Features.Coach.Queries;
@@ -10,6 +9,9 @@ namespace Focus.WebAPI.Controllers;
 [Route("api/v1/coach")]
 public class CoachController : BaseApiController
 {
+    /// <summary>
+    /// Masaüstü terminalindeki AI Koç ile sohbet eder; RAG çift katmanlı vektör hafızasını ve anomali tetikleyicilerini kullanarak kişiselleştirilmiş rehberlik sunar.
+    /// </summary>
     [Authorize]
     [HttpPost("chat")]
     [ProducesResponseType(typeof(CoachChatResponseDto), StatusCodes.Status200OK)]
@@ -21,13 +23,16 @@ public class CoachController : BaseApiController
 
         if (string.IsNullOrWhiteSpace(request.Message))
         {
-            return BadRequest(new { message = "Mesaj alani bos olamaz." });
+            return BadRequest(new { message = "Mesaj alanı boş olamaz." });
         }
 
         var result = await Mediator.Send(new SendCoachChatCommand(userId, request.Message), cancellationToken);
         return Ok(result);
     }
 
+    /// <summary>
+    /// Seans başlangıcında kullanıcının ruh halini, enerji seviyesini (1-5) ve seans hedefini kaydeder (görünmez profilleme).
+    /// </summary>
     [Authorize]
     [HttpPost("check-in")]
     [ProducesResponseType(typeof(SessionCheckInDto), StatusCodes.Status200OK)]
@@ -54,6 +59,9 @@ public class CoachController : BaseApiController
         }
     }
 
+    /// <summary>
+    /// Seans bitiminde odaklanma kalitesini, hissiyatı ve dikkat dağıtıcı notları kaydeder; vektör hafızasına sentezler.
+    /// </summary>
     [Authorize]
     [HttpPost("reflection")]
     [ProducesResponseType(typeof(SessionReflectionDto), StatusCodes.Status200OK)]
@@ -80,6 +88,9 @@ public class CoachController : BaseApiController
         }
     }
 
+    /// <summary>
+    /// Kullanıcının günlük yorgunluk skorunu (0-100), haftalık çalışma yükünü ve olası anomali durumlarını teşhis eder.
+    /// </summary>
     [Authorize]
     [HttpGet("anomaly-status")]
     [ProducesResponseType(typeof(CoachAnomalyStatusDto), StatusCodes.Status200OK)]
@@ -92,6 +103,9 @@ public class CoachController : BaseApiController
         return Ok(result);
     }
 
+    /// <summary>
+    /// Kullanıcının hem kişisel havuzunda hem de anonimleştirilmiş kolektif global havuzda bulunan son vektör hafıza kayıtlarını listeler.
+    /// </summary>
     [Authorize]
     [HttpGet("memories")]
     [ProducesResponseType(typeof(List<MemoryInsightDto>), StatusCodes.Status200OK)]
@@ -102,12 +116,5 @@ public class CoachController : BaseApiController
 
         var result = await Mediator.Send(new GetRecentMemoriesQuery(userId), cancellationToken);
         return Ok(result);
-    }
-
-    private bool TryGetUserId(out Guid userId)
-    {
-        userId = Guid.Empty;
-        var subClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
-        return Guid.TryParse(subClaim, out userId);
     }
 }

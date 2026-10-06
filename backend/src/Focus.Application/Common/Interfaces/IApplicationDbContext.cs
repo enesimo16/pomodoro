@@ -23,6 +23,8 @@ public interface IApplicationDbContext
     DbSet<AgentMemory> AgentMemories { get; }
     DbSet<SessionCheckIn> SessionCheckIns { get; }
     DbSet<SessionReflection> SessionReflections { get; }
+    DbSet<RoomGuestbookEntry> RoomGuestbookEntries { get; }
+    DbSet<Notification> Notifications { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

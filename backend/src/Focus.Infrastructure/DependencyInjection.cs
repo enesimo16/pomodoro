@@ -57,6 +57,14 @@ public static class DependencyInjection
         services.AddHttpClient<IVectorMemoryService, VectorMemoryService>();
         services.AddHttpClient<ICoachChatService, CoachChatService>();
 
+        // Faz 6: Focus Wrapped, Ziyaretci Defteri & Bildirim Servisleri
+        services.AddScoped<INotificationService, NotificationService>();
+        services.AddScoped<IFocusWrappedService, FocusWrappedService>();
+        services.AddScoped<IGuestbookService, GuestbookService>();
+
+        // Faz 7: Admin Is Zekasi & Sistem Sagligi Servisi
+        services.AddScoped<IAdminAnalyticsService, AdminAnalyticsService>();
+
         // JWT Kimlik Dogrulama
         var key = Encoding.UTF8.GetBytes(jwtSettings.SigningKey);
 

@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Focus.Application.Common.Interfaces;
+using Focus.Application.Features.Guestbook.DTOs;
 using Focus.Application.Features.Social.Commands;
 using Focus.Application.Features.Social.DTOs;
 using Focus.Application.Features.Social.Queries;
@@ -19,12 +20,19 @@ public record RoomReactionRequest(string RoomCode, string Reaction);
 public class StudyRoomController : BaseApiController
 {
     private readonly IHubContext<RoomHub, IRoomClient> _roomHub;
+    private readonly IGuestbookService _guestbookService;
 
-    public StudyRoomController(IHubContext<RoomHub, IRoomClient> roomHub)
+    public StudyRoomController(
+        IHubContext<RoomHub, IRoomClient> roomHub,
+        IGuestbookService guestbookService)
     {
         _roomHub = roomHub;
+        _guestbookService = guestbookService;
     }
 
+    /// <summary>
+    /// Halka açık genel kütüphaneleri ve piksel çarşıyı listeler.
+    /// </summary>
     [HttpGet("public")]
     [ProducesResponseType(typeof(List<StudyRoomDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPublicRooms(CancellationToken cancellationToken)
@@ -33,6 +41,9 @@ public class StudyRoomController : BaseApiController
         return Ok(result);
     }
 
+    /// <summary>
+    /// Belirtilen oda koduna sahip çalışma odasının detaylarını, masalarını ve aktif üyelerini getirir.
+    /// </summary>
     [HttpGet("{code}")]
     [ProducesResponseType(typeof(StudyRoomDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -43,6 +54,9 @@ public class StudyRoomController : BaseApiController
         return Ok(result);
     }
 
+    /// <summary>
+    /// Kullanıcının özel çalışma odası için WhatsApp, Telegram ve doğrudan paylaşım linkleri üretir.
+    /// </summary>
     [Authorize]
     [HttpPost("create-invite")]
     [ProducesResponseType(typeof(RoomInvitationResultDto), StatusCodes.Status200OK)]
@@ -56,6 +70,9 @@ public class StudyRoomController : BaseApiController
         return Ok(result);
     }
 
+    /// <summary>
+    /// Kullanıcı adıyla odaya doğrudan davet bağlantısı oluşturur.
+    /// </summary>
     [Authorize]
     [HttpPost("invite-username")]
     [ProducesResponseType(typeof(RoomInvitationResultDto), StatusCodes.Status200OK)]
@@ -77,6 +94,9 @@ public class StudyRoomController : BaseApiController
         }
     }
 
+    /// <summary>
+    /// Belirtilen çalışma odasına katılır (kapasite ve yetki kontrolü yapar, SignalR grubuna bağlar).
+    /// </summary>
     [Authorize]
     [HttpPost("join")]
     [ProducesResponseType(typeof(JoinRoomResultDto), StatusCodes.Status200OK)]
@@ -92,7 +112,6 @@ public class StudyRoomController : BaseApiController
             return BadRequest(result);
         }
 
-        // SignalR odaya katilma yayini
         var joinedMember = result.Room?.Members.FirstOrDefault(m => m.UserId == userId);
         if (joinedMember != null)
         {
@@ -107,6 +126,9 @@ public class StudyRoomController : BaseApiController
         return Ok(result);
     }
 
+    /// <summary>
+    /// Bulunulan çalışma odasından ayrılır ve masayı boşaltır.
+    /// </summary>
     [Authorize]
     [HttpPost("leave")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -125,6 +147,9 @@ public class StudyRoomController : BaseApiController
         return Ok(new { success });
     }
 
+    /// <summary>
+    /// Çalışma odasında belirtilen numaralı masaya oturur.
+    /// </summary>
     [Authorize]
     [HttpPost("sit")]
     [ProducesResponseType(typeof(SitSeatResultDto), StatusCodes.Status200OK)]
@@ -146,6 +171,9 @@ public class StudyRoomController : BaseApiController
         return Ok(result);
     }
 
+    /// <summary>
+    /// Çalışma odasındaki arkadaşlara sessiz piksel reaksiyonu (kahve ikramı, tebrik vb.) iletir.
+    /// </summary>
     [Authorize]
     [HttpPost("reaction")]
     [ProducesResponseType(typeof(RoomReactionDto), StatusCodes.Status200OK)]
@@ -157,7 +185,7 @@ public class StudyRoomController : BaseApiController
         var result = await Mediator.Send(new SendRoomReactionCommand(userId, request.RoomCode, request.Reaction), cancellationToken);
         if (result == null)
         {
-            return BadRequest(new { message = "Reaksiyon gönderilemedi. Önce odaya katılmalısınız." });
+            return BadRequest(new { message = "Reaksiyon gonderilemedi. Once odaya katilmalisiniz." });
         }
 
         var groupName = $"room_{request.RoomCode.ToUpperInvariant().Trim()}";
@@ -166,10 +194,49 @@ public class StudyRoomController : BaseApiController
         return Ok(result);
     }
 
-    private bool TryGetUserId(out Guid userId)
+    /// <summary>
+    /// Çalışma odasının ziyaretçi defterine not veya sessiz ikram (kahve vb.) ekler.
+    /// </summary>
+    [Authorize]
+    [HttpPost("{code}/guestbook")]
+    [ProducesResponseType(typeof(GuestbookEntryDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> AddGuestbookEntry(
+        [FromRoute] string code,
+        [FromBody] CreateGuestbookEntryRequest request,
+        CancellationToken cancellationToken)
     {
-        userId = Guid.Empty;
-        var subClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
-        return Guid.TryParse(subClaim, out userId);
+        if (!TryGetUserId(out var userId)) return Unauthorized();
+
+        try
+        {
+            var entry = await _guestbookService.AddEntryAsync(
+                code,
+                userId,
+                request.Message,
+                request.GiftType,
+                cancellationToken);
+
+            return Ok(entry);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Çalışma odasına bırakılan ziyaretçi notlarını tarihe göre ters sıralı listeler.
+    /// </summary>
+    [HttpGet("{code}/guestbook")]
+    [ProducesResponseType(typeof(IReadOnlyList<GuestbookEntryDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetGuestbookEntries(
+        [FromRoute] string code,
+        [FromQuery] int limit = 30,
+        CancellationToken cancellationToken = default)
+    {
+        var entries = await _guestbookService.GetEntriesByRoomCodeAsync(code, limit, cancellationToken);
+        return Ok(entries);
     }
 }

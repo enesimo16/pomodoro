@@ -21,6 +21,9 @@ public class ExternalMediaController : BaseApiController
         _weatherService = weatherService;
     }
 
+    /// <summary>
+    /// Pixabay API üzerinden döngüsel HD video arka plan temalarını (yağmur, şömine, kafe, gece şehri vb.) arar ve listeler.
+    /// </summary>
     [HttpGet("themes")]
     [ProducesResponseType(typeof(IReadOnlyList<ThemeVideoDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetThemeVideos([FromQuery] string query = "rain window", [FromQuery] int perPage = 6, CancellationToken cancellationToken = default)
@@ -29,6 +32,9 @@ public class ExternalMediaController : BaseApiController
         return Ok(videos);
     }
 
+    /// <summary>
+    /// Jamendo API üzerinden piksel plak çalarda oynatılabilecek telifsiz Lo-Fi, caz ve enstrümantal müzik parçalarını arar.
+    /// </summary>
     [HttpGet("tracks")]
     [ProducesResponseType(typeof(IReadOnlyList<MusicTrackDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetTracks([FromQuery] string query = "lofi", [FromQuery] int limit = 10, CancellationToken cancellationToken = default)
@@ -37,6 +43,9 @@ public class ExternalMediaController : BaseApiController
         return Ok(tracks);
     }
 
+    /// <summary>
+    /// Open-Meteo API ile kullanıcının konumundaki canlı hava durumunu çeker; pencere yağmur efektini ve önerilen oda temasını hesaplar.
+    /// </summary>
     [HttpGet("weather")]
     [ProducesResponseType(typeof(WeatherReportDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetWeather(

@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Focus.Application.Features.Shop.Commands;
 using Focus.Application.Features.Shop.DTOs;
 using Focus.Application.Features.Shop.Queries;
@@ -12,6 +11,9 @@ public record BuyItemRequest(string CatalogItemId);
 
 public class ShopController : BaseApiController
 {
+    /// <summary>
+    /// Mağazada satılan mobilya, kıyafet, aksesuar ve zemin/duvar kataloğunu kategori, seviye veya arama filtresine göre listeler.
+    /// </summary>
     [HttpGet("catalog")]
     [ProducesResponseType(typeof(List<CatalogItemDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetCatalog(
@@ -21,8 +23,7 @@ public class ShopController : BaseApiController
         CancellationToken cancellationToken)
     {
         Guid? userId = null;
-        var subClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
-        if (Guid.TryParse(subClaim, out var parsedId))
+        if (TryGetUserId(out var parsedId))
         {
             userId = parsedId;
         }
@@ -31,6 +32,9 @@ public class ShopController : BaseApiController
         return Ok(result);
     }
 
+    /// <summary>
+    /// Kullanıcının satın aldığı ve envanterinde bulunan tüm mobilya ve kıyafet eşyalarını getirir.
+    /// </summary>
     [Authorize]
     [HttpGet("inventory")]
     [ProducesResponseType(typeof(List<UserInventoryItemDto>), StatusCodes.Status200OK)]
@@ -39,16 +43,15 @@ public class ShopController : BaseApiController
         [FromQuery] CatalogCategory? category,
         CancellationToken cancellationToken)
     {
-        var subClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
-        if (!Guid.TryParse(subClaim, out var userId))
-        {
-            return Unauthorized();
-        }
+        if (!TryGetUserId(out var userId)) return Unauthorized();
 
         var result = await Mediator.Send(new GetUserInventoryQuery(userId, category), cancellationToken);
         return Ok(result);
     }
 
+    /// <summary>
+    /// Focus Coin harcayarak mağazadan mobilya, kıyafet veya dekoratif bir eşya satın alır.
+    /// </summary>
     [Authorize]
     [HttpPost("buy")]
     [ProducesResponseType(typeof(PurchaseItemResultDto), StatusCodes.Status200OK)]
@@ -56,11 +59,7 @@ public class ShopController : BaseApiController
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> BuyItem([FromBody] BuyItemRequest request, CancellationToken cancellationToken)
     {
-        var subClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
-        if (!Guid.TryParse(subClaim, out var userId))
-        {
-            return Unauthorized();
-        }
+        if (!TryGetUserId(out var userId)) return Unauthorized();
 
         var result = await Mediator.Send(new BuyCatalogItemCommand(userId, request.CatalogItemId), cancellationToken);
         if (!result.Success)
@@ -71,6 +70,9 @@ public class ShopController : BaseApiController
         return Ok(result);
     }
 
+    /// <summary>
+    /// 100 Focus Coin karşılığında seri dondurucu (Streak Freeze) hakkı satın alır (maksimum 2 adet depolanabilir).
+    /// </summary>
     [Authorize]
     [HttpPost("buy-freeze")]
     [ProducesResponseType(typeof(BuyFreezeResultDto), StatusCodes.Status200OK)]
@@ -78,11 +80,7 @@ public class ShopController : BaseApiController
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> BuyStreakFreeze(CancellationToken cancellationToken)
     {
-        var subClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
-        if (!Guid.TryParse(subClaim, out var userId))
-        {
-            return Unauthorized();
-        }
+        if (!TryGetUserId(out var userId)) return Unauthorized();
 
         var result = await Mediator.Send(new BuyStreakFreezeCommand(userId), cancellationToken);
         if (!result.Success)
