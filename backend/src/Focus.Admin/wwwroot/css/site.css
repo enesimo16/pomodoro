@@ -607,3 +607,100 @@ a:hover {
     width: 200px;
   }
 }
+
+/* -------------------------------------------------------------
+   API LAB SHOPIFY POLARIS STİLİ
+   ------------------------------------------------------------- */
+.polaris-nav-pills {
+  background-color: #ffffff !important;
+  border: 1px solid var(--p-color-border) !important;
+  padding: 4px !important;
+  border-radius: 8px !important;
+}
+
+.polaris-nav-pills .nav-link {
+  color: var(--p-color-text-subdued) !important;
+  font-weight: 500 !important;
+  border-radius: 6px !important;
+  transition: none !important;
+  border: none !important;
+  background-color: transparent !important;
+}
+
+.polaris-nav-pills .nav-link:hover {
+  background-color: #f1f2f4 !important;
+  color: var(--p-color-text) !important;
+}
+
+.polaris-nav-pills .nav-link.active {
+  background-color: #202223 !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+}
+
+.card-custom {
+  background-color: #ffffff !important;
+  border: 1px solid var(--p-color-border) !important;
+  border-radius: var(--p-radius-card) !important;
+  box-shadow: var(--p-shadow-card) !important;
+}
+
+.card-custom h6 {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: var(--p-color-text) !important;
+  margin-bottom: 8px !important;
+}
+
+.btn-primary {
+  background-color: #202223 !important;
+  border-color: #202223 !important;
+  color: #ffffff !important;
+  font-size: 12.5px !important;
+  font-weight: 500 !important;
+  border-radius: var(--p-radius-btn) !important;
+  box-shadow: none !important;
+  transition: none !important;
+}
+
+.btn-primary:hover {
+  background-color: #333333 !important;
+  border-color: #333333 !important;
+  color: #ffffff !important;
+}
+
+.btn-outline-primary,
+.btn-outline-secondary,
+.btn-outline-danger {
+  background-color: #ffffff !important;
+  border: 1px solid #d2d5d8 !important;
+  color: #202223 !important;
+  font-size: 12.5px !important;
+  font-weight: 500 !important;
+  border-radius: var(--p-radius-btn) !important;
+  box-shadow: none !important;
+  transition: none !important;
+}
+
+.btn-outline-primary:hover,
+.btn-outline-secondary:hover {
+  background-color: #f6f6f7 !important;
+  border-color: #c4c7cb !important;
+  color: #202223 !important;
+}
+
+.btn-outline-danger:hover {
+  background-color: #202223 !important;
+  border-color: #202223 !important;
+  color: #ffffff !important;
+}
+
+#terminalLog {
+  background-color: #141414 !important;
+  border: 1px solid #282828 !important;
+  border-radius: 8px !important;
+  color: #f1f1f1 !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  font-size: 12px !important;
+  line-height: 1.6 !important;
+}

@@ -74,9 +74,17 @@
                     </a>
                 </div>
 
-                <!-- Grup: Güvenlik & Loglar -->
+                <!-- Grup: Sistem & Görevler -->
                 <div class="sidebar-nav-group">
-                    <div class="sidebar-group-title">GÜVENLİK & LOGLAR</div>
+                    <div class="sidebar-group-title">SİSTEM & GÖREVLER</div>
+                    <a asp-page="/Jobs/Index" class="sidebar-nav-item">
+                        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        <span>Cron Görevleri</span>
+                    </a>
+                    <a href="/hangfire" target="_blank" class="sidebar-nav-item">
+                        <svg viewBox="0 0 24 24" fill="none"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                        <span>Hangfire Panel</span>
+                    </a>
                     <a asp-page="/Audit/Index" class="sidebar-nav-item">
                         <svg viewBox="0 0 24 24" fill="none"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
                         <span>Oturum Logları</span>

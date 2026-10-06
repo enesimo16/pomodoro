@@ -96,6 +96,30 @@ public class UserStreak : BaseEntity<Guid>
         return true;
     }
 
+    public (bool FreezeUsed, bool Reset) ApplyOvernightFreezeOrReset(DateTime checkDate)
+    {
+        var yesterday = checkDate.Date.AddDays(-1);
+        if (!LastActivityDate.HasValue || LastActivityDate.Value.Date >= yesterday)
+        {
+            return (false, false);
+        }
+
+        if (CurrentStreak > 0)
+        {
+            if (FreezesAvailable > 0 && LastFreezeUsedDate?.Date != yesterday)
+            {
+                FreezesAvailable--;
+                LastFreezeUsedDate = yesterday;
+                return (true, false);
+            }
+
+            CurrentStreak = 0;
+            return (false, true);
+        }
+
+        return (false, false);
+    }
+
     private static int CalculateMilestoneBonus(int streakDays)
     {
         return streakDays switch

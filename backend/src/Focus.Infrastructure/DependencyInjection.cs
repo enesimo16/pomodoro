@@ -1,9 +1,12 @@
 using System.Text;
 using Focus.Application.Common.Interfaces;
 using Focus.Infrastructure.Authentication;
+using Focus.Infrastructure.BackgroundJobs;
 using Focus.Infrastructure.Common;
 using Focus.Infrastructure.Persistence;
 using Focus.Infrastructure.Services;
+using Hangfire;
+using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -65,6 +68,25 @@ public static class DependencyInjection
         // Faz 7: Admin Is Zekasi & Sistem Sagligi Servisi
         services.AddScoped<IAdminAnalyticsService, AdminAnalyticsService>();
         services.AddScoped<IUserAccessTrackingService, UserAccessTrackingService>();
+
+        // Hangfire Arka Plan Gorevleri ve Zamanlayici
+        services.AddHangfire(config => config
+            .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+            .UseSimpleAssemblyNameTypeSerializer()
+            .UseRecommendedSerializerSettings()
+            .UsePostgreSqlStorage(c => c.UseNpgsqlConnection(connectionString), new PostgreSqlStorageOptions
+            {
+                QueuePollInterval = TimeSpan.FromSeconds(15),
+                InvisibilityTimeout = TimeSpan.FromMinutes(30)
+            }));
+
+        services.AddHangfireServer(options =>
+        {
+            options.WorkerCount = 2;
+            options.ServerName = "focus-worker";
+        });
+
+        services.AddScoped<IBackgroundJobService, BackgroundJobService>();
 
         // JWT Kimlik Dogrulama
         var key = Encoding.UTF8.GetBytes(jwtSettings.SigningKey);

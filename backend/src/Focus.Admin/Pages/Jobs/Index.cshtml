@@ -1,0 +1,149 @@
+@page
+@model Focus.Admin.Pages.Jobs.IndexModel
+@{
+    ViewData["Title"] = "Cron Görevleri";
+}
+
+<!-- Başlık ve Aksiyonlar -->
+<div class="admin-page-header">
+    <div>
+        <h1 class="admin-page-title">Cron Görevleri & Hangfire Otomasyonu</h1>
+        <p class="admin-page-subtitle">Zamanlanmış arka plan işleri, günlük seri denetimleri ve sistem bakım motoru</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="/hangfire" target="_blank" class="polaris-btn polaris-btn-secondary">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+            Hangfire Dashboard
+        </a>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.StatusMessage))
+{
+    <div class="polaris-card mb-4" style="border-left: 3px solid #202223;">
+        <div class="polaris-card-body py-3 d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-2">
+                <span class="polaris-badge polaris-badge-dark">Bilgi</span>
+                <span class="fw-semibold text-dark">@Model.StatusMessage</span>
+            </div>
+            <button type="button" class="btn-close" onclick="this.closest('.polaris-card').remove();"></button>
+        </div>
+    </div>
+}
+
+<!-- PANEL 1: Görev ve Sunucu Metrik Kartları -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="polaris-metric-card">
+            <div class="polaris-metric-label">
+                <span>Kayıtlı Cron Görevi</span>
+                <span class="polaris-badge polaris-badge-dark">Hangfire</span>
+            </div>
+            <div class="polaris-metric-value">@Model.TotalRecurringJobs</div>
+            <div class="polaris-metric-subtext">Otomatik yinelenen işler</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="polaris-metric-card">
+            <div class="polaris-metric-label">
+                <span>Aktif İşçi Sunucu</span>
+                <span class="polaris-badge">Worker</span>
+            </div>
+            <div class="polaris-metric-value">@Math.Max(1, Model.ActiveServersCount)</div>
+            <div class="polaris-metric-subtext">Kuyrukları dinleyen arka plan sunucusu</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="polaris-metric-card">
+            <div class="polaris-metric-label">
+                <span>Kalıcı Depo Sağlayıcısı</span>
+                <span class="polaris-badge">SQL</span>
+            </div>
+            <div class="polaris-metric-value" style="font-size: 20px;">@Model.StorageInfo</div>
+            <div class="polaris-metric-subtext">PostgreSQL kalıcı görev tablosu</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="polaris-metric-card">
+            <div class="polaris-metric-label">
+                <span>Zamanlayıcı Durumu</span>
+                <span class="polaris-badge polaris-badge-dark">Aktif</span>
+            </div>
+            <div class="polaris-metric-value" style="font-size: 20px;">Çalışıyor</div>
+            <div class="polaris-metric-subtext">UTC saat dilimi ile senkronize</div>
+        </div>
+    </div>
+</div>
+
+<!-- PANEL 2: Zamanlanmış Görevler Tablosu Paneli -->
+<div class="polaris-card">
+    <div class="polaris-card-header">
+        <h6>Kayıtlı Yinelenen Görevler (Recurring Jobs)</h6>
+        <span class="polaris-badge">@Model.Jobs.Count Görev Tanımlı</span>
+    </div>
+    <div class="table-responsive">
+        <table class="polaris-table">
+            <thead>
+                <tr>
+                    <th>Görev Tanımı & ID</th>
+                    <th>Açıklama & Amaç</th>
+                    <th>Cron & Çalışma Zamanı</th>
+                    <th>Son Çalışma</th>
+                    <th>Gelecek Çalışma</th>
+                    <th>Durum</th>
+                    <th class="text-end">İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var job in Model.Jobs)
+                {
+                    <tr>
+                        <td>
+                            <div>
+                                <span class="fw-semibold text-dark">@job.Title</span>
+                                <div class="text-muted small font-monospace">@job.Id</div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="text-secondary small" style="max-width: 320px; white-space: normal;">
+                                @job.Description
+                            </div>
+                        </td>
+                        <td>
+                            <div>
+                                <span class="badge bg-light text-dark border font-monospace">@job.CronExpression</span>
+                                <div class="text-muted small mt-1">@job.ScheduleDescription</div>
+                            </div>
+                        </td>
+                        <td class="text-muted" style="font-size: 11px;">
+                            @(job.LastExecution.HasValue ? job.LastExecution.Value.ToString("dd.MM.yyyy HH:mm") : "-")
+                        </td>
+                        <td class="text-dark fw-semibold" style="font-size: 11px;">
+                            @(job.NextExecution.HasValue ? job.NextExecution.Value.ToString("dd.MM.yyyy HH:mm") : "Zamanlandı")
+                        </td>
+                        <td>
+                            <span class="polaris-badge polaris-badge-dark">@job.LastJobState</span>
+                        </td>
+                        <td class="text-end">
+                            <form method="post" asp-page-handler="Trigger" class="d-inline">
+                                <input type="hidden" name="jobId" value="@job.Id" />
+                                <button type="submit" class="polaris-btn polaris-btn-primary polaris-btn-sm" title="Görevi beklemeden hemen çalıştır">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                                    Şimdi Tetikle
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="polaris-card-footer">
+        <div class="text-muted small">
+            Tüm görevler Hangfire kalıcı veritabanında saklanır. Görevler manuel tetiklendiğinde bağımsız arka plan işi olarak anında kuyruğa alınır.
+        </div>
+        <a href="/hangfire" target="_blank" class="polaris-btn polaris-btn-secondary polaris-btn-sm">
+            Detaylı Grafikler ve Kuyruk İnceleme
+        </a>
+    </div>
+</div>
