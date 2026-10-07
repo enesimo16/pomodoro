@@ -11,7 +11,7 @@
     </div>
     <div class="d-flex align-items-center gap-2">
         <span class="polaris-badge polaris-badge-neutral px-3 py-2">
-            Hedef API: <strong class="text-dark">@Model.WebApiBaseUrl</strong>
+            Hedef API: <strong class="text-dark" id="lblTargetApi">@Model.WebApiBaseUrl</strong>
         </span>
         <button id="btnResetAll" class="polaris-btn polaris-btn-secondary polaris-btn-sm" title="Tüm yerel oturum verilerini temizle">
             Sıfırla
@@ -44,11 +44,11 @@
                 </div>
                 <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
                     <button type="button" class="polaris-btn polaris-btn-secondary polaris-btn-sm" onclick="navigateModule(-1)">
-                        ← Önceki
+                        Önceki
                     </button>
                     <span class="text-muted" style="font-size: 11px;" id="moduleStepIndicator">Modül 1 / 9</span>
                     <button type="button" class="polaris-btn polaris-btn-secondary polaris-btn-sm" onclick="navigateModule(1)">
-                        Sonraki →
+                        Sonraki
                     </button>
                 </div>
             </div>
@@ -987,7 +987,12 @@
 @section Scripts {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
 <script>
-    const apiBase = '@Model.WebApiBaseUrl';
+    const savedApiBase = localStorage.getItem('focus_custom_api_base_url');
+    const apiBase = (savedApiBase || '@Model.WebApiBaseUrl').replace(/\/+$/, '');
+    const targetLabel = document.getElementById('lblTargetApi');
+    if (targetLabel && savedApiBase) {
+        targetLabel.textContent = apiBase;
+    }
 
     let currentTokens = {
         accessToken: sessionStorage.getItem('focus_test_at') || null,

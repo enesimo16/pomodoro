@@ -12,10 +12,10 @@
     </div>
     <div class="d-flex gap-2 flex-wrap">
         <a asp-page="/ApiLab/Index" class="polaris-btn polaris-btn-primary">
-            Canlı API Test Konsolu (Lab) ↗
+            Canlı API Test Konsolu (Lab)
         </a>
-        <a href="@Model.WebApiBaseUrl/swagger" target="_blank" class="polaris-btn polaris-btn-secondary">
-            Ham Swagger UI ↗
+        <a href="@Model.WebApiBaseUrl/swagger" id="btnSwaggerLink" target="_blank" class="polaris-btn polaris-btn-secondary">
+            Ham Swagger UI
         </a>
     </div>
 </div>
@@ -25,11 +25,17 @@
     <div class="polaris-card-body p-3">
         <div class="row g-3 align-items-center">
             <div class="col-md-5">
-                <span class="text-muted small d-block">WebAPI Taban Adresi</span>
+                <span class="text-muted small d-block">WebAPI Taban Adresi (Değiştirilebilir)</span>
                 <div class="d-flex align-items-center gap-2 mt-1">
-                    <code class="bg-light px-2 py-1 border rounded text-dark font-monospace fw-bold" id="lblApiBase">@Model.WebApiBaseUrl</code>
-                    <button type="button" class="polaris-btn polaris-btn-secondary polaris-btn-sm" onclick="copyText('@Model.WebApiBaseUrl', this)">
+                    <input type="text" id="txtApiBaseUrl" class="form-control form-control-sm font-monospace fw-bold" 
+                           placeholder="http://localhost:5000 veya https://api.domain.com" 
+                           value="@Model.WebApiBaseUrl" 
+                           oninput="onApiBaseUrlChanged(this.value)" style="max-width: 280px;" />
+                    <button type="button" class="polaris-btn polaris-btn-secondary polaris-btn-sm" onclick="copyApiBaseUrl(this)">
                         Kopyala
+                    </button>
+                    <button type="button" class="polaris-btn polaris-btn-secondary polaris-btn-sm" onclick="resetApiBaseUrl()" title="Varsayılan localhost adresine sıfırla">
+                        Sıfırla
                     </button>
                 </div>
             </div>
@@ -50,7 +56,7 @@
 <div class="polaris-card mb-4" id="quickstartCard">
     <div class="polaris-card-header d-flex justify-content-between align-items-center py-2 px-3 bg-light border-bottom">
         <div class="d-flex align-items-center gap-2">
-            <span class="fw-bold text-dark fs-6">🚀 Frontend Entegrasyon Rehberi & Ortam Değişkenleri</span>
+            <span class="fw-bold text-dark fs-6">Frontend Entegrasyon Rehberi & Ortam Değişkenleri</span>
             <span class="polaris-badge polaris-badge-dark">Next.js & TypeScript</span>
         </div>
         <button type="button" class="polaris-btn polaris-btn-secondary polaris-btn-sm" id="btnToggleQuickstart" onclick="toggleQuickstart()">
@@ -62,22 +68,22 @@
         <ul class="nav nav-tabs polaris-tabs border-bottom mb-3" id="quickstartTabs" role="tablist">
             <li class="nav-item">
                 <button class="nav-link active polaris-tab-btn" data-bs-toggle="tab" data-bs-target="#qs-env" type="button">
-                    📁 .env.local Şablonu
+                    .env.local Şablonu
                 </button>
             </li>
             <li class="nav-item">
                 <button class="nav-link polaris-tab-btn" data-bs-toggle="tab" data-bs-target="#qs-keys" type="button">
-                    🔑 Güvenlik & Admin Key'leri
+                    Güvenlik & Admin Key'leri
                 </button>
             </li>
             <li class="nav-item">
                 <button class="nav-link polaris-tab-btn" data-bs-toggle="tab" data-bs-target="#qs-auth" type="button">
-                    🔄 Token & Refresh Döngüsü
+                    Token & Refresh Döngüsü
                 </button>
             </li>
             <li class="nav-item">
                 <button class="nav-link polaris-tab-btn" data-bs-toggle="tab" data-bs-target="#qs-signalr" type="button">
-                    ⚡ SignalR WebSocket İstemcisi
+                    SignalR WebSocket İstemcisi
                 </button>
             </li>
         </ul>
@@ -244,7 +250,7 @@ export function createTimerHubConnection(accessToken: string) {
                 </button>
             }
             <button type="button" class="polaris-btn polaris-btn-secondary polaris-btn-sm filter-pill" onclick="setCategoryFilter('signalr', this)">
-                ⚡ SignalR Hub'lar
+                SignalR Hub'lar
             </button>
         </div>
     </div>
@@ -284,7 +290,7 @@ export function createTimerHubConnection(accessToken: string) {
                                     <span class="badge bg-danger text-white font-monospace px-2 py-1">@ep.Method</span>
                                 }
 
-                                <span class="font-monospace fw-bold text-dark" style="font-size: 13.5px;">@ep.Path</span>
+                                <span class="font-monospace fw-bold text-dark" style="font-size: 13.5px;"><span class="dynamic-api-base text-muted font-monospace" style="font-weight: 500;">@Model.WebApiBaseUrl</span>@ep.Path</span>
                                 <span class="text-muted small">— @ep.Title</span>
                             </div>
 
@@ -298,10 +304,14 @@ export function createTimerHubConnection(accessToken: string) {
                                     <span class="polaris-badge polaris-badge-neutral">Herkese Açık</span>
                                 }
 
+                                <button type="button" class="polaris-btn polaris-btn-secondary polaris-btn-sm" onclick="copyEndpointUrl('@ep.Path', this)" title="Tam uç nokta URL'ini kopyala">
+                                    URL Kopyala
+                                </button>
+
                                 @if (!string.IsNullOrEmpty(ep.TestLabTab))
                                 {
                                     <a asp-page="/ApiLab/Index" class="polaris-btn polaris-btn-secondary polaris-btn-sm" title="Bu ucu API Test Konsolunda canlı dene">
-                                        Test Et ↗
+                                        Test Et
                                     </a>
                                 }
                             </div>
@@ -354,7 +364,7 @@ export function createTimerHubConnection(accessToken: string) {
 <!-- SIGNALR REAL-TIME HUBS SÖZLEŞMESİ (SWAGGER'DA BULUNMAYAN ÖZEL REHBER) -->
 <div class="mb-5 category-section" data-cat-id="signalr" id="signalrSection">
     <div class="d-flex align-items-center justify-content-between mb-2">
-        <h6 class="fw-bold text-dark m-0">⚡ SignalR Canlı WebSocket Hub Sözleşmesi</h6>
+        <h6 class="fw-bold text-dark m-0">SignalR Canlı WebSocket Hub Sözleşmesi</h6>
         <span class="badge bg-dark text-white">Canlı Etkileşim</span>
     </div>
     <p class="text-muted small mb-3">
@@ -369,7 +379,10 @@ export function createTimerHubConnection(accessToken: string) {
                     <div class="polaris-card-header d-flex justify-content-between align-items-center">
                         <div>
                             <span class="fw-bold text-dark fs-6">@hub.HubName</span>
-                            <code class="ms-2 text-muted font-monospace">@hub.Path</code>
+                            <code class="ms-2 text-muted font-monospace"><span class="dynamic-api-base">@Model.WebApiBaseUrl</span>@hub.Path</code>
+                            <button type="button" class="btn btn-link btn-sm text-dark p-0 text-decoration-none ms-2" style="font-size: 11px;" onclick="copyEndpointUrl('@hub.Path', this)">
+                                URL Kopyala
+                            </button>
                         </div>
                         <span class="polaris-badge">WebSocket / SSE</span>
                     </div>
@@ -421,6 +434,81 @@ export function createTimerHubConnection(accessToken: string) {
 @section Scripts {
 <script>
     let activeFilter = 'all';
+    const defaultApiBaseUrl = '@Model.WebApiBaseUrl';
+
+    function getActiveBaseUrl() {
+        return (localStorage.getItem('focus_custom_api_base_url') || defaultApiBaseUrl).trim().replace(/\/+$/, '');
+    }
+
+    function onApiBaseUrlChanged(newVal) {
+        const cleaned = (newVal || defaultApiBaseUrl).trim().replace(/\/+$/, '');
+        if (newVal && newVal.trim() !== '') {
+            localStorage.setItem('focus_custom_api_base_url', cleaned);
+        } else {
+            localStorage.removeItem('focus_custom_api_base_url');
+        }
+        updateDynamicUrls(cleaned);
+    }
+
+    function resetApiBaseUrl() {
+        localStorage.removeItem('focus_custom_api_base_url');
+        const input = document.getElementById('txtApiBaseUrl');
+        if (input) input.value = defaultApiBaseUrl;
+        updateDynamicUrls(defaultApiBaseUrl);
+    }
+
+    function copyApiBaseUrl(btn) {
+        const url = getActiveBaseUrl();
+        copyText(url, btn);
+    }
+
+    function copyEndpointUrl(path, btn) {
+        const fullUrl = `${getActiveBaseUrl()}${path}`;
+        copyText(fullUrl, btn);
+    }
+
+    function updateDynamicUrls(baseUrl) {
+        // 1. Tüm dinamik base URL metinlerini güncelle
+        document.querySelectorAll('.dynamic-api-base').forEach(el => {
+            el.textContent = baseUrl;
+        });
+
+        // 2. .env.local kod bloğunu güncelle
+        const envEl = document.getElementById('envSnippet');
+        if (envEl) {
+            envEl.textContent = `# Focus WebAPI Taban Adresi\nNEXT_PUBLIC_API_URL=${baseUrl}/api/v1\n\n# SignalR Gerçek Zamanlı Hub Adresleri\nNEXT_PUBLIC_SIGNALR_TIMER_URL=${baseUrl}/hubs/timer\nNEXT_PUBLIC_SIGNALR_ROOM_URL=${baseUrl}/hubs/room\n\n# Admin Paneli Stealth Passkey (Yerel Geliştirici Erişimi)\nFOCUS_ADMIN_PASSKEY=focus_master_key_9971x`;
+        }
+
+        // 3. Token Refresh kod bloğunu güncelle
+        const authEl = document.getElementById('authSnippet');
+        if (authEl) {
+            authEl.textContent = `// lib/apiClient.ts\nexport async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {\n  let token = typeof window !== 'undefined' ? localStorage.getItem('focus_at') : null;\n\n  const headers = {\n    'Content-Type': 'application/json',\n    ...(token ? { 'Authorization': \`Bearer \${token}\` } : {}),\n    ...options.headers,\n  };\n\n  const baseUrl = process.env.NEXT_PUBLIC_API_URL || '${baseUrl}/api/v1';\n  let response = await fetch(\`\${baseUrl}\${endpoint}\`, { ...options, headers });\n\n  // Access Token süresi dolmuşsa (401), Refresh Token ile otomatik yenile\n  if (response.status === 401 && typeof window !== 'undefined') {\n    const refreshToken = localStorage.getItem('focus_rt');\n    if (refreshToken) {\n      const refreshRes = await fetch(\`\${baseUrl}/auth/refresh\`, {\n        method: 'POST',\n        headers: { 'Content-Type': 'application/json' },\n        body: JSON.stringify({ refreshToken }),\n      });\n\n      if (refreshRes.ok) {\n        const { data } = await refreshRes.json();\n        localStorage.setItem('focus_at', data.accessToken);\n        localStorage.setItem('focus_rt', data.refreshToken);\n\n        // İsteği yeni Access Token ile tekrarla\n        headers['Authorization'] = \`Bearer \${data.accessToken}\`;\n        return fetch(\`\${baseUrl}\${endpoint}\`, { ...options, headers });\n      }\n    }\n  }\n\n  return response;\n}`;
+        }
+
+        // 4. SignalR istemci kod bloğunu güncelle
+        const signalrEl = document.getElementById('signalrSnippet');
+        if (signalrEl) {
+            signalrEl.textContent = `// lib/timerHub.ts\nimport * as signalR from '@@microsoft/signalr';\n\nexport function createTimerHubConnection(accessToken: string) {\n  const hubUrl = process.env.NEXT_PUBLIC_SIGNALR_TIMER_URL || '${baseUrl}/hubs/timer';\n\n  const connection = new signalR.HubConnectionBuilder()\n    .withUrl(hubUrl, {\n      accessTokenFactory: () => accessToken,\n      skipNegotiation: false,\n      transport: signalR.HttpTransportType.WebSockets | signalR.HttpTransportType.LongPolling\n    })\n    .withAutomaticReconnect()\n    .build();\n\n  // Canlı Saniye Tiklerini Dinle\n  connection.on('ReceiveTick', ({ remainingSeconds, elapsedSeconds }) => {\n    console.log('Kalan Saniye:', remainingSeconds);\n  });\n\n  // Seans Durum Değişikliklerini Dinle (Running, Paused, FlowShieldBroken)\n  connection.on('ReceiveStateChanged', ({ status }) => {\n    console.log('Seans Durumu:', status);\n  });\n\n  return connection;\n}`;
+        }
+
+        // 5. Üstteki Swagger linkini güncelle
+        const swBtn = document.getElementById('btnSwaggerLink');
+        if (swBtn) swBtn.href = `${baseUrl}/swagger`;
+
+        // 6. Sol menüdeki Swagger linkini güncelle
+        const sideSw = document.getElementById('sidebarSwaggerLink');
+        if (sideSw) sideSw.href = `${baseUrl}/swagger`;
+    }
+
+    // Sayfa açıldığında önceden kaydedilmiş özel URL varsa yükle
+    document.addEventListener('DOMContentLoaded', () => {
+        const saved = localStorage.getItem('focus_custom_api_base_url');
+        if (saved) {
+            const input = document.getElementById('txtApiBaseUrl');
+            if (input) input.value = saved;
+            updateDynamicUrls(saved);
+        }
+    });
 
     function setCategoryFilter(catId, btnElement) {
         activeFilter = catId;
