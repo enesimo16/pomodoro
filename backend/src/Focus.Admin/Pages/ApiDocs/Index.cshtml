@@ -46,6 +46,187 @@
     </div>
 </div>
 
+<!-- FRONTEND HIZLI BAŞLANGIÇ & ENTEGRASYON REHBERİ (QUICKSTART) -->
+<div class="polaris-card mb-4" id="quickstartCard">
+    <div class="polaris-card-header d-flex justify-content-between align-items-center py-2 px-3 bg-light border-bottom">
+        <div class="d-flex align-items-center gap-2">
+            <span class="fw-bold text-dark fs-6">🚀 Frontend Entegrasyon Rehberi & Ortam Değişkenleri</span>
+            <span class="polaris-badge polaris-badge-dark">Next.js & TypeScript</span>
+        </div>
+        <button type="button" class="polaris-btn polaris-btn-secondary polaris-btn-sm" id="btnToggleQuickstart" onclick="toggleQuickstart()">
+            Gizle / Göster
+        </button>
+    </div>
+    <div class="polaris-card-body p-3" id="quickstartContent">
+        <!-- Rehber Alt Sekmeleri -->
+        <ul class="nav nav-tabs polaris-tabs border-bottom mb-3" id="quickstartTabs" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active polaris-tab-btn" data-bs-toggle="tab" data-bs-target="#qs-env" type="button">
+                    📁 .env.local Şablonu
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link polaris-tab-btn" data-bs-toggle="tab" data-bs-target="#qs-keys" type="button">
+                    🔑 Güvenlik & Admin Key'leri
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link polaris-tab-btn" data-bs-toggle="tab" data-bs-target="#qs-auth" type="button">
+                    🔄 Token & Refresh Döngüsü
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link polaris-tab-btn" data-bs-toggle="tab" data-bs-target="#qs-signalr" type="button">
+                    ⚡ SignalR WebSocket İstemcisi
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="quickstartTabContent">
+            <!-- TAB 1: .env.local -->
+            <div class="tab-pane fade show active" id="qs-env">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="small text-muted">Next.js projenizin kök dizinindeki <code>.env.local</code> dosyasına yapıştırın:</span>
+                    <button type="button" class="polaris-btn polaris-btn-secondary polaris-btn-sm" onclick="copyText(document.getElementById('envSnippet').textContent.trim(), this)">
+                        Tümünü Kopyala
+                    </button>
+                </div>
+                <pre class="bg-light p-3 border rounded text-dark font-monospace small m-0" id="envSnippet"><code># Focus WebAPI Taban Adresi
+NEXT_PUBLIC_API_URL=@Model.WebApiBaseUrl/api/v1
+
+# SignalR Gerçek Zamanlı Hub Adresleri
+NEXT_PUBLIC_SIGNALR_TIMER_URL=@Model.WebApiBaseUrl/hubs/timer
+NEXT_PUBLIC_SIGNALR_ROOM_URL=@Model.WebApiBaseUrl/hubs/room
+
+# Admin Paneli Stealth Passkey (Yerel Geliştirici Erişimi)
+FOCUS_ADMIN_PASSKEY=focus_master_key_9971x</code></pre>
+            </div>
+
+            <!-- TAB 2: Güvenlik & Admin Key'leri -->
+            <div class="tab-pane fade" id="qs-keys">
+                <p class="small text-muted mb-2">Admin paneline yetkisiz kişilerin erişimini engellemek için tanımlanan anahtarlar (Stealth 404 Kalkanı):</p>
+                <div class="table-responsive mb-3">
+                    <table class="table table-bordered table-sm m-0 bg-white" style="font-size: 12px;">
+                        <thead class="bg-light">
+                            <tr>
+                                <th>Tanımlı Anahtar (Passkey)</th>
+                                <th>Yetki Seviyesi</th>
+                                <th>Hızlı Kullanım Bağlantısı</th>
+                                <th class="text-end">İşlem</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var key in Model.AdminKeys)
+                            {
+                                <tr>
+                                    <td><code class="fw-bold text-dark">@key</code></td>
+                                    <td><span class="badge bg-dark text-white">Yönetici / Geliştirici</span></td>
+                                    <td><code>?admin_key=@key</code></td>
+                                    <td class="text-end">
+                                        <button type="button" class="btn btn-outline-dark btn-sm py-0 px-2" style="font-size: 11px;" onclick="copyText('@key', this)">
+                                            Kopyala
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <div class="alert alert-secondary py-2 px-3 small m-0" style="font-size: 11.5px;">
+                    <strong>Nasıl Kullanılır?</strong><br/>
+                    • <strong>Tarayıcı:</strong> <code>http://localhost:5001/?admin_key=focus_master_key_9971x</code> (Otomatik HttpOnly çerez atanır ve temiz URL'e yönlenir).<br/>
+                    • <strong>HTTP Header:</strong> İstek başlığına <code>X-Admin-Key: focus_master_key_9971x</code> eklenebilir.<br/>
+                    • <strong>Oturumu Kilitle:</strong> <code>http://localhost:5001/?admin_logout=true</code> tıklandığında çerez silinir ve panel tekrar <strong>404 Not Found</strong> görünümüne kilitlenir.
+                </div>
+            </div>
+
+            <!-- TAB 3: Token & Refresh Döngüsü -->
+            <div class="tab-pane fade" id="qs-auth">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="small text-muted">Next.js için 401 Unauthorized durumunda otomatik token yenileyen istemci fonksiyonu:</span>
+                    <button type="button" class="polaris-btn polaris-btn-secondary polaris-btn-sm" onclick="copyText(document.getElementById('authSnippet').textContent.trim(), this)">
+                        Kodu Kopyala
+                    </button>
+                </div>
+                <pre class="bg-light p-3 border rounded text-dark font-monospace small m-0" style="max-height: 240px; overflow-y: auto;" id="authSnippet"><code>// lib/apiClient.ts
+export async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
+  let token = typeof window !== 'undefined' ? localStorage.getItem('focus_at') : null;
+
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+    ...options.headers,
+  };
+
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+  let response = await fetch(`${baseUrl}${endpoint}`, { ...options, headers });
+
+  // Access Token süresi dolmuşsa (401), Refresh Token ile otomatik yenile
+  if (response.status === 401 && typeof window !== 'undefined') {
+    const refreshToken = localStorage.getItem('focus_rt');
+    if (refreshToken) {
+      const refreshRes = await fetch(`${baseUrl}/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken }),
+      });
+
+      if (refreshRes.ok) {
+        const { data } = await refreshRes.json();
+        localStorage.setItem('focus_at', data.accessToken);
+        localStorage.setItem('focus_rt', data.refreshToken);
+
+        // İsteği yeni Access Token ile tekrarla
+        headers['Authorization'] = `Bearer ${data.accessToken}`;
+        return fetch(`${baseUrl}${endpoint}`, { ...options, headers });
+      }
+    }
+  }
+
+  return response;
+}</code></pre>
+            </div>
+
+            <!-- TAB 4: SignalR WebSocket İstemcisi -->
+            <div class="tab-pane fade" id="qs-signalr">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="small text-muted"><code>npm install @@microsoft/signalr</code> sonrası canlı sayaç ve oda dinleme şablonu:</span>
+                    <button type="button" class="polaris-btn polaris-btn-secondary polaris-btn-sm" onclick="copyText(document.getElementById('signalrSnippet').textContent.trim(), this)">
+                        Kodu Kopyala
+                    </button>
+                </div>
+                <pre class="bg-light p-3 border rounded text-dark font-monospace small m-0" style="max-height: 240px; overflow-y: auto;" id="signalrSnippet"><code>// lib/timerHub.ts
+import * as signalR from '@@microsoft/signalr';
+
+export function createTimerHubConnection(accessToken: string) {
+  const hubUrl = process.env.NEXT_PUBLIC_SIGNALR_TIMER_URL || 'http://localhost:5000/hubs/timer';
+
+  const connection = new signalR.HubConnectionBuilder()
+    .withUrl(hubUrl, {
+      accessTokenFactory: () => accessToken,
+      skipNegotiation: false,
+      transport: signalR.HttpTransportType.WebSockets | signalR.HttpTransportType.LongPolling
+    })
+    .withAutomaticReconnect()
+    .build();
+
+  // Canlı Saniye Tiklerini Dinle
+  connection.on('ReceiveTick', ({ remainingSeconds, elapsedSeconds }) => {
+    console.log('Kalan Saniye:', remainingSeconds);
+  });
+
+  // Seans Durum Değişikliklerini Dinle (Running, Paused, FlowShieldBroken)
+  connection.on('ReceiveStateChanged', ({ status }) => {
+    console.log('Seans Durumu:', status);
+  });
+
+  return connection;
+}</code></pre>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- ARAMA VE KATEGORİ FİLTRELEME ÇUBUĞU -->
 <div class="polaris-card mb-4">
     <div class="p-3 border-bottom d-flex flex-wrap gap-2 justify-content-between align-items-center">
@@ -308,6 +489,16 @@
         const codeEl = parent ? parent.querySelector('code') : null;
         if (codeEl) {
             copyText(codeEl.textContent.trim(), btn);
+        }
+    }
+
+    function toggleQuickstart() {
+        const content = document.getElementById('quickstartContent');
+        if (!content) return;
+        if (content.style.display === 'none') {
+            content.style.display = 'block';
+        } else {
+            content.style.display = 'none';
         }
     }
 </script>
