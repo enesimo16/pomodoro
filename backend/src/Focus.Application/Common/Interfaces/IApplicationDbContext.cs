@@ -26,6 +26,7 @@ public interface IApplicationDbContext
     DbSet<RoomGuestbookEntry> RoomGuestbookEntries { get; }
     DbSet<Notification> Notifications { get; }
     DbSet<UserDeviceSession> UserDeviceSessions { get; }
+    DbSet<SavedAtmosphere> SavedAtmospheres { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

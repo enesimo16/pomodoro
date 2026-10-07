@@ -360,6 +360,87 @@ public class IndexModel : PageModel
                         JsonSuccessResponse = "{\n  \"success\": true,\n  \"data\": [\n    { \"topic\": \"Çalışma Tercihi\", \"summary\": \"Gece saatlerinde yağmur ambiyansıyla kod yazmayı tercih ediyor.\" }\n  ]\n}"
                     }
                 }
+            },
+            new ApiCategoryDoc
+            {
+                Id = "atmosphere",
+                Title = "8. AI Atmosfer, Tema & Müzik Üretimi (Atmosphere AI)",
+                Description = "Prompt veya tercihlerle oda teması ve 4 kanallı mikser üretimi, sirkadiyen/yorgunluk tabanlı otomatik öneri ve kolektif yapay zeka.",
+                Endpoints = new List<ApiEndpointDoc>
+                {
+                    new ApiEndpointDoc
+                    {
+                        Method = "POST",
+                        Path = "/api/v1/ai-atmosphere/generate",
+                        Title = "Prompt veya Tercihlerle Tema & Müzik Üret",
+                        Description = "Serbest metin prompt'u veya seçilen mod/ambiyans/estetik seçeneklerine göre tam görsel palet ve 4 kanallı mikser üretir.",
+                        RequiresAuth = true,
+                        TestLabTab = "#tab-atmosphere",
+                        TypeScriptRequest = "interface GenerateAtmosphereRequest {\n  prompt?: string;\n  focusGoal?: 'DeepWork_Coding' | 'Reading_Study' | 'Creative_Writing' | 'Meditation_Relax' | 'Urgent_Sprint';\n  moodTarget?: 'CalmZen' | 'EnergeticFlow' | 'MelancholicRain' | 'MidnightFocus' | 'WarmCozy';\n  preferredAmbience?: 'RainWindow' | 'CracklingFireplace' | 'BusyCafe' | 'NightForest' | 'SilentOLED';\n  visualAesthetic?: 'RetroStudio' | 'RainyLoft' | 'CyberpunkNeon' | 'JapaneseZen' | 'MidnightMinimal';\n  timeOfDay?: 'Auto' | 'Morning' | 'Afternoon' | 'Evening' | 'LateNight';\n}",
+                        JsonRequestBody = "{\n  \"prompt\": \"Yağmurlu bir siberpunk gecesinde neon ışıklar altında derin kodlama odası\",\n  \"focusGoal\": \"DeepWork_Coding\",\n  \"visualAesthetic\": \"CyberpunkNeon\"\n}",
+                        JsonSuccessResponse = "{\n  \"success\": true,\n  \"data\": {\n    \"themeName\": \"Siber Gece & Neon Yağmur\",\n    \"visualTheme\": { \"aesthetic\": \"CyberpunkNeon\", \"wallColor\": \"#161224\", \"accentLightColor\": \"#00f0ff\", \"weatherEffect\": \"Rain\" },\n    \"soundscapeMixer\": {\n      \"layer1Melody\": { \"genre\": \"Synthwave Lofi\", \"volume\": 0.65 },\n      \"layer2Ambience\": { \"ambienceType\": \"RainOnWindow\", \"volume\": 0.65 },\n      \"layer3Noise\": { \"noiseType\": \"BrownNoise\", \"volume\": 0.35, \"cutoffFrequencyHz\": 420 },\n      \"layer4Texture\": { \"textureType\": \"MechanicalKeyboard\", \"volume\": 0.30 }\n    },\n    \"recommendedSession\": { \"durationMinutes\": 50, \"breakMinutes\": 10, \"flowShieldLevel\": \"Strict\" },\n    \"coachMessage\": \"Siber frekanslar hazır. Ekrandaki her satır senin ritminle akacak.\"\n  }\n}"
+                    },
+                    new ApiEndpointDoc
+                    {
+                        Method = "GET",
+                        Path = "/api/v1/ai-atmosphere/auto-recommend",
+                        Title = "Analitik Tabanlı Otomatik Tema & Müzik Öner",
+                        Description = "Günün saati, yorgunluk skoru, yerel hava durumu ve geçmiş seans başarısına göre anlık en uygun akış atmosferini otomatik sentezler.",
+                        RequiresAuth = true,
+                        TestLabTab = "#tab-atmosphere",
+                        TypeScriptRequest = "// Parametre gerekmez, sunucu analitiği otomatik işletir",
+                        JsonRequestBody = null,
+                        JsonSuccessResponse = "{\n  \"success\": true,\n  \"data\": {\n    \"themeName\": \"Akşam Derin Toparlanma\",\n    \"source\": \"AutoRecommended\",\n    \"recommendedSession\": { \"durationMinutes\": 20, \"breakMinutes\": 10 }\n  }\n}"
+                    },
+                    new ApiEndpointDoc
+                    {
+                        Method = "POST",
+                        Path = "/api/v1/ai-atmosphere/apply",
+                        Title = "Üretilen Atmosferi Odaya ve Sayaca Uygula",
+                        Description = "Oda duvar ve zemin kaplamasını günceller, varsayılan seans süresi ve Flow Shield ayarını uygular.",
+                        RequiresAuth = true,
+                        TestLabTab = "#tab-atmosphere",
+                        TypeScriptRequest = "interface ApplyAtmosphereRequest {\n  roomId?: string;\n  wallPaperId?: string;\n  floorId?: string;\n  focusMinutes?: number;\n  breakMinutes?: number;\n  flowShieldEnabled?: boolean;\n}",
+                        JsonRequestBody = "{\n  \"wallPaperId\": \"wallpaper_slate_dark\",\n  \"focusMinutes\": 45,\n  \"flowShieldEnabled\": true\n}",
+                        JsonSuccessResponse = "{\n  \"success\": true\n}"
+                    },
+                    new ApiEndpointDoc
+                    {
+                        Method = "POST",
+                        Path = "/api/v1/ai-atmosphere/save",
+                        Title = "Üretilen Atmosferi Kütüphaneye Kaydet",
+                        Description = "Kullanıcının beğendiği bir atmosfer ve mikser ayarını kalıcı olarak saklar.",
+                        RequiresAuth = true,
+                        TestLabTab = "#tab-atmosphere",
+                        TypeScriptRequest = "interface SaveAtmosphereRequest {\n  atmosphere: GeneratedAtmosphereDto;\n  customName?: string;\n}",
+                        JsonRequestBody = "{\n  \"customName\": \"Favori Kodlama Odam\"\n}",
+                        JsonSuccessResponse = "{\n  \"success\": true,\n  \"data\": { \"id\": \"atm_8829\", \"name\": \"Favori Kodlama Odam\" }\n}"
+                    },
+                    new ApiEndpointDoc
+                    {
+                        Method = "GET",
+                        Path = "/api/v1/ai-atmosphere/saved",
+                        Title = "Kaydedilen Atmosferleri Listele",
+                        Description = "Kullanıcının kütüphanesindeki tüm özel atmosferleri listeler.",
+                        RequiresAuth = true,
+                        TestLabTab = "#tab-atmosphere",
+                        TypeScriptRequest = "// Gövde gerekmez",
+                        JsonRequestBody = null,
+                        JsonSuccessResponse = "{\n  \"success\": true,\n  \"data\": [ { \"id\": \"atm_8829\", \"name\": \"Favori Kodlama Odam\" } ]\n}"
+                    },
+                    new ApiEndpointDoc
+                    {
+                        Method = "POST",
+                        Path = "/api/v1/ai-atmosphere/contribute-insight",
+                        Title = "Kolektif AI'ye Anonim İçgörü Aktar",
+                        Description = "Başarılı seansın akustik ve görsel bileşenlerini PII'den arındırıp ortak yapay zeka hafızasına aktarır.",
+                        RequiresAuth = true,
+                        TestLabTab = "#tab-atmosphere",
+                        TypeScriptRequest = "interface ContributeInsightRequest {\n  sessionId: string;\n}",
+                        JsonRequestBody = "{\n  \"sessionId\": \"sess_7721\"\n}",
+                        JsonSuccessResponse = "{\n  \"contributed\": true\n}"
+                    }
+                }
             }
         };
     }

@@ -54,11 +54,12 @@ public static class DependencyInjection
         services.AddHttpClient<IMusicTrackService, JamendoMusicService>();
         services.AddHttpClient<IWeatherService, OpenMeteoWeatherService>();
 
-        // Faz 5: Yapay Zeka Koc & Cift Katmanli Hafiza Servisleri
+        // Faz 5: Yapay Zeka Koc, Cift Katmanli Hafiza & Atmosfer Uretim Servisleri
         services.AddSingleton<IAnonymizationService, AnonymizationService>();
         services.AddScoped<IFocusCoachEngine, FocusCoachEngine>();
         services.AddHttpClient<IVectorMemoryService, VectorMemoryService>();
         services.AddHttpClient<ICoachChatService, CoachChatService>();
+        services.AddHttpClient<IAtmosphereAiService, AtmosphereAiService>();
 
         // Faz 6: Focus Wrapped, Ziyaretci Defteri & Bildirim Servisleri
         services.AddScoped<INotificationService, NotificationService>();
@@ -83,7 +84,7 @@ public static class DependencyInjection
         services.AddHangfireServer(options =>
         {
             options.WorkerCount = 2;
-            options.ServerName = "focus-worker";
+            options.ServerName = $"focus-worker-{Environment.ProcessId}";
         });
 
         services.AddScoped<IBackgroundJobService, BackgroundJobService>();

@@ -32,6 +32,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<RoomGuestbookEntry> RoomGuestbookEntries => Set<RoomGuestbookEntry>();
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<UserDeviceSession> UserDeviceSessions => Set<UserDeviceSession>();
+    public DbSet<SavedAtmosphere> SavedAtmospheres => Set<SavedAtmosphere>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

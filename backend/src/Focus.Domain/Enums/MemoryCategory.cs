@@ -6,5 +6,7 @@ public enum MemoryCategory
     ProductivityPattern = 2,
     EmotionalResponse = 3,
     FatigueRecovery = 4,
-    DeepWorkStrategy = 5
+    DeepWorkStrategy = 5,
+    AtmospherePreference = 6,
+    CollectiveWisdom = 7
 }
