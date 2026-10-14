@@ -14,11 +14,11 @@
 
         <!-- SOL PANEL (Shopify Dark Charcoal Sidebar) -->
         <aside class="admin-sidebar" id="adminSidebar">
-            <!-- Marka Alanı: Sadece Sade ve Büyük "Dashboard" Yazısı + Mobil Kapatma -->
+            <!-- Marka Alanı: Sadece Sade ve Büyük "Dashboard" Yazısı + Gizleme Butonu -->
             <div class="sidebar-brand d-flex justify-content-between align-items-center">
                 <span class="sidebar-brand-title">Dashboard</span>
-                <button type="button" class="sidebar-close-btn d-lg-none text-white small" id="sidebarCloseBtn" aria-label="Menüyü Kapat">
-                    Kapat
+                <button type="button" class="sidebar-close-btn" id="sidebarCloseBtn" aria-label="Sol Paneli Gizle" title="Sol Paneli Gizle">
+                    Gizle
                 </button>
             </div>
 
@@ -101,8 +101,8 @@
         <!-- ÜST PANEL (Shopify Minimal Header) -->
         <header class="admin-header">
             <div class="d-flex align-items-center flex-grow-1 overflow-hidden me-2">
-                <!-- Hamburger Menü Butonu (Mobilde Görünür) -->
-                <button type="button" class="sidebar-toggle-btn d-lg-none" id="sidebarToggleBtn" aria-label="Menüyü Aç">
+                <!-- Sol Panel Aç / Kapat Butonu (Masaüstü ve Mobil) -->
+                <button type="button" class="sidebar-toggle-btn" id="sidebarToggleBtn" aria-label="Sol Paneli Aç veya Kapat" title="Sol Paneli Aç / Kapat">
                     Menü
                 </button>
                 <span class="d-lg-none fw-bold text-dark text-truncate me-2" style="font-size: 14px;">Dashboard</span>
@@ -195,32 +195,74 @@
                 if (swLink) swLink.href = `${customApi.replace(/\/+$/, '')}/swagger`;
             }
 
-            // Mobil Menü Aç / Kapa Kontrolü
+            // Sol Panel Aç / Kapa & Masaüstü Daraltma Kontrolü
             const sidebar = document.getElementById('adminSidebar');
             const toggleBtn = document.getElementById('sidebarToggleBtn');
             const closeBtn = document.getElementById('sidebarCloseBtn');
             const backdrop = document.getElementById('sidebarBackdrop');
+            const sidebarCollapseStorageKey = 'focus_sidebar_collapsed';
 
-            function openSidebar() {
+            // Sayfa açılışında kayıtlı masaüstü gizlilik durumunu uygula
+            if (window.innerWidth >= 992) {
+                try {
+                    const isCollapsed = localStorage.getItem(sidebarCollapseStorageKey) === 'true';
+                    if (isCollapsed) {
+                        document.body.classList.add('sidebar-collapsed');
+                    }
+                } catch (e) {}
+            }
+
+            function toggleSidebar() {
+                if (window.innerWidth < 992) {
+                    const isShown = sidebar?.classList.contains('show');
+                    if (isShown) {
+                        closeMobileSidebar();
+                    } else {
+                        openMobileSidebar();
+                    }
+                } else {
+                    const collapsed = document.body.classList.toggle('sidebar-collapsed');
+                    try {
+                        localStorage.setItem(sidebarCollapseStorageKey, collapsed ? 'true' : 'false');
+                    } catch (e) {}
+                }
+            }
+
+            function openMobileSidebar() {
                 sidebar?.classList.add('show');
                 backdrop?.classList.add('show');
                 document.body.classList.add('sidebar-open');
             }
 
-            function closeSidebar() {
+            function closeMobileSidebar() {
                 sidebar?.classList.remove('show');
                 backdrop?.classList.remove('show');
                 document.body.classList.remove('sidebar-open');
             }
 
-            toggleBtn?.addEventListener('click', openSidebar);
-            closeBtn?.addEventListener('click', closeSidebar);
-            backdrop?.addEventListener('click', closeSidebar);
+            toggleBtn?.addEventListener('click', (e) => {
+                e.preventDefault();
+                toggleSidebar();
+            });
+
+            closeBtn?.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (window.innerWidth < 992) {
+                    closeMobileSidebar();
+                } else {
+                    document.body.classList.add('sidebar-collapsed');
+                    try {
+                        localStorage.setItem(sidebarCollapseStorageKey, 'true');
+                    } catch (e) {}
+                }
+            });
+
+            backdrop?.addEventListener('click', closeMobileSidebar);
 
             document.querySelectorAll('.sidebar-nav-item').forEach(link => {
                 link.addEventListener('click', () => {
                     if (window.innerWidth < 992) {
-                        closeSidebar();
+                        closeMobileSidebar();
                     }
                 });
             });
@@ -230,8 +272,14 @@
                     e.preventDefault();
                     document.getElementById('globalSearchInput')?.focus();
                 }
+                if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+                    e.preventDefault();
+                    toggleSidebar();
+                }
                 if (e.key === 'Escape') {
-                    closeSidebar();
+                    if (window.innerWidth < 992) {
+                        closeMobileSidebar();
+                    }
                 }
             });
         });

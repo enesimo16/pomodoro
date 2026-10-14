@@ -11,13 +11,13 @@
   --p-color-text-subdued: #6d7175;
   --p-color-text-disabled: #8c9196;
   
-  /* Açık Siyah / Antrasit Sol Panel */
-  --p-color-sidebar-bg: #1a1a1a;
-  --p-color-sidebar-border: #282828;
-  --p-color-sidebar-text: #8c9196;
+  /* Açık Siyah / Antrasit Sol Panel (Daha Beyaz Yazılar) */
+  --p-color-sidebar-bg: #141517;
+  --p-color-sidebar-border: #24262b;
+  --p-color-sidebar-text: #e1e3e6;
   --p-color-sidebar-text-active: #ffffff;
-  --p-color-sidebar-hover: #242527;
-  --p-color-sidebar-active: #2a2b2e;
+  --p-color-sidebar-hover: #22252a;
+  --p-color-sidebar-active: #2b2e34;
   
   /* Butonlar & Aksiyonlar (Siyah & Gri) */
   --p-color-primary: #202223;
@@ -97,11 +97,16 @@ a:hover {
   flex-direction: column;
   z-index: 1040;
   overflow-y: auto;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+body.sidebar-collapsed .admin-sidebar {
+  transform: translateX(-100%);
 }
 
 .sidebar-brand {
   height: var(--header-height);
-  padding: 0 20px;
+  padding: 0 16px 0 20px;
   display: flex;
   align-items: center;
   border-bottom: 1px solid var(--p-color-sidebar-border);
@@ -134,7 +139,7 @@ a:hover {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #55575a;
+  color: #9ca3af;
   padding: 4px 10px;
   margin-bottom: 2px;
 }
@@ -145,7 +150,7 @@ a:hover {
   gap: 10px;
   padding: 7px 10px;
   border-radius: 6px;
-  color: var(--p-color-sidebar-text);
+  color: #d1d5db;
   text-decoration: none;
   font-size: 13px;
   font-weight: 500;
@@ -183,7 +188,7 @@ a:hover {
   padding: 7px 10px;
   background: transparent;
   border: none;
-  color: var(--p-color-sidebar-text);
+  color: #f3f4f6;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.05em;
@@ -215,8 +220,8 @@ a:hover {
 .folder-caret {
   width: 6px;
   height: 6px;
-  border-right: 1.5px solid var(--p-color-sidebar-text);
-  border-bottom: 1.5px solid var(--p-color-sidebar-text);
+  border-right: 1.5px solid #d1d5db;
+  border-bottom: 1.5px solid #d1d5db;
   transform: rotate(45deg);
   transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.12s ease;
   flex-shrink: 0;
@@ -238,7 +243,7 @@ a:hover {
   gap: 2px;
   margin-left: 12px;
   padding-left: 10px;
-  border-left: 1px solid #282828;
+  border-left: 1px solid #2e3136;
   margin-top: 2px;
   margin-bottom: 4px;
 }
@@ -250,7 +255,7 @@ a:hover {
 .sidebar-folder-items .sidebar-nav-item {
   font-size: 12.5px;
   padding: 6px 10px;
-  color: #8c9196;
+  color: #d1d5db;
 }
 
 .sidebar-folder-items .sidebar-nav-item:hover {
@@ -267,7 +272,7 @@ a:hover {
 .sidebar-footer {
   padding: 12px 14px;
   border-top: 1px solid var(--p-color-sidebar-border);
-  background-color: #141414;
+  background-color: #101113;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -298,7 +303,7 @@ a:hover {
 
 .sidebar-user-role {
   font-size: 11px;
-  color: #66686b;
+  color: #9ca3af;
 }
 
 /* -------------------------------------------------------------
@@ -317,6 +322,11 @@ a:hover {
   justify-content: space-between;
   padding: 0 24px;
   z-index: 1030;
+  transition: left 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+body.sidebar-collapsed .admin-header {
+  left: 0 !important;
 }
 
 .header-search-container {
@@ -378,6 +388,11 @@ a:hover {
   flex: 1;
   padding: 24px 32px 60px 32px;
   background-color: var(--p-color-bg-app);
+  transition: margin-left 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+body.sidebar-collapsed .admin-main {
+  margin-left: 0 !important;
 }
 
 .admin-page-header {
@@ -707,17 +722,20 @@ a:hover {
   background: #ffffff;
   border: 1px solid #d2d5d8;
   color: #202223;
-  width: 32px;
+  min-width: 52px;
   height: 32px;
   border-radius: var(--p-radius-btn);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  padding: 0;
-  margin-right: 8px;
+  padding: 0 10px;
+  font-size: 12.5px;
+  font-weight: 500;
+  margin-right: 12px;
   flex-shrink: 0;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 .sidebar-toggle-btn:hover {
   background-color: #f6f6f7;
@@ -725,20 +743,24 @@ a:hover {
 }
 
 .sidebar-close-btn {
-  background: transparent;
-  border: none;
-  color: #8c9196;
-  width: 28px;
-  height: 28px;
+  background: #23272f;
+  border: 1px solid #374151;
+  color: #d1d5db;
+  height: 26px;
+  padding: 0 10px;
+  font-size: 11px;
+  font-weight: 500;
   border-radius: 4px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 .sidebar-close-btn:hover {
-  background-color: #2b2c2f;
+  background-color: #374151;
   color: #ffffff;
+  border-color: #4b5563;
 }
 
 /* Kartlar ve Tablolar İçin Taşma Koruması */

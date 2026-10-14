@@ -1458,8 +1458,8 @@
                 <span class="text-muted small text-uppercase fw-semibold" style="letter-spacing: 0.05em; font-size: 11px;">Canlı İstek & Yanıt Günlüğü</span>
                 <button id="btnClearLog" type="button" class="polaris-btn polaris-btn-secondary polaris-btn-sm">Temizle</button>
             </div>
-            <div id="terminalLog" class="terminal-box" style="height: 180px; overflow-y: auto; background: #1a1a1a; color: #e1e3e5; font-family: monospace; font-size: 12px; padding: 12px; border-radius: 6px;">
-[Sistem] API Test Konsolu hazır. Shopify Polaris modüler görünüm aktif.
+            <div id="terminalLog" class="terminal-box" style="height: 220px; overflow-y: auto; background-color: #0f1117; color: #f3f4f6; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 12.5px; line-height: 1.6; padding: 14px 16px; border: 1px solid #23272f; border-radius: 6px;">
+                <div style="color: #93c5fd;"><span style="color: #94a3b8; font-weight: 500;">[Sistem]</span> API Test Konsolu hazır. Shopify Polaris modüler test görünümü aktif.</div>
             </div>
         </div>
     </div>
@@ -1636,15 +1636,25 @@
 
     function log(message, type = 'info') {
         const box = document.getElementById('terminalLog');
+        if (!box) return;
         const time = new Date().toLocaleTimeString();
-        let color = '#202223';
-        if (type === 'error') color = '#202223';
-        if (type === 'success') color = '#202223';
-        if (type === 'warn') color = '#55575a';
+        
+        let color = '#f3f4f6'; // Varsayılan temiz açık beyaz/gümüş
+        if (type === 'error' || message.includes('Hata') || message.includes('HTTP 4') || message.includes('HTTP 5')) {
+            color = '#f87171'; // Canlı açık kırmızı
+        } else if (type === 'success' || message.includes('HTTP 200') || message.includes('HTTP 201')) {
+            color = '#4ade80'; // Canlı nane yeşili
+        } else if (type === 'warn' || message.includes('Uyarı')) {
+            color = '#fde047'; // Canlı altın sarısı
+        } else if (type === 'info' || message.includes('GET ') || message.includes('POST ') || message.includes('PATCH ') || message.includes('DELETE ')) {
+            color = '#93c5fd'; // Canlı açık gök mavisi
+        }
 
         const line = document.createElement('div');
         line.style.color = color;
-        line.innerHTML = `<span style="color: #8c9196;">[${time}]</span> ${escapeHtml(message)}`;
+        line.style.marginBottom = '4px';
+        line.style.wordBreak = 'break-word';
+        line.innerHTML = `<span style="color: #94a3b8; font-weight: 500;">[${time}]</span> ${escapeHtml(message)}`;
         box.appendChild(line);
         box.scrollTop = box.scrollHeight;
     }
