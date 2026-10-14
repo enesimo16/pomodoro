@@ -19,6 +19,15 @@ public class IndexModel : PageModel
     [BindProperty(SupportsGet = true)]
     public string? SourceFilter { get; set; }
 
+    [BindProperty(SupportsGet = true)]
+    public string? Genre { get; set; } = "All";
+
+    [BindProperty(SupportsGet = true)]
+    public int PageNumber { get; set; } = 1;
+
+    public int PageSize { get; set; } = 12;
+    public int TotalPages { get; set; } = 10;
+
     public int TotalCount => Tracks.Count;
     public int JamendoCount => Tracks.Count(t => t.Source == "Jamendo API");
     public int AiMixerCount => Tracks.Count(t => t.Source == "Yapay Zeka Mikser");
@@ -45,7 +54,20 @@ public class IndexModel : PageModel
 
     public async Task OnGetAsync(CancellationToken cancellationToken)
     {
+        if (PageNumber < 1) PageNumber = 1;
         var list = new List<SoundTrackViewModel>();
+
+        var genreQuery = Genre?.ToLowerInvariant() switch
+        {
+            "lofi" => "lofi chillhop beats",
+            "synthwave" => "synthwave retrowave cyberpunk",
+            "ambient" => "ambient drone deep meditation",
+            "piano" => "classical piano solo instrumental",
+            "jazz" => "jazz cafe acoustic trio",
+            "alpha" => "alpha waves binaural sleep focus",
+            "nature" => "nature rain forest stream",
+            _ => string.IsNullOrWhiteSpace(Search) ? "lofi" : Search.Trim()
+        };
 
         // 1. Yapay Zeka 4-Kanallı Akustik Mikser Presets
         var aiPresets = new List<SoundTrackViewModel>
@@ -121,7 +143,7 @@ public class IndexModel : PageModel
         // 2. Jamendo API Parçaları
         try
         {
-            var jamendoTracks = await _musicService.SearchTracksAsync("lofi chill study instrumental", 10, cancellationToken);
+            var jamendoTracks = await _musicService.SearchTracksAsync(genreQuery, PageSize, PageNumber, cancellationToken);
             foreach (var t in jamendoTracks)
             {
                 list.Add(new SoundTrackViewModel(

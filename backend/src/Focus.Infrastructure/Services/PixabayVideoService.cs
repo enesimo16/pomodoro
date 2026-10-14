@@ -31,18 +31,21 @@ public class PixabayVideoService : IThemeVideoService
 
     public async Task<IReadOnlyList<ThemeVideoDto>> SearchVideosAsync(
         string query = "rain window",
-        int perPage = 6,
+        int perPage = 12,
+        int page = 1,
         CancellationToken cancellationToken = default)
     {
         var apiKey = _settings.Pixabay.ApiKey;
+        var validPage = Math.Max(1, page);
+        var validPerPage = Math.Clamp(perPage, 3, 50);
+
         if (string.IsNullOrWhiteSpace(apiKey))
         {
             _logger.LogWarning("Pixabay API key is not configured.");
-            return GetFallbackVideos();
+            return GetFallbackVideos(query, validPage, validPerPage);
         }
 
-        var validPerPage = Math.Clamp(perPage, 3, 20);
-        var url = $"https://pixabay.com/api/videos/?key={apiKey}&q={Uri.EscapeDataString(query)}&video_type=film&per_page={validPerPage}";
+        var url = $"https://pixabay.com/api/videos/?key={apiKey}&q={Uri.EscapeDataString(query)}&video_type=film&per_page={validPerPage}&page={validPage}";
 
         try
         {
@@ -110,35 +113,42 @@ public class PixabayVideoService : IThemeVideoService
                 }
             }
 
-            return list.Count > 0 ? list : GetFallbackVideos();
+            return list.Count > 0 ? list : GetFallbackVideos(query, validPage, validPerPage);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to fetch videos from Pixabay");
-            return GetFallbackVideos();
+            return GetFallbackVideos(query, validPage, validPerPage);
         }
     }
 
-    private static IReadOnlyList<ThemeVideoDto> GetFallbackVideos()
+    private static IReadOnlyList<ThemeVideoDto> GetFallbackVideos(string query = "", int page = 1, int perPage = 12)
     {
-        return new List<ThemeVideoDto>
+        var allFallbacks = new List<ThemeVideoDto>
         {
-            new(
-                101,
-                "https://pixabay.com/videos/id-101/",
-                30,
-                "https://images.unsplash.com/photo-1519692933481-e162a57d6721?w=640",
-                "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-                "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-                "rain, cozy window, coffee, focus"),
-            new(
-                102,
-                "https://pixabay.com/videos/id-102/",
-                45,
-                "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=640",
-                "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
-                "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
-                "cafe, evening, warm ambient, study")
+            new(101, "https://pixabay.com/videos/id-101/", 30, "https://images.unsplash.com/photo-1519692933481-e162a57d6721?w=640", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4", "rain, window, cozy, focus, drizzle"),
+            new(102, "https://pixabay.com/videos/id-102/", 45, "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=640", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4", "cafe, evening, warm ambient, coffee shop, study"),
+            new(103, "https://pixabay.com/videos/id-103/", 60, "https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=640", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4", "cyberpunk, neon, night city, synthwave, terminal"),
+            new(104, "https://pixabay.com/videos/id-104/", 40, "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=640", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyBlazes.mp4", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyBlazes.mp4", "fireplace, wood cabin, crackle, winter warmth"),
+            new(105, "https://pixabay.com/videos/id-105/", 50, "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=640", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4", "zen, japanese garden, bamboo, water fountain, calm"),
+            new(106, "https://pixabay.com/videos/id-106/", 90, "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=640", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4", "space station, orbit, earth, cosmic calm, stars"),
+            new(107, "https://pixabay.com/videos/id-107/", 35, "https://images.unsplash.com/photo-1448375240586-882707db888b?w=640", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackSeeTheWorld.mp4", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackSeeTheWorld.mp4", "forest, mist, pine trees, morning breeze, green"),
+            new(108, "https://pixabay.com/videos/id-108/", 55, "https://images.unsplash.com/photo-1507842229451-7f01be45c067?w=640", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4", "library, ancient books, quiet reading, wood desk"),
+            new(109, "https://pixabay.com/videos/id-109/", 48, "https://images.unsplash.com/photo-1514565131-fce0801e5785?w=640", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4", "sunset, skyline, golden hour, rooftop, evening"),
+            new(110, "https://pixabay.com/videos/id-110/", 65, "https://images.unsplash.com/photo-1517411032315-54ef2cb783bb?w=640", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WhatCarCanYouGetForAGrand.mp4", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WhatCarCanYouGetForAGrand.mp4", "snow, gentle blizzard, frosted window, winter stillness"),
+            new(111, "https://pixabay.com/videos/id-111/", 42, "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=640", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4", "midnight, minimalist moon, monochrome dark, deep code"),
+            new(112, "https://pixabay.com/videos/id-112/", 38, "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=640", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4", "retro 80s, crt glow, vaporwave, pixel arcade, beats")
         };
+
+        var filtered = string.IsNullOrWhiteSpace(query)
+            ? allFallbacks
+            : allFallbacks.Where(f => f.Tags.Contains(query, StringComparison.OrdinalIgnoreCase)).ToList();
+
+        if (filtered.Count == 0) filtered = allFallbacks;
+
+        return filtered
+            .Skip((page - 1) * perPage)
+            .Take(perPage)
+            .ToList();
     }
 }

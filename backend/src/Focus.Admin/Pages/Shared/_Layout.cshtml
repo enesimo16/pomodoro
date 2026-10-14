@@ -14,77 +14,81 @@
 
         <!-- SOL PANEL (Shopify Dark Charcoal Sidebar) -->
         <aside class="admin-sidebar" id="adminSidebar">
-            <!-- Marka Alanı: Sadece Sade ve Büyük "Dashboard" Yazısı + Gizleme Butonu -->
+            <!-- Marka Alanı: Sade "FOCUS CONSOLE" Başlığı + Animasyonlu Daraltma İkonu -->
             <div class="sidebar-brand d-flex justify-content-between align-items-center">
-                <span class="sidebar-brand-title">Dashboard</span>
-                <button type="button" class="sidebar-close-btn" id="sidebarCloseBtn" aria-label="Sol Paneli Gizle" title="Sol Paneli Gizle">
-                    Gizle
+                <span class="sidebar-brand-title">FOCUS CONSOLE</span>
+                <button type="button" class="sidebar-icon-btn" id="sidebarCloseBtn" aria-label="Gezinme Panelini Daralt" title="Gezinme Panelini Daralt">
+                    <span class="animated-toggle-icon" aria-hidden="true">
+                        <span class="bar bar-1"></span>
+                        <span class="bar bar-2"></span>
+                        <span class="bar bar-3"></span>
+                    </span>
                 </button>
             </div>
 
-            <!-- Menü Grupları & Klasör Hiyerarşisi (Shopify Polaris Folder Hierarchy) -->
+            <!-- Menü Grupları & Klasör Hiyerarşisi (Kurumsal Shopify Polaris Hiyerarşisi) -->
             <div class="sidebar-nav-container">
-                <!-- Sabit Linkler: Genel -->
+                <!-- Sabit Linkler: Yönetim & Metrikler -->
                 <div class="sidebar-nav-group">
-                    <div class="sidebar-group-title">GENEL</div>
-                    <a asp-page="/Index" class="sidebar-nav-item">Dashboard</a>
-                    <a asp-page="/Analytics/Index" class="sidebar-nav-item">Analitik</a>
+                    <div class="sidebar-group-title">YÖNETİM &amp; METRİKLER</div>
+                    <a asp-page="/Index" class="sidebar-nav-item">Genel Bakış</a>
+                    <a asp-page="/Analytics/Index" class="sidebar-nav-item">Analitik &amp; Performans</a>
                 </div>
 
-                <!-- Klasör: Ekosistem -->
-                <div class="sidebar-folder" data-folder-id="ecosystem">
+                <!-- Klasör: Çalışma Alanları -->
+                <div class="sidebar-folder" data-folder-id="workspaces">
                     <button type="button" class="sidebar-folder-header" aria-expanded="true">
-                        <span class="folder-title">Ekosistem</span>
+                        <span class="folder-title">Çalışma Alanları</span>
                         <span class="folder-caret" aria-hidden="true"></span>
                     </button>
                     <div class="sidebar-folder-items">
-                        <a asp-page="/Users/Index" class="sidebar-nav-item">Kullanıcılar</a>
-                        <a asp-page="/Sessions/Index" class="sidebar-nav-item">Seanslar</a>
-                        <a asp-page="/StudyRooms/Index" class="sidebar-nav-item">Odalar</a>
-                        <a asp-page="/Guestbook/Index" class="sidebar-nav-item">Ziyaretçi Defteri</a>
+                        <a asp-page="/Users/Index" class="sidebar-nav-item">Kullanıcı Yönetimi</a>
+                        <a asp-page="/Sessions/Index" class="sidebar-nav-item">Odaklanma Seansları</a>
+                        <a asp-page="/StudyRooms/Index" class="sidebar-nav-item">Sanal Çalışma Odaları</a>
+                        <a asp-page="/Guestbook/Index" class="sidebar-nav-item">Topluluk &amp; Etkileşim</a>
                     </div>
                 </div>
 
-                <!-- Klasör: Ekonomi & Mağaza -->
-                <div class="sidebar-folder" data-folder-id="economy">
+                <!-- Klasör: Katalog & Finans -->
+                <div class="sidebar-folder" data-folder-id="catalog_finance">
                     <button type="button" class="sidebar-folder-header" aria-expanded="true">
-                        <span class="folder-title">Ekonomi & Mağaza</span>
+                        <span class="folder-title">Katalog &amp; Finans</span>
                         <span class="folder-caret" aria-hidden="true"></span>
                     </button>
                     <div class="sidebar-folder-items">
-                        <a asp-page="/Shop/Index" class="sidebar-nav-item">Mağaza Kataloğu</a>
-                        <a asp-page="/Economy/Index" class="sidebar-nav-item">Coin Defteri</a>
+                        <a asp-page="/Shop/Index" class="sidebar-nav-item">Öğe &amp; Envanter Kataloğu</a>
+                        <a asp-page="/Economy/Index" class="sidebar-nav-item">Mali Defter &amp; Bakiye (Ledger)</a>
                     </div>
                 </div>
 
-                <!-- Klasör: Yapay Zeka (Kullanıcı ve Sistem Bazlı Sentez) -->
-                <div class="sidebar-folder" data-folder-id="ai">
+                <!-- Klasör: Ortam & Bilişsel Motor -->
+                <div class="sidebar-folder" data-folder-id="ambience_engine">
                     <button type="button" class="sidebar-folder-header" aria-expanded="true">
-                        <span class="folder-title">Yapay Zeka</span>
+                        <span class="folder-title">Ortam &amp; Bilişsel Motor</span>
                         <span class="folder-caret" aria-hidden="true"></span>
                     </button>
                     <div class="sidebar-folder-items">
-                        <a asp-page="/Themes/Index" class="sidebar-nav-item">Görsel Temalar</a>
-                        <a asp-page="/Music/Index" class="sidebar-nav-item">Müzik &amp; Sesler</a>
-                        <a asp-page="/AiCoach/Atmosphere" class="sidebar-nav-item">Atmosfer &amp; Tema Sentezi</a>
-                        <a asp-page="/AiCoach/Personal" class="sidebar-nav-item">Kişisel AI Bilgileri</a>
-                        <a asp-page="/AiCoach/Global" class="sidebar-nav-item">Kolektif Global AI</a>
+                        <a asp-page="/Themes/Index" class="sidebar-nav-item">Görsel Temalar &amp; Video</a>
+                        <a asp-page="/Music/Index" class="sidebar-nav-item">Akustik Ses Kütüphanesi</a>
+                        <a asp-page="/AiCoach/Atmosphere" class="sidebar-nav-item">Üretken Ortam Motoru</a>
+                        <a asp-page="/AiCoach/Personal" class="sidebar-nav-item">Bilişsel Kullanıcı Belleği</a>
+                        <a asp-page="/AiCoach/Global" class="sidebar-nav-item">Kolektif Model Havuzu</a>
                     </div>
                 </div>
 
-                <!-- Klasör: Geliştirici (Folder / Dropdown) -->
-                <div class="sidebar-folder" data-folder-id="developer">
+                <!-- Klasör: Sistem & Entegrasyon -->
+                <div class="sidebar-folder" data-folder-id="infrastructure">
                     <button type="button" class="sidebar-folder-header" aria-expanded="true">
-                        <span class="folder-title">Geliştirici</span>
+                        <span class="folder-title">Sistem &amp; Entegrasyon</span>
                         <span class="folder-caret" aria-hidden="true"></span>
                     </button>
                     <div class="sidebar-folder-items">
-                        <a asp-page="/ApiDocs/Index" class="sidebar-nav-item">API Dokümantasyonu</a>
-                        <a asp-page="/ApiLab/Index" class="sidebar-nav-item">API Test (Lab)</a>
-                        <a asp-page="/Jobs/Index" class="sidebar-nav-item">Cron Görevleri</a>
-                        <a href="http://localhost:5000/swagger" target="_blank" class="sidebar-nav-item" id="sidebarSwaggerLink">Swagger UI</a>
-                        <a href="/hangfire" target="_blank" class="sidebar-nav-item">Hangfire Panel</a>
-                        <a asp-page="/Audit/Index" class="sidebar-nav-item">Oturum Logları</a>
+                        <a asp-page="/ApiDocs/Index" class="sidebar-nav-item">API Referans Dokümantasyonu</a>
+                        <a asp-page="/ApiLab/Index" class="sidebar-nav-item">Uç Nokta Simülatörü (API Lab)</a>
+                        <a asp-page="/Jobs/Index" class="sidebar-nav-item">Zamanlanmış İşler (Scheduled Jobs)</a>
+                        <a href="http://localhost:5000/swagger" target="_blank" class="sidebar-nav-item" id="sidebarSwaggerLink">OpenAPI / Swagger</a>
+                        <a href="/hangfire" target="_blank" class="sidebar-nav-item">Hangfire İş Dağıtıcısı</a>
+                        <a asp-page="/Audit/Index" class="sidebar-nav-item">Güvenlik &amp; Denetim Günlüğü</a>
                     </div>
                 </div>
             </div>
@@ -92,8 +96,8 @@
             <!-- Alt Profil Kutusu -->
             <div class="sidebar-footer">
                 <div class="sidebar-user-info">
-                    <div class="sidebar-user-name">Sistem Yöneticisi</div>
-                    <div class="sidebar-user-role">admin@focus.local</div>
+                    <div class="sidebar-user-name">Platform Yöneticisi</div>
+                    <div class="sidebar-user-role">SecOps / Root Authority</div>
                 </div>
             </div>
         </aside>
@@ -102,14 +106,18 @@
         <header class="admin-header">
             <div class="d-flex align-items-center flex-grow-1 overflow-hidden me-2">
                 <!-- Sol Panel Aç / Kapat Butonu (Masaüstü ve Mobil) -->
-                <button type="button" class="sidebar-toggle-btn" id="sidebarToggleBtn" aria-label="Sol Paneli Aç veya Kapat" title="Sol Paneli Aç / Kapat">
-                    Menü
+                <button type="button" class="header-icon-btn" id="sidebarToggleBtn" aria-label="Gezinme Panelini Aç veya Kapat" title="Gezinme Panelini Aç / Kapat (Ctrl+B)">
+                    <span class="animated-toggle-icon" aria-hidden="true">
+                        <span class="bar bar-1"></span>
+                        <span class="bar bar-2"></span>
+                        <span class="bar bar-3"></span>
+                    </span>
                 </button>
-                <span class="d-lg-none fw-bold text-dark text-truncate me-2" style="font-size: 14px;">Dashboard</span>
+                <span class="d-lg-none fw-bold text-dark text-truncate me-2" style="font-size: 14px;">FOCUS CONSOLE</span>
 
                 <!-- Sol: Arama Kutusu (Tablet & Masaüstü) -->
                 <div class="header-search-container d-none d-md-flex">
-                    <input type="text" class="header-search-input" style="padding-left: 12px;" placeholder="Kullanıcı, IP, oda veya eşya ara..." id="globalSearchInput" />
+                    <input type="text" class="header-search-input" style="padding-left: 12px;" placeholder="Kullanıcı, IP, seans veya uç nokta ara..." id="globalSearchInput" />
                     <span class="header-search-shortcut">⌘K</span>
                 </div>
             </div>

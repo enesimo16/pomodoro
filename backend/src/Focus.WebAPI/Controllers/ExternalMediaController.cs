@@ -26,9 +26,13 @@ public class ExternalMediaController : BaseApiController
     /// </summary>
     [HttpGet("themes")]
     [ProducesResponseType(typeof(IReadOnlyList<ThemeVideoDto>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetThemeVideos([FromQuery] string query = "rain window", [FromQuery] int perPage = 6, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> GetThemeVideos(
+        [FromQuery] string query = "rain window",
+        [FromQuery] int perPage = 12,
+        [FromQuery] int page = 1,
+        CancellationToken cancellationToken = default)
     {
-        var videos = await _videoService.SearchVideosAsync(query, perPage, cancellationToken);
+        var videos = await _videoService.SearchVideosAsync(query, perPage, page, cancellationToken);
         return Ok(videos);
     }
 
@@ -37,9 +41,13 @@ public class ExternalMediaController : BaseApiController
     /// </summary>
     [HttpGet("tracks")]
     [ProducesResponseType(typeof(IReadOnlyList<MusicTrackDto>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetTracks([FromQuery] string query = "lofi", [FromQuery] int limit = 10, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> GetTracks(
+        [FromQuery] string query = "lofi",
+        [FromQuery] int limit = 12,
+        [FromQuery] int page = 1,
+        CancellationToken cancellationToken = default)
     {
-        var tracks = await _musicService.SearchTracksAsync(query, limit, cancellationToken);
+        var tracks = await _musicService.SearchTracksAsync(query, limit, page, cancellationToken);
         return Ok(tracks);
     }
 

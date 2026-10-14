@@ -22,6 +22,15 @@ public class IndexModel : PageModel
     [BindProperty(SupportsGet = true)]
     public string? SourceFilter { get; set; }
 
+    [BindProperty(SupportsGet = true)]
+    public string? Category { get; set; } = "All";
+
+    [BindProperty(SupportsGet = true)]
+    public int PageNumber { get; set; } = 1;
+
+    public int PageSize { get; set; } = 12;
+    public int TotalPages { get; set; } = 10;
+
     public int TotalCount => Themes.Count;
     public int PixabayCount => Themes.Count(t => t.Source == "Pixabay API");
     public int AiPresetCount => Themes.Count(t => t.Source == "Yapay Zeka");
@@ -46,7 +55,22 @@ public class IndexModel : PageModel
 
     public async Task OnGetAsync(CancellationToken cancellationToken)
     {
+        if (PageNumber < 1) PageNumber = 1;
         var list = new List<ThemeItemViewModel>();
+
+        // Kategoriye göre video arama sorgusu
+        var categoryQuery = Category?.ToLowerInvariant() switch
+        {
+            "rain" => "rain window rainy drizzle",
+            "fireplace" => "fireplace wood cabin warmth",
+            "cyberpunk" => "cyberpunk neon night city",
+            "cafe" => "cafe coffee shop study",
+            "nature" => "zen garden bamboo forest",
+            "space" => "space cosmic earth stars",
+            "library" => "library ancient books reading",
+            "sunset" => "sunset skyline rooftop golden",
+            _ => string.IsNullOrWhiteSpace(Search) ? "rain window cozy fireplace city nature neon" : Search.Trim()
+        };
 
         // 1. Yapay Zeka Tasarımı Piksel Oda Temaları (7 Çekirdek Tema)
         var aiThemes = new List<ThemeItemViewModel>
@@ -155,7 +179,7 @@ public class IndexModel : PageModel
         // 2. Pixabay API Canlı Video Temaları
         try
         {
-            var pxbVideos = await _videoService.SearchVideosAsync("rain window cozy fireplace city", 8, cancellationToken);
+            var pxbVideos = await _videoService.SearchVideosAsync(categoryQuery, PageSize, PageNumber, cancellationToken);
             foreach (var v in pxbVideos)
             {
                 list.Add(new ThemeItemViewModel(

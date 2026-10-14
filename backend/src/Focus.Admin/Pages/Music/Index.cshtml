@@ -53,13 +53,42 @@
         </div>
     </div>
 
+    <!-- Tür Sekmeleri (Genre Pills) -->
+    <div class="d-flex flex-wrap gap-1 mb-3">
+        <a asp-page="/Music/Index" asp-route-Genre="All" asp-route-Search="@Model.Search" asp-route-SourceFilter="@Model.SourceFilter" class="polaris-btn polaris-btn-sm @(string.IsNullOrEmpty(Model.Genre) || Model.Genre == "All" ? "polaris-btn-primary" : "polaris-btn-secondary")">
+            Tüm Müzik &amp; Sesler
+        </a>
+        <a asp-page="/Music/Index" asp-route-Genre="lofi" asp-route-Search="@Model.Search" asp-route-SourceFilter="@Model.SourceFilter" class="polaris-btn polaris-btn-sm @(Model.Genre == "lofi" ? "polaris-btn-primary" : "polaris-btn-secondary")">
+            Lo-Fi Chillhop
+        </a>
+        <a asp-page="/Music/Index" asp-route-Genre="synthwave" asp-route-Search="@Model.Search" asp-route-SourceFilter="@Model.SourceFilter" class="polaris-btn polaris-btn-sm @(Model.Genre == "synthwave" ? "polaris-btn-primary" : "polaris-btn-secondary")">
+            Synthwave &amp; Cyberpunk
+        </a>
+        <a asp-page="/Music/Index" asp-route-Genre="ambient" asp-route-Search="@Model.Search" asp-route-SourceFilter="@Model.SourceFilter" class="polaris-btn polaris-btn-sm @(Model.Genre == "ambient" ? "polaris-btn-primary" : "polaris-btn-secondary")">
+            Ambient Drone
+        </a>
+        <a asp-page="/Music/Index" asp-route-Genre="piano" asp-route-Search="@Model.Search" asp-route-SourceFilter="@Model.SourceFilter" class="polaris-btn polaris-btn-sm @(Model.Genre == "piano" ? "polaris-btn-primary" : "polaris-btn-secondary")">
+            Akustik Piyano
+        </a>
+        <a asp-page="/Music/Index" asp-route-Genre="jazz" asp-route-Search="@Model.Search" asp-route-SourceFilter="@Model.SourceFilter" class="polaris-btn polaris-btn-sm @(Model.Genre == "jazz" ? "polaris-btn-primary" : "polaris-btn-secondary")">
+            Kafe Cazı
+        </a>
+        <a asp-page="/Music/Index" asp-route-Genre="alpha" asp-route-Search="@Model.Search" asp-route-SourceFilter="@Model.SourceFilter" class="polaris-btn polaris-btn-sm @(Model.Genre == "alpha" ? "polaris-btn-primary" : "polaris-btn-secondary")">
+            Alfa Frekansları
+        </a>
+        <a asp-page="/Music/Index" asp-route-Genre="nature" asp-route-Search="@Model.Search" asp-route-SourceFilter="@Model.SourceFilter" class="polaris-btn polaris-btn-sm @(Model.Genre == "nature" ? "polaris-btn-primary" : "polaris-btn-secondary")">
+            Doğa &amp; Gürültü
+        </a>
+    </div>
+
     <!-- Filtreler ve Arama Çubuğu (Polaris Toolbar) -->
     <div class="polaris-card p-3 mb-4">
         <form method="get" class="row g-2 align-items-center">
+            <input type="hidden" name="Genre" value="@Model.Genre" />
             <div class="col-md-7">
                 <div class="input-group input-group-sm">
-                    <input type="text" name="Search" value="@Model.Search" class="form-control" placeholder="Parça adı, sanatçı, janr veya enstrüman ara..." />
-                    @if (!string.IsNullOrWhiteSpace(Model.Search) || !string.IsNullOrWhiteSpace(Model.SourceFilter))
+                    <input type="text" name="Search" value="@Model.Search" class="form-control" placeholder="500.000+ Jamendo ve Yapay Zeka parçasında ara..." />
+                    @if (!string.IsNullOrWhiteSpace(Model.Search) || !string.IsNullOrWhiteSpace(Model.SourceFilter) || (Model.Genre != "All" && !string.IsNullOrEmpty(Model.Genre)))
                     {
                         <a asp-page="/Music/Index" class="btn btn-outline-secondary">Temizle</a>
                     }
@@ -68,16 +97,16 @@
             </div>
             <div class="col-md-5">
                 <div class="d-flex gap-1 flex-wrap justify-content-md-end">
-                    <a asp-page="/Music/Index" asp-route-Search="@Model.Search" class="polaris-btn polaris-btn-sm @(string.IsNullOrEmpty(Model.SourceFilter) || Model.SourceFilter == "All" ? "polaris-btn-primary" : "polaris-btn-secondary")">
+                    <a asp-page="/Music/Index" asp-route-Genre="@Model.Genre" asp-route-Search="@Model.Search" class="polaris-btn polaris-btn-sm @(string.IsNullOrEmpty(Model.SourceFilter) || Model.SourceFilter == "All" ? "polaris-btn-primary" : "polaris-btn-secondary")">
                         Tümü
                     </a>
-                    <a asp-page="/Music/Index" asp-route-SourceFilter="Yapay Zeka Mikser" asp-route-Search="@Model.Search" class="polaris-btn polaris-btn-sm @(Model.SourceFilter == "Yapay Zeka Mikser" ? "polaris-btn-primary" : "polaris-btn-secondary")">
+                    <a asp-page="/Music/Index" asp-route-Genre="@Model.Genre" asp-route-SourceFilter="Yapay Zeka Mikser" asp-route-Search="@Model.Search" class="polaris-btn polaris-btn-sm @(Model.SourceFilter == "Yapay Zeka Mikser" ? "polaris-btn-primary" : "polaris-btn-secondary")">
                         AI Mikserleri
                     </a>
-                    <a asp-page="/Music/Index" asp-route-SourceFilter="Jamendo API" asp-route-Search="@Model.Search" class="polaris-btn polaris-btn-sm @(Model.SourceFilter == "Jamendo API" ? "polaris-btn-primary" : "polaris-btn-secondary")">
+                    <a asp-page="/Music/Index" asp-route-Genre="@Model.Genre" asp-route-SourceFilter="Jamendo API" asp-route-Search="@Model.Search" class="polaris-btn polaris-btn-sm @(Model.SourceFilter == "Jamendo API" ? "polaris-btn-primary" : "polaris-btn-secondary")">
                         Jamendo Lo-Fi
                     </a>
-                    <a asp-page="/Music/Index" asp-route-SourceFilter="Doğa & Gürültü" asp-route-Search="@Model.Search" class="polaris-btn polaris-btn-sm @(Model.SourceFilter == "Doğa & Gürültü" ? "polaris-btn-primary" : "polaris-btn-secondary")">
+                    <a asp-page="/Music/Index" asp-route-Genre="@Model.Genre" asp-route-SourceFilter="Doğa & Gürültü" asp-route-Search="@Model.Search" class="polaris-btn polaris-btn-sm @(Model.SourceFilter == "Doğa & Gürültü" ? "polaris-btn-primary" : "polaris-btn-secondary")">
                         Doğa &amp; Gürültü
                     </a>
                 </div>
@@ -178,6 +207,33 @@
                     </div>
                 </div>
             }
+        </div>
+
+        <!-- Canlı Sayfalama Çubuğu (Pagination) -->
+        <div class="d-flex flex-wrap justify-content-between align-items-center mt-4 pt-3 border-top">
+            <span class="text-muted small">
+                Sayfa <strong>@Model.PageNumber</strong> / @Model.TotalPages (Toplam @Model.TotalCount kayıt listeleniyor)
+            </span>
+            <div class="d-flex gap-1 align-items-center">
+                @if (Model.PageNumber > 1)
+                {
+                    <a asp-page="/Music/Index" asp-route-PageNumber="@(Model.PageNumber - 1)" asp-route-Genre="@Model.Genre" asp-route-SourceFilter="@Model.SourceFilter" asp-route-Search="@Model.Search" class="polaris-btn polaris-btn-secondary polaris-btn-sm">
+                        Önceki Sayfa
+                    </a>
+                }
+                @for (int p = Math.Max(1, Model.PageNumber - 2); p <= Math.Min(Model.TotalPages, Model.PageNumber + 2); p++)
+                {
+                    <a asp-page="/Music/Index" asp-route-PageNumber="@p" asp-route-Genre="@Model.Genre" asp-route-SourceFilter="@Model.SourceFilter" asp-route-Search="@Model.Search" class="polaris-btn polaris-btn-sm @(p == Model.PageNumber ? "polaris-btn-primary" : "polaris-btn-secondary")">
+                        @p
+                    </a>
+                }
+                @if (Model.PageNumber < Model.TotalPages)
+                {
+                    <a asp-page="/Music/Index" asp-route-PageNumber="@(Model.PageNumber + 1)" asp-route-Genre="@Model.Genre" asp-route-SourceFilter="@Model.SourceFilter" asp-route-Search="@Model.Search" class="polaris-btn polaris-btn-secondary polaris-btn-sm">
+                        Sonraki Sayfa
+                    </a>
+                }
+            </div>
         </div>
     }
 </div>
