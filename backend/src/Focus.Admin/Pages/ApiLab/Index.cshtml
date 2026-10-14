@@ -9,10 +9,16 @@
         <h1 class="admin-page-title">API Test Konsolu</h1>
         <p class="admin-page-subtitle">Tüm fazların uçtan uca interaktif test ve simülasyon laboratuvarı</p>
     </div>
-    <div class="d-flex align-items-center gap-2">
+    <div class="d-flex align-items-center gap-2 flex-wrap">
         <span class="polaris-badge polaris-badge-neutral px-3 py-2">
             Hedef API: <strong class="text-dark" id="lblTargetApi">@Model.WebApiBaseUrl</strong>
         </span>
+        <span class="polaris-badge polaris-badge-dark px-3 py-2" id="lblAutoAccountBadge">
+            Test Hesabı: <strong id="lblAutoAccountName">Bağlanıyor...</strong>
+        </span>
+        <button id="btnQuickNewAccount" class="polaris-btn polaris-btn-primary polaris-btn-sm" title="Yeni bağımsız bir test hesabı aç">
+            Yeni Test Hesabı
+        </button>
         <button id="btnResetAll" class="polaris-btn polaris-btn-secondary polaris-btn-sm" title="Tüm yerel oturum verilerini temizle">
             Sıfırla
         </button>
@@ -1287,10 +1293,87 @@
     }
     window.navigateModule = navigateModule;
 
-    document.addEventListener('DOMContentLoaded', function () {
+    function updateAutoAccountBadge(displayName) {
+        const lbl = document.getElementById('lblAutoAccountName');
+        const badge = document.getElementById('lblAutoAccountBadge');
+        if (lbl) lbl.textContent = displayName || 'Aktif';
+        if (badge) badge.className = 'polaris-badge polaris-badge-dark px-3 py-2';
+    }
+
+    async function quietFetchInitialData() {
+        try {
+            await Promise.allSettled([
+                fetch(`${apiBase}/api/v1/avatar`, { headers: getAuthHeaders(false), credentials: 'include' })
+                    .then(r => r.ok ? r.json() : null)
+                    .then(av => { if (av) updateSessionUI({ avatar: av }); }),
+                fetch(`${apiBase}/api/v1/room`, { headers: getAuthHeaders(false), credentials: 'include' })
+                    .then(r => r.ok ? r.json() : null)
+                    .then(rm => { if (rm) updateSessionUI({ room: rm }); }),
+                fetch(`${apiBase}/api/v1/sessions/active`, { headers: getAuthHeaders(false), credentials: 'include' })
+                    .then(r => r.ok && r.status !== 204 ? r.json() : null)
+                    .then(sess => { if (sess) updateTimerUI(sess); })
+            ]);
+            fetchLiveStreak();
+        } catch (e) { }
+    }
+
+    async function ensureAuthToken(quiet = false) {
+        if (currentTokens.accessToken) {
+            return currentTokens.accessToken;
+        }
+
+        if (!quiet) {
+            log('[Test Konsolu] Aktif oturum yok, otomatik test hesabı bağlanıyor...', 'info');
+        }
+
+        try {
+            const guestName = 'TestUser_' + Math.floor(1000 + Math.random() * 9000);
+            const res = await fetch(`${apiBase}/api/v1/auth/guest`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ displayName: guestName })
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                saveTokens(data.accessToken, data.refreshToken);
+                updateSessionUI(data);
+                updateAutoAccountBadge(data.user?.displayName || guestName);
+                if (!quiet) {
+                    log(`[Test Konsolu] '${data.user?.displayName || guestName}' test hesabı başarıyla bağlandı.`, 'success');
+                }
+                await quietFetchInitialData();
+                return data.accessToken;
+            } else {
+                log(`[Test Konsolu] Test hesabı oluşturulamadı (HTTP ${res.status}).`, 'error');
+            }
+        } catch (err) {
+            log(`[Test Konsolu] Oturum başlatma hatası: ${err.message}`, 'error');
+        }
+        return null;
+    }
+
+    document.addEventListener('DOMContentLoaded', async function () {
         const select = document.getElementById('moduleSelectDropdown');
         if (select) {
             onModuleTabChange(select);
+        }
+
+        const btnQuickNew = document.getElementById('btnQuickNewAccount');
+        if (btnQuickNew) {
+            btnQuickNew.addEventListener('click', async () => {
+                log('[Test Konsolu] Yeni bağımsız test hesabı oluşturuluyor...', 'info');
+                clearSessionUI();
+                await ensureAuthToken(false);
+            });
+        }
+
+        if (currentTokens.accessToken) {
+            log(`Kayıtlı oturum tespit edildi. Profil sorgulanıyor...`, 'info');
+            document.getElementById('btnGetMe').click();
+        } else {
+            await ensureAuthToken(true);
         }
     });
 
@@ -1357,6 +1440,7 @@
             const statusBadge = document.getElementById('sessionStatusBadge');
             statusBadge.textContent = 'Aktif Oturum';
             statusBadge.className = 'badge rounded-pill badge-status-active';
+            updateAutoAccountBadge(data.user.displayName);
         }
 
         if (data.tokens && data.tokens.accessToken) {
@@ -1416,6 +1500,10 @@
         document.getElementById('lblLiveFreezes').textContent = '1 / 2 Hak';
         document.getElementById('lblStreakStatusBadge').textContent = 'Bugün Yapılmadı';
         updateTimerDisplay(48 * 60, 48 * 60, 'Beklemede', 'Hazır', 'Tur 1 / 4', false);
+        const lbl = document.getElementById('lblAutoAccountName');
+        const badge = document.getElementById('lblAutoAccountBadge');
+        if (lbl) lbl.textContent = 'Bağlı Değil';
+        if (badge) badge.className = 'polaris-badge polaris-badge-neutral px-3 py-2';
     }
 
     // SAĞDAKİ CANLI TEMA & MÜZİK ÖNİZLEMESİNİ GÜNCELLE
@@ -1575,6 +1663,7 @@
     });
 
     document.getElementById('btnGetMe').addEventListener('click', async () => {
+        await ensureAuthToken();
         log(`GET ${apiBase}/api/v1/auth/me gönderiliyor...`);
         try {
             const res = await fetch(`${apiBase}/api/v1/auth/me`, {
@@ -1668,6 +1757,7 @@
 
     // 2. AVATAR
     document.getElementById('btnGetAvatar').addEventListener('click', async () => {
+        await ensureAuthToken();
         log(`GET ${apiBase}/api/v1/avatar gönderiliyor...`);
         try {
             const res = await fetch(`${apiBase}/api/v1/avatar`, {
@@ -1686,6 +1776,7 @@
     });
 
     document.getElementById('btnUpdateAvatar').addEventListener('click', async () => {
+        await ensureAuthToken();
         const payload = {
             skinTone: document.getElementById('avSkinTone').value,
             hairStyle: document.getElementById('avHairStyle').value,
@@ -1716,6 +1807,7 @@
 
     // 3. PIXEL ROOM
     document.getElementById('btnGetRoom').addEventListener('click', async () => {
+        await ensureAuthToken();
         log(`GET ${apiBase}/api/v1/room gönderiliyor...`);
         try {
             const res = await fetch(`${apiBase}/api/v1/room`, {
@@ -1734,6 +1826,7 @@
     });
 
     document.getElementById('btnAddRoomItem').addEventListener('click', async () => {
+        await ensureAuthToken();
         const payload = {
             catalogItemId: document.getElementById('roomCatalogItem').value,
             gridX: parseInt(document.getElementById('roomGridX').value) || 0,
@@ -1760,6 +1853,7 @@
     });
 
     document.getElementById('btnUpdateTheme').addEventListener('click', async () => {
+        await ensureAuthToken();
         const payload = {
             wallpaperCatalogId: document.getElementById('roomWallpaper').value,
             floorCatalogId: document.getElementById('roomFloor').value
@@ -1784,6 +1878,7 @@
     });
 
     window.removeItem = async function(itemId) {
+        await ensureAuthToken();
         log(`DELETE ${apiBase}/api/v1/room/items/${itemId} gönderiliyor...`);
         try {
             const res = await fetch(`${apiBase}/api/v1/room/items/${itemId}`, {
@@ -1801,6 +1896,7 @@
     };
 
     window.moveItemPrompt = async function(itemId, currX, currY, currRot) {
+        await ensureAuthToken();
         const newX = prompt("Yeni Grid X (0-10):", currX);
         if (newX === null) return;
         const newY = prompt("Yeni Grid Y (0-10):", currY);
@@ -1833,6 +1929,7 @@
 
     // 4. SAYAÇ & DÖNGÜ (FAZ 2)
     document.getElementById('btnStartSession').addEventListener('click', async () => {
+        await ensureAuthToken();
         const payload = {
             kind: document.getElementById('sessionKind').value,
             focusMinutes: parseInt(document.getElementById('sessionFocusMin').value) || 48,
@@ -1863,6 +1960,7 @@
     });
 
     document.getElementById('btnPauseSession').addEventListener('click', async () => {
+        await ensureAuthToken();
         log(`POST ${apiBase}/api/v1/sessions/pause gönderiliyor...`);
         try {
             const res = await fetch(`${apiBase}/api/v1/sessions/pause`, {
@@ -1881,6 +1979,7 @@
     });
 
     document.getElementById('btnResumeSession').addEventListener('click', async () => {
+        await ensureAuthToken();
         log(`POST ${apiBase}/api/v1/sessions/resume gönderiliyor...`);
         try {
             const res = await fetch(`${apiBase}/api/v1/sessions/resume`, {
@@ -1899,6 +1998,7 @@
     });
 
     document.getElementById('btnExtendSession').addEventListener('click', async () => {
+        await ensureAuthToken();
         log(`POST ${apiBase}/api/v1/sessions/extend (+10 Dk) gönderiliyor...`);
         try {
             const res = await fetch(`${apiBase}/api/v1/sessions/extend`, {
@@ -1918,6 +2018,7 @@
     });
 
     document.getElementById('btnCompleteSession').addEventListener('click', async () => {
+        await ensureAuthToken();
         log(`POST ${apiBase}/api/v1/sessions/complete gönderiliyor...`);
         try {
             const res = await fetch(`${apiBase}/api/v1/sessions/complete`, {
@@ -1937,6 +2038,7 @@
     });
 
     document.getElementById('btnAbandonSession').addEventListener('click', async () => {
+        await ensureAuthToken();
         log(`POST ${apiBase}/api/v1/sessions/abandon gönderiliyor...`);
         try {
             const res = await fetch(`${apiBase}/api/v1/sessions/abandon`, {
@@ -1955,6 +2057,7 @@
     });
 
     document.getElementById('btnGetActiveSession').addEventListener('click', async () => {
+        await ensureAuthToken();
         log(`GET ${apiBase}/api/v1/sessions/active gönderiliyor...`);
         try {
             const res = await fetch(`${apiBase}/api/v1/sessions/active`, {
@@ -2186,6 +2289,7 @@
     }
 
     document.getElementById('btnGetCatalog').addEventListener('click', async () => {
+        await ensureAuthToken();
         const cat = document.getElementById('shopCategoryFilter').value;
         const search = document.getElementById('shopSearchFilter').value.trim();
         let url = `${apiBase}/api/v1/shop/catalog?`;
@@ -2253,10 +2357,7 @@
     });
 
     document.getElementById('btnGetInventory').addEventListener('click', async () => {
-        if (!currentTokens.accessToken) {
-            log(`Envanterinizi görüntülemek için önce giriş yapmalısınız.`, 'warning');
-            return;
-        }
+        await ensureAuthToken();
 
         const cat = document.getElementById('shopCategoryFilter').value;
         let url = `${apiBase}/api/v1/shop/inventory`;
@@ -2310,10 +2411,7 @@
     });
 
     window.buyShopItem = async function(catalogItemId, itemName, price) {
-        if (!currentTokens.accessToken) {
-            log(`Satın alma işlemi için oturum açmalısınız.`, 'warning');
-            return;
-        }
+        await ensureAuthToken();
 
         log(`POST ${apiBase}/api/v1/shop/buy [${itemName}] gönderiliyor...`);
         try {
@@ -2338,10 +2436,7 @@
     };
 
     document.getElementById('btnBuyFreeze').addEventListener('click', async () => {
-        if (!currentTokens.accessToken) {
-            log(`Dondurucu satın almak için oturum açmalısınız.`, 'warning');
-            return;
-        }
+        await ensureAuthToken();
 
         log(`POST ${apiBase}/api/v1/shop/buy-freeze gönderiliyor...`);
         try {
@@ -2380,10 +2475,7 @@
 
     // 7. SERİ & İSTATİSTİKLER (FAZ 3)
     document.getElementById('btnGetStreak').addEventListener('click', async () => {
-        if (!currentTokens.accessToken) {
-            log(`Seri bilgisini görmek için oturum açmalısınız.`, 'warning');
-            return;
-        }
+        await ensureAuthToken();
 
         log(`GET ${apiBase}/api/v1/streak gönderiliyor...`);
         try {
@@ -2420,10 +2512,7 @@
     });
 
     document.getElementById('btnGetStats').addEventListener('click', async () => {
-        if (!currentTokens.accessToken) {
-            log(`İstatistikleri görmek için oturum açmalısınız.`, 'warning');
-            return;
-        }
+        await ensureAuthToken();
 
         log(`GET ${apiBase}/api/v1/stats gönderiliyor...`);
         try {
@@ -2564,10 +2653,7 @@
     }
 
     window.joinStudyRoom = async function(roomCode, inviteCode = null) {
-        if (!currentTokens.accessToken) {
-            log(`Odaya katılmak için oturum açmalısınız.`, 'warning');
-            return;
-        }
+        await ensureAuthToken();
 
         log(`POST ${apiBase}/api/v1/study-rooms/join (${roomCode})...`);
         try {
@@ -2611,6 +2697,7 @@
     };
 
     document.getElementById('btnGetPublicRooms').addEventListener('click', async () => {
+        await ensureAuthToken();
         log(`GET ${apiBase}/api/v1/study-rooms/public gönderiliyor...`);
         try {
             const res = await fetch(`${apiBase}/api/v1/study-rooms/public`, { headers: getAuthHeaders(false) });
@@ -2653,10 +2740,7 @@
     });
 
     document.getElementById('btnCreateInvite').addEventListener('click', async () => {
-        if (!currentTokens.accessToken) {
-            log(`Davet linki oluşturmak için oturum açmalısınız.`, 'warning');
-            return;
-        }
+        await ensureAuthToken();
 
         log(`POST ${apiBase}/api/v1/study-rooms/create-invite gönderiliyor...`);
         try {
@@ -2708,10 +2792,7 @@
     });
 
     document.getElementById('btnInviteUsername').addEventListener('click', async () => {
-        if (!currentTokens.accessToken) {
-            log(`Kullanıcı davet etmek için oturum açmalısınız.`, 'warning');
-            return;
-        }
+        await ensureAuthToken();
 
         const username = document.getElementById('txtInviteUsername').value.trim();
         if (!username) {
@@ -2819,10 +2900,7 @@
 
     // Chat Gönder
     document.getElementById('btnSendCoachChat').addEventListener('click', async () => {
-        if (!currentTokens.accessToken) {
-            log(`Masa Asistanı ile konuşmak için oturum açmalısınız.`, 'warning');
-            return;
-        }
+        await ensureAuthToken();
 
         const input = document.getElementById('txtCoachMessage');
         const message = input.value.trim();
@@ -2897,10 +2975,7 @@
 
     // Seans Başı Check-In Gönder
     document.getElementById('btnSubmitCheckIn').addEventListener('click', async () => {
-        if (!currentTokens.accessToken) {
-            log(`Check-In yapmak için oturum açmalısınız.`, 'warning');
-            return;
-        }
+        await ensureAuthToken();
 
         const mood = document.getElementById('checkInMood').value;
         const energy = parseInt(document.getElementById('checkInEnergy').value);
@@ -2934,10 +3009,7 @@
 
     // Seans Sonu Değerlendirme (Reflection) Gönder
     document.getElementById('btnSubmitReflection').addEventListener('click', async () => {
-        if (!currentTokens.accessToken) {
-            log(`Değerlendirme göndermek için oturum açmalısınız.`, 'warning');
-            return;
-        }
+        await ensureAuthToken();
 
         const quality = parseInt(document.getElementById('refFocusQuality').value);
         const moodAfter = document.getElementById('refMoodAfter').value;
@@ -2973,10 +3045,7 @@
 
     // Anomali ve Yorgunluk Durumu Sorgula
     document.getElementById('btnCheckAnomaly').addEventListener('click', async () => {
-        if (!currentTokens.accessToken) {
-            log(`Anomali tanısı için oturum açmalısınız.`, 'warning');
-            return;
-        }
+        await ensureAuthToken();
 
         log(`GET ${apiBase}/api/v1/coach/anomaly-status...`);
         try {
@@ -3007,10 +3076,7 @@
 
     // Çift Katmanlı Vektör Hafızasını Listele
     document.getElementById('btnListMemories').addEventListener('click', async () => {
-        if (!currentTokens.accessToken) {
-            log(`Hafıza kayıtlarını görmek için oturum açmalısınız.`, 'warning');
-            return;
-        }
+        await ensureAuthToken();
 
         log(`GET ${apiBase}/api/v1/coach/memories?limit=15...`);
         try {
@@ -3207,6 +3273,7 @@
 
     // 1. Prompt ile Atmosfer Üret (POST /ai-atmosphere/generate)
     document.getElementById('btnGenerateAtmosphere').addEventListener('click', async () => {
+        await ensureAuthToken();
         const prompt = document.getElementById('txtAtmospherePrompt').value.trim();
         const goal = document.getElementById('selectAtmosphereGoal').value;
         const mood = document.getElementById('selectAtmosphereMood').value;
@@ -3245,6 +3312,7 @@
 
     // 2. Otomatik Ritim & Analitik Önerisi (GET /ai-atmosphere/auto-recommend)
     document.getElementById('btnAutoAtmosphere').addEventListener('click', async () => {
+        await ensureAuthToken();
         log(`GET ${apiBase}/api/v1/ai-atmosphere/auto-recommend gönderiliyor...`);
         try {
             const res = await fetch(`${apiBase}/api/v1/ai-atmosphere/auto-recommend`, {
@@ -3266,6 +3334,7 @@
 
     // 3. Odaya & Miksere Uygula (POST /ai-atmosphere/apply)
     document.getElementById('btnApplyAtmosphere').addEventListener('click', async () => {
+        await ensureAuthToken();
         if (!latestAtmosphere) {
             log(`Önce bir atmosfer üretmelisiniz.`, 'warning');
             return;
@@ -3295,6 +3364,7 @@
 
     // 4. Kütüphaneye Kaydet (POST /ai-atmosphere/save)
     document.getElementById('btnSaveAtmosphere').addEventListener('click', async () => {
+        await ensureAuthToken();
         if (!latestAtmosphere) {
             log(`Önce bir atmosfer üretmelisiniz.`, 'warning');
             return;
@@ -3328,10 +3398,7 @@
 
     // 5. Kayıtlı Atmosferleri Listele (GET /ai-atmosphere/saved)
     document.getElementById('btnListSavedAtmospheres').addEventListener('click', async () => {
-        if (!currentTokens.accessToken) {
-            log(`Kayıtlı temaları listelemek için oturum açmalısınız.`, 'warning');
-            return;
-        }
+        await ensureAuthToken();
 
         log(`GET ${apiBase}/api/v1/ai-atmosphere/saved...`);
         try {
@@ -3431,10 +3498,7 @@
 
     // 6. Kolektif Hafızaya Deneyim Aktar (POST /ai-atmosphere/contribute-insight)
     document.getElementById('btnContributeInsight').addEventListener('click', async () => {
-        if (!currentTokens.accessToken) {
-            log(`Kolektif havuz katkısı için oturum açmalısınız.`, 'warning');
-            return;
-        }
+        await ensureAuthToken();
 
         const duration = parseInt(document.getElementById('txtContributeDuration').value) || 45;
         const quality = parseInt(document.getElementById('selectContributeQuality').value) || 5;
@@ -3486,11 +3550,5 @@
     document.getElementById('btnClearLog').addEventListener('click', () => {
         document.getElementById('terminalLog').innerHTML = '';
     });
-
-    // Açılışta oturum varsa bilgileri çek
-    if (currentTokens.accessToken) {
-        log(`Kayıtlı oturum tespit edildi. Profil sorgulanıyor...`, 'info');
-        document.getElementById('btnGetMe').click();
-    }
 </script>
 }
