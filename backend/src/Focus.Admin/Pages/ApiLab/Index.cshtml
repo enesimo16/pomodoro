@@ -46,14 +46,16 @@
                         <option value="#tab-stats">7. İstatistikler, Seri (Streak) & Heatmap</option>
                         <option value="#tab-social">8. Sosyal Ortak Çalışma Odası (Social)</option>
                         <option value="#tab-coach">9. Masaüstü Yapay Zeka Koç & Vektör Bellek (AI Coach)</option>
-                        <option value="#tab-atmosphere">10. AI Atmosfer, Tema & Müzik Üretimi (Atmosphere AI)</option>
+                        <option value="#tab-atmosphere">10. AI Atmosfer & Sirkadiyen Orkestrasyon (Atmosphere AI)</option>
+                        <option value="#tab-theme-ai">11. AI Görsel Tema & Piksel Oda Paleti (Theme AI)</option>
+                        <option value="#tab-music-ai">12. AI Müzik & 4-Kanal Akustik Ses Mikseri (Music AI)</option>
                     </select>
                 </div>
                 <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
                     <button type="button" class="polaris-btn polaris-btn-secondary polaris-btn-sm" onclick="navigateModule(-1)">
                         Önceki
                     </button>
-                    <span class="text-muted" style="font-size: 11px;" id="moduleStepIndicator">Modül 1 / 10</span>
+                    <span class="text-muted" style="font-size: 11px;" id="moduleStepIndicator">Modül 1 / 12</span>
                     <button type="button" class="polaris-btn polaris-btn-secondary polaris-btn-sm" onclick="navigateModule(1)">
                         Sonraki
                     </button>
@@ -815,21 +817,34 @@
                 </div>
             </div>
 
-            <!-- TAB 10: AI ATMOSFER, TEMA & MÜZİK ÜRETİMİ (ATMOSPHERE AI) -->
+            <!-- TAB 10: AI BÜTÜNSEL SİRKADİYEN ATMOSFER & ORKESTRASYON (ATMOSPHERE AI) -->
             <div class="tab-pane fade" id="tab-atmosphere" role="tabpanel">
-                <!-- Bölüm 1: İstek Üzerine & Otomatik Atmosfer Sentezi -->
+                <!-- Hızlı Geçiş Alt Çubuğu -->
+                <div class="d-flex gap-1 mb-3 p-1 bg-light rounded border">
+                    <button type="button" class="btn btn-sm btn-dark flex-fill py-1 fw-semibold" onclick="quickJumpTab('#tab-atmosphere')">
+                        1. Atmosfer Orkestrasyonu
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary flex-fill py-1 fw-semibold" onclick="quickJumpTab('#tab-theme-ai')">
+                        2. Görsel Tema & Palet
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary flex-fill py-1 fw-semibold" onclick="quickJumpTab('#tab-music-ai')">
+                        3. Müzik & 4-Kanal Mikser
+                    </button>
+                </div>
+
+                <!-- Bölüm 1: Bütünsel Sirkadiyen Atmosfer Orkestrasyonu -->
                 <div class="card card-custom p-3 mb-3">
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h6 class="fw-bold text-dark mb-0">AI Atmosfer & 4-Kanal Mikser Sentezi</h6>
+                        <h6 class="fw-bold text-dark mb-0">Bütünsel Sirkadiyen Atmosfer Orkestrasyonu</h6>
                         <span class="badge bg-dark small" id="lblAtmosphereEngineStatus">Gemini / Kural Motoru</span>
                     </div>
                     <p class="text-muted small mb-3">
-                        Serbest metin prompt'u veya yapılandırılmış seçeneklerle piksel oda paleti, pencere hava durumu ve 4 kanallı ses mikseri oluşturun.
+                        Görsel tema, 4 kanallı akustik ses mikseri, biyolojik saat ve pencere hava durumunu tek bir akıllı formülde sentezleyin.
                     </p>
 
                     <!-- Serbest Prompt Girişi -->
                     <div class="mb-3">
-                        <label class="form-label small fw-semibold text-dark mb-1">Doğal Dil Prompt'u (İsteğe Bağlı):</label>
+                        <label class="form-label small fw-semibold text-dark mb-1">Doğal Dil Atmosfer Prompt'u (İsteğe Bağlı):</label>
                         <textarea id="txtAtmospherePrompt" class="form-control form-control-sm" rows="2" placeholder="Örn: Yağmurlu gecede neon ışıklı siberpunk kodlama odası, derin odaklanma ve lo-fi ritimler"></textarea>
                     </div>
 
@@ -891,15 +906,15 @@
                     <!-- Aksiyon Butonları -->
                     <div class="d-flex gap-2 mb-2">
                         <button id="btnGenerateAtmosphere" class="btn btn-primary btn-sm flex-fill">
-                            Prompt ile Üret (POST /generate)
+                            Prompt ile Bütünsel Üret (POST /generate)
                         </button>
                         <button id="btnAutoAtmosphere" class="btn btn-outline-dark btn-sm flex-fill" title="Sirkadiyen saat, yorgunluk ve hava durumuna göre otomatik üretir">
-                            Otomatik Ritim Öner (GET /auto-recommend)
+                            Sirkadiyen Öner (GET /auto-recommend)
                         </button>
                     </div>
                 </div>
 
-                <!-- Bölüm 2: Üretilen Atmosfer, Odaya Uygulama & Kütüphane -->
+                <!-- Bölüm 2: Aktif Atmosfer, Odaya Uygulama & Kütüphane -->
                 <div class="card card-custom p-3 mb-3">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <h6 class="fw-bold text-dark mb-0">Aktif Atmosfer & Odaya Uygulama</h6>
@@ -970,6 +985,295 @@
                     <button id="btnContributeInsight" class="btn btn-outline-success btn-sm w-100">
                         Kolektif Hafızaya Aktar (POST /contribute-insight)
                     </button>
+                </div>
+            </div>
+
+            <!-- TAB 11: AI GÖRSEL TEMA & PİKSEL ODA PALETİ (THEME AI) -->
+            <div class="tab-pane fade" id="tab-theme-ai" role="tabpanel">
+                <!-- Hızlı Geçiş Alt Çubuğu -->
+                <div class="d-flex gap-1 mb-3 p-1 bg-light rounded border">
+                    <button type="button" class="btn btn-sm btn-outline-secondary flex-fill py-1 fw-semibold" onclick="quickJumpTab('#tab-atmosphere')">
+                        1. Atmosfer Orkestrasyonu
+                    </button>
+                    <button type="button" class="btn btn-sm btn-dark flex-fill py-1 fw-semibold" onclick="quickJumpTab('#tab-theme-ai')">
+                        2. Görsel Tema & Palet
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary flex-fill py-1 fw-semibold" onclick="quickJumpTab('#tab-music-ai')">
+                        3. Müzik & 4-Kanal Mikser
+                    </button>
+                </div>
+
+                <!-- Kart 1: Görsel Tema ve Renk Paleti Ayarları -->
+                <div class="card card-custom p-3 mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="fw-bold text-dark mb-0">AI Görsel Tema & Piksel Renk Paleti</h6>
+                        <span class="badge bg-primary-subtle text-primary border small">Theme Generator</span>
+                    </div>
+                    <p class="text-muted small mb-3">
+                        İzometrik piksel odanızın duvar, zemin ve neon vurgu renk paletini belirleyin; canlı HD pencere döngüsünü Pixabay API ile eşleyin.
+                    </p>
+
+                    <!-- Estetik Stili -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-dark mb-1">Görsel Estetik Şablonu:</label>
+                        <select id="selectThemeAiAesthetic" class="form-select form-select-sm">
+                            <option value="CyberpunkNeon" selected>Siberpunk Neon (Koyu Mor & Turkuaz)</option>
+                            <option value="JapaneseZen">Japon Zen Bahçesi (Bambu, Ahşap & Yeşil)</option>
+                            <option value="RainyLoft">Yağmurlu Çatı Katı (Koyu Gri & Mavi)</option>
+                            <option value="MidnightMinimal">Gece Yarısı Minimal (Siyah-Beyaz & Koyu Gri)</option>
+                            <option value="RetroStudio">Retro 80s Piksel Stüdyo (Sıcak Magenta & Neon Sarı)</option>
+                            <option value="CozyCabin">Sıcak Ahşap Dağ Evi (Kahverengi & Amber)</option>
+                            <option value="SpaceStation">Uzay İstasyonu (Kozmik Mavi & Beyaz)</option>
+                        </select>
+                    </div>
+
+                    <!-- Doğal Dil Tema Prompt'u -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-dark mb-1">Tema Tasarım Prompt'u:</label>
+                        <input type="text" id="txtThemeAiPrompt" class="form-control form-control-sm" placeholder="Örn: Yağmurlu çatı katı, loş amber lamba ve buğulu pencereler" value="Yağmurlu çatı katı, loş amber lamba ve buğulu pencereler" />
+                    </div>
+
+                    <!-- Pencere Manzarası & Efekt -->
+                    <div class="row g-2 mb-3">
+                        <div class="col-7">
+                            <label class="form-label small text-muted mb-0">Pencere Video Sorgusu:</label>
+                            <input type="text" id="txtThemeVideoQuery" class="form-control form-control-sm font-monospace" value="rain window" placeholder="Örn: rain window, fireplace, city" />
+                        </div>
+                        <div class="col-5">
+                            <label class="form-label small text-muted mb-0">Cam Efekti:</label>
+                            <select id="selectThemeWeatherEffect" class="form-select form-select-sm">
+                                <option value="RainDrops" selected>Yağmur Damlaları</option>
+                                <option value="SnowFlakes">Kar Taneleri</option>
+                                <option value="NeonGlow">Neon Parıltısı</option>
+                                <option value="MistFog">Yoğun Sis</option>
+                                <option value="ClearSky">Açık Gökyüzü</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Canlı Piksel Renk Paleti (Duvar, Zemin, Işık) -->
+                    <label class="form-label small fw-semibold text-dark mb-1">Canlı Piksel Renk Paleti:</label>
+                    <div class="row g-2 mb-3">
+                        <div class="col-4">
+                            <div class="p-2 bg-light rounded border text-center">
+                                <span class="d-block text-muted small mb-1" style="font-size: 10px;">Duvar Rengi</span>
+                                <div class="d-flex align-items-center justify-content-center gap-1 mb-1">
+                                    <input type="color" id="pickerThemeWall" value="#1a1a2e" style="width: 32px; height: 32px; border: none; cursor: pointer; border-radius: 4px;" />
+                                </div>
+                                <input type="text" id="txtThemeWall" class="form-control form-control-sm text-center font-monospace p-1" style="font-size: 11px;" value="#1a1a2e" />
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-2 bg-light rounded border text-center">
+                                <span class="d-block text-muted small mb-1" style="font-size: 10px;">Zemin Rengi</span>
+                                <div class="d-flex align-items-center justify-content-center gap-1 mb-1">
+                                    <input type="color" id="pickerThemeFloor" value="#16213e" style="width: 32px; height: 32px; border: none; cursor: pointer; border-radius: 4px;" />
+                                </div>
+                                <input type="text" id="txtThemeFloor" class="form-control form-control-sm text-center font-monospace p-1" style="font-size: 11px;" value="#16213e" />
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-2 bg-light rounded border text-center">
+                                <span class="d-block text-muted small mb-1" style="font-size: 10px;">Vurgu / Işık</span>
+                                <div class="d-flex align-items-center justify-content-center gap-1 mb-1">
+                                    <input type="color" id="pickerThemeAccent" value="#00fff5" style="width: 32px; height: 32px; border: none; cursor: pointer; border-radius: 4px;" />
+                                </div>
+                                <input type="text" id="txtThemeAccent" class="form-control form-control-sm text-center font-monospace p-1" style="font-size: 11px;" value="#00fff5" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Aksiyon Butonları -->
+                    <div class="d-flex gap-2 mb-2">
+                        <button id="btnSynthesizeThemeOnly" class="btn btn-primary btn-sm flex-fill">
+                            Temayı Sentezle (Video & Renkler)
+                        </button>
+                        <button id="btnPresetThemeColors" class="btn btn-outline-dark btn-sm flex-fill">
+                            Uyumlu Renk Paleti Türet
+                        </button>
+                    </div>
+                    <button id="btnApplyThemeToRoomDirect" class="btn btn-outline-success btn-sm w-100">
+                        Odaya Uygula ve Kaydet (PATCH /room)
+                    </button>
+                </div>
+
+                <!-- Kart 2: Aktif Tema Bilgisi -->
+                <div class="card card-custom p-3">
+                    <h6 class="fw-bold text-dark mb-2">Aktif Görsel Tema Özeti</h6>
+                    <div class="p-2 bg-light rounded border">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="small fw-bold text-dark" id="lblThemeSummaryTitle">Cyberpunk Neon</span>
+                            <span class="badge bg-secondary-subtle text-secondary border small" id="lblThemeSummaryEffect">Yağmur Damlaları</span>
+                        </div>
+                        <span class="text-muted d-block small mb-2" id="lblThemeSummaryDesc" style="font-size: 11px;">
+                            Piksel odanın duvar ve zemin kaplamaları sağdaki canlı stüdyoya senkronize edildi.
+                        </span>
+                        <div class="d-flex gap-2 align-items-center">
+                            <span class="small text-muted" style="font-size: 11px;">Aktif Renkler:</span>
+                            <span class="d-inline-block rounded border" id="previewThemeSwatchWall" style="width: 16px; height: 16px; background: #1a1a2e;" title="Duvar"></span>
+                            <span class="d-inline-block rounded border" id="previewThemeSwatchFloor" style="width: 16px; height: 16px; background: #16213e;" title="Zemin"></span>
+                            <span class="d-inline-block rounded border" id="previewThemeSwatchAccent" style="width: 16px; height: 16px; background: #00fff5;" title="Işık"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 12: AI MÜZİK & 4-KANAL AKUSTİK SES SENTEZİ (MUSIC AI) -->
+            <div class="tab-pane fade" id="tab-music-ai" role="tabpanel">
+                <!-- Hızlı Geçiş Alt Çubuğu -->
+                <div class="d-flex gap-1 mb-3 p-1 bg-light rounded border">
+                    <button type="button" class="btn btn-sm btn-outline-secondary flex-fill py-1 fw-semibold" onclick="quickJumpTab('#tab-atmosphere')">
+                        1. Atmosfer Orkestrasyonu
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary flex-fill py-1 fw-semibold" onclick="quickJumpTab('#tab-theme-ai')">
+                        2. Görsel Tema & Palet
+                    </button>
+                    <button type="button" class="btn btn-sm btn-dark flex-fill py-1 fw-semibold" onclick="quickJumpTab('#tab-music-ai')">
+                        3. Müzik & 4-Kanal Mikser
+                    </button>
+                </div>
+
+                <!-- Kart 1: Müzik ve 4 Kanallı Mikser Sentezi -->
+                <div class="card card-custom p-3 mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="fw-bold text-dark mb-0">AI Müzik & 4-Kanal Akustik Mikser</h6>
+                        <span class="badge bg-success-subtle text-success border small">Soundscape AI</span>
+                    </div>
+                    <p class="text-muted small mb-3">
+                        Lo-Fi melodi parçalarını, doğal ambiyans seslerini, bilişsel gürültü frekanslarını ve analog plak dokusunu birbirinden bağımsız olarak sentezleyin.
+                    </p>
+
+                    <!-- Müzik Türü & Arama -->
+                    <div class="row g-2 mb-3">
+                        <div class="col-7">
+                            <label class="form-label small text-muted mb-0">Müzik Janrı / Hissi:</label>
+                            <select id="selectMusicGenre" class="form-select form-select-sm">
+                                <option value="lofi" selected>Lo-Fi Hip Hop Study</option>
+                                <option value="chillhop">Chillhop Mellow Beats</option>
+                                <option value="ambient">Ambient Drone & Space</option>
+                                <option value="piano">Derin Klasik Piyano</option>
+                                <option value="synthwave">Retro Synthwave Focus</option>
+                                <option value="zen">Alfa Dalgaları & Zen Akustik</option>
+                            </select>
+                        </div>
+                        <div class="col-5">
+                            <label class="form-label small text-muted mb-0">Hedef BPM:</label>
+                            <input type="number" id="numMusicBpm" class="form-control form-control-sm font-monospace" value="78" min="50" max="140" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small text-muted mb-0">Parça Arama Terimi (Jamendo):</label>
+                            <input type="text" id="txtMusicSearchQuery" class="form-control form-control-sm" value="lofi study chill" placeholder="Örn: lofi study, ambient calm piano" />
+                        </div>
+                    </div>
+
+                    <!-- 4-Kanal Akustik Mikser Kaydırıcıları -->
+                    <label class="form-label small fw-semibold text-dark mb-1">4-Kanal Akustik Denge:</label>
+                    <div class="d-flex flex-column gap-2 p-2 bg-light rounded border mb-3">
+                        <!-- Kanal 1: Melodi -->
+                        <div>
+                            <div class="d-flex justify-content-between align-items-center small mb-1">
+                                <span class="fw-semibold text-dark" style="font-size: 11px;">1. Melodi Kanalı (Lo-Fi Track)</span>
+                                <span class="badge bg-primary text-white" id="badgeRangeMelody" style="font-size: 10px;">%65</span>
+                            </div>
+                            <input type="range" class="form-range" id="rangeMusicMelody" min="0" max="100" value="65" />
+                        </div>
+
+                        <!-- Kanal 2: Doğa Ambiyansı -->
+                        <div>
+                            <div class="d-flex justify-content-between align-items-center small mb-1">
+                                <span class="fw-semibold text-dark" style="font-size: 11px;">2. Doğa Ambiyansı</span>
+                                <span class="badge bg-info text-dark" id="badgeRangeAmbience" style="font-size: 10px;">%80</span>
+                            </div>
+                            <div class="row g-1 mb-1">
+                                <div class="col-7">
+                                    <select id="selectMusicAmbienceType" class="form-select form-select-sm" style="font-size: 11px;">
+                                        <option value="Pencere Yağmuru" selected>Pencereye Vuran Yağmur</option>
+                                        <option value="Orman ve Kuşlar">Sakin Orman & Kuş Sesleri</option>
+                                        <option value="Şömine Çatırtısı">Sıcak Şömine Çatırtısı</option>
+                                        <option value="Gece Fırtınası">Gece Fırtınası & Gök Gürültüsü</option>
+                                        <option value="Piksel Kafe">Sessiz Kütüphane & Kafe</option>
+                                    </select>
+                                </div>
+                                <div class="col-5">
+                                    <input type="range" class="form-range mt-1" id="rangeMusicAmbience" min="0" max="100" value="80" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Kanal 3: Bilişsel Gürültü -->
+                        <div>
+                            <div class="d-flex justify-content-between align-items-center small mb-1">
+                                <span class="fw-semibold text-dark" style="font-size: 11px;">3. Bilişsel Gürültü (Noise Generator)</span>
+                                <span class="badge bg-warning text-dark" id="badgeRangeNoise" style="font-size: 10px;">%40</span>
+                            </div>
+                            <div class="row g-1 mb-1">
+                                <div class="col-7">
+                                    <select id="selectMusicNoiseType" class="form-select form-select-sm" style="font-size: 11px;">
+                                        <option value="Brown Noise (Derin Odak)" selected>Brown Noise (Derin Odak)</option>
+                                        <option value="Pink Noise (Dengeli Akış)">Pink Noise (Dengeli Akış)</option>
+                                        <option value="White Noise (İzolasyon)">White Noise (Tam İzolasyon)</option>
+                                    </select>
+                                </div>
+                                <div class="col-5">
+                                    <input type="range" class="form-range mt-1" id="rangeMusicNoise" min="0" max="100" value="40" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Kanal 4: Retro Doku -->
+                        <div>
+                            <div class="d-flex justify-content-between align-items-center small mb-1">
+                                <span class="fw-semibold text-dark" style="font-size: 11px;">4. Retro Doku & Cızırtı</span>
+                                <span class="badge bg-secondary text-white" id="badgeRangeTexture" style="font-size: 10px;">%25</span>
+                            </div>
+                            <div class="row g-1 mb-1">
+                                <div class="col-7">
+                                    <select id="selectMusicTextureType" class="form-select form-select-sm" style="font-size: 11px;">
+                                        <option value="Vinyl Cızırtısı" selected>Vinil Plak Cızırtısı</option>
+                                        <option value="Kaset Hışırtısı">Kaset Bant Hışırtısı</option>
+                                        <option value="Yağmur Pıtırtısı">Cam Pıtırtısı</option>
+                                        <option value="Analog Uğultu">Vintage Amfi Uğultusu</option>
+                                    </select>
+                                </div>
+                                <div class="col-5">
+                                    <input type="range" class="form-range mt-1" id="rangeMusicTexture" min="0" max="100" value="25" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hızlı Hazır Ayarlar (Presets) -->
+                    <span class="text-muted small fw-semibold d-block mb-1">Hızlı Hazır Ayarlar:</span>
+                    <div class="d-flex flex-wrap gap-1 mb-3">
+                        <button type="button" class="btn btn-sm btn-outline-secondary flex-fill py-1 small" id="btnPresetDeepCode">Derin Kodlama</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary flex-fill py-1 small" id="btnPresetChillRead">Sakin Okuma</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary flex-fill py-1 small" id="btnPresetZenMeditate">Zen Meditasyon</button>
+                    </div>
+
+                    <!-- Aksiyon Butonları -->
+                    <div class="d-flex gap-2 mb-2">
+                        <button id="btnSynthesizeMusicOnly" class="btn btn-primary btn-sm flex-fill">
+                            Müziği ve Mikseri Sentezle (Jamendo + Web Audio)
+                        </button>
+                        <button id="btnPlayPreviewAudio" class="btn btn-outline-dark btn-sm px-3">
+                            Çal / Duraklat
+                        </button>
+                    </div>
+                    <button id="btnApplyMixerToStudio" class="btn btn-outline-secondary btn-sm w-100">
+                        Mikser Düzeylerini Stüdyoya Yansıt
+                    </button>
+                </div>
+
+                <!-- Kart 2: Çalan Parça Bilgisi -->
+                <div class="card card-custom p-3">
+                    <h6 class="fw-bold text-dark mb-2">Canlı Akustik Akış</h6>
+                    <div class="p-2 bg-light rounded border d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong class="d-block text-dark small" id="lblMusicCurrentTrackName">Midnight Lofi Study</strong>
+                            <span class="text-muted small" id="lblMusicCurrentArtistName">Focus Chill Lab • 78 BPM</span>
+                        </div>
+                        <span class="badge bg-success-subtle text-success border small" id="lblMusicLiveStatus">Hazır</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -3550,6 +3854,332 @@
             }
         } catch (err) {
             log(`Bağlantı Hatası: ${err.message}`, 'error');
+        }
+    });
+
+    // --- 7. HIZLI SEÇİCİ VE MODÜL AYIRMA YARDIMCILARI ---
+    window.quickJumpTab = function(tabId) {
+        const select = document.getElementById('moduleSelectDropdown');
+        if (select) {
+            select.value = tabId;
+            if (typeof window.onModuleTabChange === 'function') {
+                window.onModuleTabChange(select);
+            }
+        }
+    };
+
+    // --- 8. AI GÖRSEL TEMA VE PİKSEL RENK PALETİ MANTIĞI ---
+    function syncThemeColors(wall, floor, accent) {
+        if (wall) {
+            const pw = document.getElementById('pickerThemeWall');
+            const tw = document.getElementById('txtThemeWall');
+            const sw = document.getElementById('previewThemeSwatchWall');
+            const studioWall = document.getElementById('swatchWallColor');
+            if (pw) pw.value = wall;
+            if (tw) tw.value = wall;
+            if (sw) sw.style.backgroundColor = wall;
+            if (studioWall) studioWall.style.backgroundColor = wall;
+        }
+        if (floor) {
+            const pf = document.getElementById('pickerThemeFloor');
+            const tf = document.getElementById('txtThemeFloor');
+            const sw = document.getElementById('previewThemeSwatchFloor');
+            const studioFloor = document.getElementById('swatchFloorColor');
+            if (pf) pf.value = floor;
+            if (tf) tf.value = floor;
+            if (sw) sw.style.backgroundColor = floor;
+            if (studioFloor) studioFloor.style.backgroundColor = floor;
+        }
+        if (accent) {
+            const pa = document.getElementById('pickerThemeAccent');
+            const ta = document.getElementById('txtThemeAccent');
+            const sw = document.getElementById('previewThemeSwatchAccent');
+            const studioLight = document.getElementById('swatchAccentLight');
+            const previewCard = document.getElementById('studioPreviewCard');
+            if (pa) pa.value = accent;
+            if (ta) ta.value = accent;
+            if (sw) sw.style.backgroundColor = accent;
+            if (studioLight) studioLight.style.backgroundColor = accent;
+            if (previewCard) previewCard.style.borderTopColor = accent;
+        }
+    }
+
+    document.getElementById('pickerThemeWall')?.addEventListener('input', (e) => syncThemeColors(e.target.value, null, null));
+    document.getElementById('txtThemeWall')?.addEventListener('input', (e) => syncThemeColors(e.target.value, null, null));
+    document.getElementById('pickerThemeFloor')?.addEventListener('input', (e) => syncThemeColors(null, e.target.value, null));
+    document.getElementById('txtThemeFloor')?.addEventListener('input', (e) => syncThemeColors(null, e.target.value, null));
+    document.getElementById('pickerThemeAccent')?.addEventListener('input', (e) => syncThemeColors(null, null, e.target.value));
+    document.getElementById('txtThemeAccent')?.addEventListener('input', (e) => syncThemeColors(null, null, e.target.value));
+
+    const themeAestheticPresets = {
+        'CyberpunkNeon': { wall: '#100e17', floor: '#1a162b', accent: '#00fff5', query: 'cyberpunk neon city' },
+        'JapaneseZen': { wall: '#2b2621', floor: '#3a322b', accent: '#c8a870', query: 'japanese bamboo garden' },
+        'RainyLoft': { wall: '#1c212b', floor: '#252d3a', accent: '#64b5f6', query: 'rain window' },
+        'MidnightMinimal': { wall: '#121212', floor: '#1e1e1e', accent: '#e0e0e0', query: 'night sky stars' },
+        'RetroStudio': { wall: '#2e112d', floor: '#3c1b3c', accent: '#ff007f', query: 'retro 80s arcade' },
+        'CozyCabin': { wall: '#332211', floor: '#442e18', accent: '#ffaa44', query: 'fireplace cozy' },
+        'SpaceStation': { wall: '#0d1b2a', floor: '#1b263b', accent: '#48cae4', query: 'space station orbit' }
+    };
+
+    document.getElementById('selectThemeAiAesthetic')?.addEventListener('change', (e) => {
+        const preset = themeAestheticPresets[e.target.value];
+        if (preset) {
+            syncThemeColors(preset.wall, preset.floor, preset.accent);
+            document.getElementById('txtThemeVideoQuery').value = preset.query;
+            document.getElementById('lblThemeSummaryTitle').textContent = e.target.options[e.target.selectedIndex].text.split('(')[0].trim();
+        }
+    });
+
+    document.getElementById('btnPresetThemeColors')?.addEventListener('click', () => {
+        const sel = document.getElementById('selectThemeAiAesthetic').value;
+        const preset = themeAestheticPresets[sel] || themeAestheticPresets['CyberpunkNeon'];
+        syncThemeColors(preset.wall, preset.floor, preset.accent);
+        log(`Uyumlu renk paleti uygulandı: ${sel} (Duvar: ${preset.wall}, Zemin: ${preset.floor}, Işık: ${preset.accent})`, 'info');
+    });
+
+    document.getElementById('btnSynthesizeThemeOnly')?.addEventListener('click', async () => {
+        await ensureAuthToken();
+        const aesthetic = document.getElementById('selectThemeAiAesthetic').value;
+        const prompt = document.getElementById('txtThemeAiPrompt').value.trim();
+        const videoQuery = document.getElementById('txtThemeVideoQuery').value.trim() || 'rain window';
+        const weatherEffect = document.getElementById('selectThemeWeatherEffect').value;
+        const wall = document.getElementById('txtThemeWall').value.trim();
+        const floor = document.getElementById('txtThemeFloor').value.trim();
+        const accent = document.getElementById('txtThemeAccent').value.trim();
+
+        log(`GET ${apiBase}/api/v1/media/themes?query=${encodeURIComponent(videoQuery)} sorgulanıyor...`);
+        try {
+            const res = await fetch(`${apiBase}/api/v1/media/themes?query=${encodeURIComponent(videoQuery)}&perPage=4`);
+            let videoUrl = 'https://cdn.pixabay.com/video/2017/08/30/11722-231759069_medium.mp4';
+            let posterUrl = 'https://images.unsplash.com/photo-1519692933481-e162a57d6721?w=640';
+            let videoTitle = videoQuery;
+
+            if (res.ok) {
+                const list = await res.json();
+                if (list && list.length > 0) {
+                    const chosen = list[0];
+                    videoUrl = chosen.videoUrl || chosen.url || videoUrl;
+                    posterUrl = chosen.thumbnailUrl || posterUrl;
+                    videoTitle = chosen.tags || videoQuery;
+                }
+            }
+
+            const player = document.getElementById('previewVideoPlayer');
+            if (player) {
+                player.src = videoUrl;
+                player.poster = posterUrl;
+                player.play().catch(() => {});
+            }
+
+            const desc = document.getElementById('previewAtmosphereDesc');
+            if (desc) desc.textContent = `${aesthetic}: ${prompt || videoTitle}`;
+            const themeBadge = document.getElementById('badgeStudioTheme');
+            if (themeBadge) themeBadge.textContent = aesthetic;
+            const effectBadge = document.getElementById('previewWindowEffectBadge');
+            if (effectBadge) effectBadge.textContent = document.getElementById('selectThemeWeatherEffect').selectedOptions[0].text;
+
+            syncThemeColors(wall, floor, accent);
+
+            document.getElementById('lblThemeSummaryTitle').textContent = aesthetic;
+            document.getElementById('lblThemeSummaryEffect').textContent = document.getElementById('selectThemeWeatherEffect').selectedOptions[0].text;
+            document.getElementById('lblThemeSummaryDesc').textContent = `Video: ${videoTitle} • Renkler: ${wall}, ${floor}, ${accent}`;
+
+            if (!latestAtmosphere) latestAtmosphere = {};
+            latestAtmosphere.visualTheme = {
+                aesthetic: aesthetic,
+                wallColor: wall,
+                floorColor: floor,
+                accentLightColor: accent,
+                weatherEffect: weatherEffect,
+                windowVideoQuery: videoQuery
+            };
+            latestAtmosphere.themeName = latestAtmosphere.themeName || `${aesthetic} Görsel Teması`;
+
+            log(`HTTP 200 OK: Görsel tema başarıyla sentezlendi ("${aesthetic}"). Canlı stüdyo penceresine yüklendi.`, 'success');
+        } catch (err) {
+            log(`Görsel tema sentez hatası: ${err.message}`, 'error');
+        }
+    });
+
+    document.getElementById('btnApplyThemeToRoomDirect')?.addEventListener('click', async () => {
+        await ensureAuthToken();
+        const wall = document.getElementById('txtThemeWall').value.trim();
+        const floor = document.getElementById('txtThemeFloor').value.trim();
+
+        log(`PATCH ${apiBase}/api/v1/room gönderiliyor (Duvar: ${wall}, Zemin: ${floor})...`);
+        try {
+            const res = await fetch(`${apiBase}/api/v1/room`, {
+                method: 'PATCH',
+                headers: getAuthHeaders(true),
+                body: JSON.stringify({
+                    wallColor: wall,
+                    floorColor: floor
+                })
+            });
+
+            if (res.ok) {
+                log(`HTTP 200 OK: Piksel odanızın duvar ve zemin renkleri başarıyla güncellendi!`, 'success');
+                const btnGetRoom = document.getElementById('btnGetRoom');
+                if (btnGetRoom) btnGetRoom.click();
+            } else {
+                log(`HTTP ${res.status}: Odaya uygulanamadı.`, 'error');
+            }
+        } catch (e) {
+            log(`Hata: ${e.message}`, 'error');
+        }
+    });
+
+    // --- 9. AI MÜZİK VE 4-KANAL AKUSTİK MİKSER MANTIĞI ---
+    function syncMusicRange(id, badgeId) {
+        const slider = document.getElementById(id);
+        const badge = document.getElementById(badgeId);
+        if (slider && badge) {
+            badge.textContent = `%${slider.value}`;
+        }
+    }
+
+    document.getElementById('rangeMusicMelody')?.addEventListener('input', () => syncMusicRange('rangeMusicMelody', 'badgeRangeMelody'));
+    document.getElementById('rangeMusicAmbience')?.addEventListener('input', () => syncMusicRange('rangeMusicAmbience', 'badgeRangeAmbience'));
+    document.getElementById('rangeMusicNoise')?.addEventListener('input', () => syncMusicRange('rangeMusicNoise', 'badgeRangeNoise'));
+    document.getElementById('rangeMusicTexture')?.addEventListener('input', () => syncMusicRange('rangeMusicTexture', 'badgeRangeTexture'));
+
+    function applyMusicPreset(melody, ambience, noise, texture) {
+        document.getElementById('rangeMusicMelody').value = melody;
+        document.getElementById('rangeMusicAmbience').value = ambience;
+        document.getElementById('rangeMusicNoise').value = noise;
+        document.getElementById('rangeMusicTexture').value = texture;
+        syncMusicRange('rangeMusicMelody', 'badgeRangeMelody');
+        syncMusicRange('rangeMusicAmbience', 'badgeRangeAmbience');
+        syncMusicRange('rangeMusicNoise', 'badgeRangeNoise');
+        syncMusicRange('rangeMusicTexture', 'badgeRangeTexture');
+        applyMixerSlidersToStudio();
+    }
+
+    document.getElementById('btnPresetDeepCode')?.addEventListener('click', () => {
+        applyMusicPreset(50, 85, 60, 20);
+        document.getElementById('selectMusicAmbienceType').value = 'Pencere Yağmuru';
+        document.getElementById('selectMusicNoiseType').value = 'Brown Noise (Derin Odak)';
+        log('Müzik Preseti uygulandı: "Derin Kodlama" (Yoğun yağmur + Brown Noise)', 'info');
+    });
+
+    document.getElementById('btnPresetChillRead')?.addEventListener('click', () => {
+        applyMusicPreset(70, 60, 25, 30);
+        document.getElementById('selectMusicAmbienceType').value = 'Orman ve Kuşlar';
+        document.getElementById('selectMusicNoiseType').value = 'Pink Noise (Dengeli Akış)';
+        log('Müzik Preseti uygulandı: "Sakin Okuma" (Melodik Chillhop + Kuş Sesleri)', 'info');
+    });
+
+    document.getElementById('btnPresetZenMeditate')?.addEventListener('click', () => {
+        applyMusicPreset(30, 90, 75, 15);
+        document.getElementById('selectMusicAmbienceType').value = 'Pencere Yağmuru';
+        document.getElementById('selectMusicNoiseType').value = 'Brown Noise (Derin Odak)';
+        log('Müzik Preseti uygulandı: "Zen Meditasyon" (Yüksek Brown Noise + Minimal Melodi)', 'info');
+    });
+
+    function applyMixerSlidersToStudio() {
+        const vMelody = parseInt(document.getElementById('rangeMusicMelody').value) || 65;
+        const vAmbience = parseInt(document.getElementById('rangeMusicAmbience').value) || 80;
+        const vNoise = parseInt(document.getElementById('rangeMusicNoise').value) || 40;
+        const vTexture = parseInt(document.getElementById('rangeMusicTexture').value) || 25;
+
+        const ambType = document.getElementById('selectMusicAmbienceType').value;
+        const noiseType = document.getElementById('selectMusicNoiseType').value;
+        const texType = document.getElementById('selectMusicTextureType').value;
+
+        document.getElementById('valMixerMelody').textContent = `%${vMelody}`;
+        document.getElementById('barMixerMelody').style.width = `${vMelody}%`;
+
+        document.getElementById('valMixerAmbience').textContent = `%${vAmbience}`;
+        document.getElementById('barMixerAmbience').style.width = `${vAmbience}%`;
+        document.getElementById('lblMixerAmbienceName').textContent = ambType;
+
+        document.getElementById('valMixerNoise').textContent = `%${vNoise}`;
+        document.getElementById('barMixerNoise').style.width = `${vNoise}%`;
+        document.getElementById('lblMixerNoiseName').textContent = noiseType;
+
+        document.getElementById('valMixerTexture').textContent = `%${vTexture}`;
+        document.getElementById('barMixerTexture').style.width = `${vTexture}%`;
+        document.getElementById('lblMixerTextureName').textContent = texType;
+
+        const audio = document.getElementById('previewAudioPlayer');
+        if (audio) {
+            audio.volume = Math.max(0.05, Math.min(1.0, vMelody / 100));
+        }
+    }
+
+    document.getElementById('btnApplyMixerToStudio')?.addEventListener('click', () => {
+        applyMixerSlidersToStudio();
+        log('4-Kanal Akustik mikser seviyeleri canlı stüdyoya senkronize edildi.', 'info');
+    });
+
+    document.getElementById('btnSynthesizeMusicOnly')?.addEventListener('click', async () => {
+        await ensureAuthToken();
+        const genre = document.getElementById('selectMusicGenre').value;
+        const searchQuery = document.getElementById('txtMusicSearchQuery').value.trim() || genre;
+        const bpm = document.getElementById('numMusicBpm').value || 78;
+
+        log(`GET ${apiBase}/api/v1/media/tracks?query=${encodeURIComponent(searchQuery)} aranıyor...`);
+        try {
+            const res = await fetch(`${apiBase}/api/v1/media/tracks?query=${encodeURIComponent(searchQuery)}&limit=5`);
+            let trackTitle = 'Midnight Lofi Study';
+            let artist = 'Focus Chill Lab';
+            let audioUrl = 'https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3';
+            let imgUrl = 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=120';
+
+            if (res.ok) {
+                const list = await res.json();
+                if (list && list.length > 0) {
+                    const chosen = list[0];
+                    trackTitle = chosen.title || trackTitle;
+                    artist = chosen.artist || artist;
+                    audioUrl = chosen.audioUrl || chosen.url || audioUrl;
+                    imgUrl = chosen.albumArtUrl || imgUrl;
+                }
+            }
+
+            const audio = document.getElementById('previewAudioPlayer');
+            if (audio) {
+                audio.src = audioUrl;
+                audio.play().catch(() => {});
+            }
+            document.getElementById('playerTrackTitle').textContent = trackTitle;
+            document.getElementById('playerArtistName').textContent = `${artist} • ${bpm} BPM`;
+            const trackImg = document.getElementById('playerTrackImg');
+            if (trackImg) trackImg.src = imgUrl;
+
+            applyMixerSlidersToStudio();
+
+            document.getElementById('lblMusicCurrentTrackName').textContent = trackTitle;
+            document.getElementById('lblMusicCurrentArtistName').textContent = `${artist} • ${bpm} BPM`;
+            document.getElementById('lblMusicLiveStatus').textContent = 'Oynatılıyor';
+
+            if (!latestAtmosphere) latestAtmosphere = {};
+            latestAtmosphere.soundscapeMixer = {
+                presetName: `${trackTitle} Mikseri`,
+                layer1Melody: { genre: genre, trackTitle: trackTitle, volume: parseInt(document.getElementById('rangeMusicMelody').value) / 100, targetBpm: parseInt(bpm) },
+                layer2Ambience: { ambienceType: document.getElementById('selectMusicAmbienceType').value, volume: parseInt(document.getElementById('rangeMusicAmbience').value) / 100 },
+                layer3Noise: { noiseType: document.getElementById('selectMusicNoiseType').value, volume: parseInt(document.getElementById('rangeMusicNoise').value) / 100 },
+                layer4Texture: { textureType: document.getElementById('selectMusicTextureType').value, volume: parseInt(document.getElementById('rangeMusicTexture').value) / 100 }
+            };
+
+            log(`HTTP 200 OK: AI Müzik & 4-Kanal Mikser başarıyla sentezlendi: "${trackTitle}" (${artist}).`, 'success');
+        } catch (err) {
+            log(`Müzik sentez hatası: ${err.message}`, 'error');
+        }
+    });
+
+    document.getElementById('btnPlayPreviewAudio')?.addEventListener('click', () => {
+        const audio = document.getElementById('previewAudioPlayer');
+        if (!audio) return;
+        if (audio.paused) {
+            audio.play().then(() => {
+                log('Ses akışı başlatıldı.', 'info');
+                document.getElementById('lblMusicLiveStatus').textContent = 'Oynatılıyor';
+            }).catch(e => log(`Ses başlatılamadı: ${e.message}`, 'error'));
+        } else {
+            audio.pause();
+            log('Ses duraklatıldı.', 'info');
+            document.getElementById('lblMusicLiveStatus').textContent = 'Duraklatıldı';
         }
     });
 

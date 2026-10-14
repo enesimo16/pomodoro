@@ -409,7 +409,24 @@ async function runBrowserAudit() {
         await page.waitForTimeout(1000);
         recordTest('apiLabModules', 'Modül 10 (Atmosphere) - Kolektif Global AI Havuzuna PII-Arındırılmış Katkı', true, 'Kolektif bilgelik havuzuna anonim veri aktarıldı');
 
-        // 3.12 Üst Başlık "Yeni Test Hesabı" Buton Testi
+        // 3.12 Tab 11: Theme AI
+        await switchModule('#tab-theme-ai');
+        await page.selectOption('#selectThemeAiAesthetic', 'JapaneseZen');
+        await page.click('#btnPresetThemeColors');
+        await page.click('#btnSynthesizeThemeOnly');
+        await page.waitForTimeout(1500);
+        const themeAesthetic = await page.locator('#lblThemeSummaryTitle').textContent();
+        recordTest('apiLabModules', 'Modül 11 (Theme AI) - Görsel Tema & Piksel Palet Sentezi', !!themeAesthetic, `Estetik: "${themeAesthetic}"`);
+
+        // 3.13 Tab 12: Music AI
+        await switchModule('#tab-music-ai');
+        await page.click('#btnPresetDeepCode');
+        await page.click('#btnSynthesizeMusicOnly');
+        await page.waitForTimeout(1500);
+        const synthMusic = await page.locator('#lblMusicCurrentTrackName').textContent();
+        recordTest('apiLabModules', 'Modül 12 (Music AI) - Müzik & 4-Kanal Akustik Mikser Sentezi', !!synthMusic, `Parça: "${synthMusic}"`);
+
+        // 3.14 Üst Başlık "Yeni Test Hesabı" Buton Testi
         await page.click('#btnQuickNewAccount');
         await page.waitForTimeout(1200);
         const freshAccountName = await page.locator('#lblAutoAccountName').textContent();

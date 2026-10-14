@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-10-14T19:30:34.794Z",
+  "timestamp": "2026-10-14T19:58:33.328Z",
   "adminPages": [
     {
       "name": "Sayfa: Dashboard (/)",
@@ -76,12 +76,12 @@
     {
       "name": "Otomatik Test Hesabı Provizyonu",
       "passed": true,
-      "details": "Aktif Hesap: \"TestUser_2465\""
+      "details": "Aktif Hesap: \"TestUser_7786\""
     },
     {
       "name": "Modül 1 (Auth) - Profil Getir",
       "passed": true,
-      "details": "Kullanıcı: TestUser_2465"
+      "details": "Kullanıcı: TestUser_7786"
     },
     {
       "name": "Modül 1 (Auth) - Token Yenile",
@@ -101,7 +101,7 @@
     {
       "name": "Modül 3 (Room) - Oda Bilgisi Getir",
       "passed": true,
-      "details": "Oda: TestUser_2465'in Odası"
+      "details": "Oda: TestUser_7786'in Odası"
     },
     {
       "name": "Modül 3 (Room) - Eşya Ekle",
@@ -244,9 +244,19 @@
       "details": "Kolektif bilgelik havuzuna anonim veri aktarıldı"
     },
     {
+      "name": "Modül 11 (Theme AI) - Görsel Tema & Piksel Palet Sentezi",
+      "passed": true,
+      "details": "Estetik: \"JapaneseZen\""
+    },
+    {
+      "name": "Modül 12 (Music AI) - Müzik & 4-Kanal Akustik Mikser Sentezi",
+      "passed": true,
+      "details": "Parça: \"Midnight Lofi Study\""
+    },
+    {
       "name": "Üst Bar: Yeni Test Hesabı Açma (Sıfır Sürtünme)",
       "passed": true,
-      "details": "Yeni Kullanıcı: \"TestUser_7161\""
+      "details": "Yeni Kullanıcı: \"TestUser_1930\""
     }
   ],
   "restApis": [
@@ -312,8 +322,8 @@
     }
   ],
   "summary": {
-    "passed": 61,
+    "passed": 63,
     "failed": 0,
-    "total": 61
+    "total": 63
   }
 }
