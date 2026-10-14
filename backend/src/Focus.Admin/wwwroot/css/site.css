@@ -1,10 +1,10 @@
 /* Shopify Polaris Design System - Focus Admin (Monochrome Edition) */
 :root {
-  --p-color-bg-app: #f1f1f1;
+  --p-color-bg-app: #f6f6f7;
   --p-color-bg-surface: #ffffff;
   --p-color-bg-surface-secondary: #f7f7f8;
   --p-color-bg-surface-hover: #ebebeb;
-  --p-color-border: #e1e3e5;
+  --p-color-border: #d2d5d8;
   --p-color-border-subdued: #ebebeb;
   
   --p-color-text: #202223;
@@ -21,16 +21,16 @@
   
   /* Butonlar & Aksiyonlar (Siyah & Gri) */
   --p-color-primary: #202223;
-  --p-color-primary-hover: #202223;
+  --p-color-primary-hover: #333333;
   
   /* Rozetler - Saf Siyah, Beyaz ve Gri Tonları */
   --p-color-badge-bg: #f1f2f4;
   --p-color-badge-border: #d2d5d8;
   --p-color-badge-text: #202223;
 
-  --p-shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+  --p-shadow-card: 0 1px 0 rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(63, 63, 68, 0.05);
   --p-shadow-popover: 0 4px 12px rgba(0, 0, 0, 0.10);
-  --p-radius-card: 10px;
+  --p-radius-card: 8px;
   --p-radius-btn: 6px;
   --p-radius-input: 6px;
   
@@ -120,7 +120,7 @@ a:hover {
   padding: 12px 10px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 10px;
 }
 
 .sidebar-nav-group {
@@ -130,7 +130,7 @@ a:hover {
 }
 
 .sidebar-group-title {
-  font-size: 10px;
+  font-size: 10.5px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -149,15 +149,7 @@ a:hover {
   text-decoration: none;
   font-size: 13px;
   font-weight: 500;
-  transition: none !important;
-}
-
-.sidebar-nav-item svg {
-  width: 17px;
-  height: 17px;
-  stroke: currentColor;
-  stroke-width: 1.8;
-  flex-shrink: 0;
+  transition: background-color 0.1s ease, color 0.1s ease;
 }
 
 /* Siyah / Koyu Gri Hover & Aktif - Asla Yeşil Yok */
@@ -172,6 +164,104 @@ a:hover {
   font-weight: 600;
   box-shadow: none !important;
   border-left: none !important;
+}
+
+/* -------------------------------------------------------------
+   SHOPIFY POLARIS SIDEBAR FOLDER DROPDOWN (Klasör Mantığı)
+   ------------------------------------------------------------- */
+.sidebar-folder {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebar-folder-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 10px;
+  background: transparent;
+  border: none;
+  color: var(--p-color-sidebar-text);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: 6px;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.12s ease, color 0.12s ease;
+  outline: none;
+  text-align: left;
+}
+
+.sidebar-folder-header:hover {
+  background-color: var(--p-color-sidebar-hover);
+  color: #ffffff;
+}
+
+.sidebar-folder.has-active-child > .sidebar-folder-header {
+  color: #ffffff;
+}
+
+.sidebar-folder-header .folder-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Pure CSS Caret Indicator (Asla ikon veya emoji yok - Saf CSS Geometrisi) */
+.folder-caret {
+  width: 6px;
+  height: 6px;
+  border-right: 1.5px solid var(--p-color-sidebar-text);
+  border-bottom: 1.5px solid var(--p-color-sidebar-text);
+  transform: rotate(45deg);
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.12s ease;
+  flex-shrink: 0;
+  margin-right: 4px;
+}
+
+.sidebar-folder-header:hover .folder-caret,
+.sidebar-folder.has-active-child > .sidebar-folder-header .folder-caret {
+  border-color: #ffffff;
+}
+
+.sidebar-folder.collapsed .folder-caret {
+  transform: rotate(-45deg);
+}
+
+.sidebar-folder-items {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-left: 12px;
+  padding-left: 10px;
+  border-left: 1px solid #282828;
+  margin-top: 2px;
+  margin-bottom: 4px;
+}
+
+.sidebar-folder.collapsed .sidebar-folder-items {
+  display: none !important;
+}
+
+.sidebar-folder-items .sidebar-nav-item {
+  font-size: 12.5px;
+  padding: 6px 10px;
+  color: #8c9196;
+}
+
+.sidebar-folder-items .sidebar-nav-item:hover {
+  color: #ffffff;
+  background-color: var(--p-color-sidebar-hover);
+}
+
+.sidebar-folder-items .sidebar-nav-item.active {
+  color: #ffffff;
+  background-color: var(--p-color-sidebar-active);
+  font-weight: 600;
 }
 
 .sidebar-footer {

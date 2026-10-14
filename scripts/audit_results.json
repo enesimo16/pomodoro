@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-10-14T18:36:35.577Z",
+  "timestamp": "2026-10-14T18:59:20.330Z",
   "adminPages": [
     {
       "name": "Sayfa: Dashboard (/)",
@@ -76,12 +76,12 @@
     {
       "name": "Otomatik Test Hesabı Provizyonu",
       "passed": true,
-      "details": "Aktif Hesap: \"TestUser_1699\""
+      "details": "Aktif Hesap: \"TestUser_3423\""
     },
     {
       "name": "Modül 1 (Auth) - Profil Getir",
       "passed": true,
-      "details": "Kullanıcı: TestUser_1699"
+      "details": "Kullanıcı: TestUser_3423"
     },
     {
       "name": "Modül 1 (Auth) - Token Yenile",
@@ -101,7 +101,7 @@
     {
       "name": "Modül 3 (Room) - Oda Bilgisi Getir",
       "passed": true,
-      "details": "Oda: TestUser_1699'in Odası"
+      "details": "Oda: TestUser_3423'in Odası"
     },
     {
       "name": "Modül 3 (Room) - Eşya Ekle",
@@ -151,7 +151,7 @@
     {
       "name": "Modül 5 (Media) - Canlı Hava Senkronu",
       "passed": true,
-      "details": "Sağanak Yağmurlu • 17.1°C"
+      "details": "Sağanak Yağmurlu • 17°C"
     },
     {
       "name": "Modül 6 (Shop) - Katalog Eşyaları Getir",
@@ -246,7 +246,7 @@
     {
       "name": "Üst Bar: Yeni Test Hesabı Açma (Sıfır Sürtünme)",
       "passed": true,
-      "details": "Yeni Kullanıcı: \"TestUser_8041\""
+      "details": "Yeni Kullanıcı: \"TestUser_5885\""
     }
   ],
   "restApis": [
@@ -278,7 +278,7 @@
     {
       "name": "GET /api/v1/media/weather",
       "passed": true,
-      "details": "HTTP 200, Temp: 17.1°C"
+      "details": "HTTP 200, Temp: 16.9°C"
     },
     {
       "name": "GET /api/v1/shop/catalog",

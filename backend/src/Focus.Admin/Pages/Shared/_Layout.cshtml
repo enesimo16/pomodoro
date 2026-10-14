@@ -22,56 +22,66 @@
                 </button>
             </div>
 
-            <!-- Menü Grupları -->
+            <!-- Menü Grupları & Klasör Hiyerarşisi (Shopify Polaris Folder Hierarchy) -->
             <div class="sidebar-nav-container">
-                <!-- Grup: Genel -->
+                <!-- Sabit Linkler: Genel -->
                 <div class="sidebar-nav-group">
                     <div class="sidebar-group-title">GENEL</div>
                     <a asp-page="/Index" class="sidebar-nav-item">Dashboard</a>
                     <a asp-page="/Analytics/Index" class="sidebar-nav-item">Analitik</a>
                 </div>
 
-                <!-- Grup: Ekosistem -->
-                <div class="sidebar-nav-group">
-                    <div class="sidebar-group-title">EKOSİSTEM</div>
-                    <a asp-page="/Users/Index" class="sidebar-nav-item">Kullanıcılar</a>
-                    <a asp-page="/Sessions/Index" class="sidebar-nav-item">Seanslar</a>
-                    <a asp-page="/StudyRooms/Index" class="sidebar-nav-item">Odalar</a>
-                    <a asp-page="/Guestbook/Index" class="sidebar-nav-item">Ziyaretçi Defteri</a>
+                <!-- Klasör: Ekosistem -->
+                <div class="sidebar-folder" data-folder-id="ecosystem">
+                    <button type="button" class="sidebar-folder-header" aria-expanded="true">
+                        <span class="folder-title">Ekosistem</span>
+                        <span class="folder-caret" aria-hidden="true"></span>
+                    </button>
+                    <div class="sidebar-folder-items">
+                        <a asp-page="/Users/Index" class="sidebar-nav-item">Kullanıcılar</a>
+                        <a asp-page="/Sessions/Index" class="sidebar-nav-item">Seanslar</a>
+                        <a asp-page="/StudyRooms/Index" class="sidebar-nav-item">Odalar</a>
+                        <a asp-page="/Guestbook/Index" class="sidebar-nav-item">Ziyaretçi Defteri</a>
+                    </div>
                 </div>
 
-                <!-- Grup: Ekonomi -->
-                <div class="sidebar-nav-group">
-                    <div class="sidebar-group-title">EKONOMİ</div>
-                    <a asp-page="/Shop/Index" class="sidebar-nav-item">Mağaza</a>
-                    <a asp-page="/Economy/Index" class="sidebar-nav-item">Coin Defteri</a>
+                <!-- Klasör: Ekonomi & Mağaza -->
+                <div class="sidebar-folder" data-folder-id="economy">
+                    <button type="button" class="sidebar-folder-header" aria-expanded="true">
+                        <span class="folder-title">Ekonomi & Mağaza</span>
+                        <span class="folder-caret" aria-hidden="true"></span>
+                    </button>
+                    <div class="sidebar-folder-items">
+                        <a asp-page="/Shop/Index" class="sidebar-nav-item">Mağaza Kataloğu</a>
+                        <a asp-page="/Economy/Index" class="sidebar-nav-item">Coin Defteri</a>
+                    </div>
                 </div>
 
-                <!-- Grup: Yapay Zeka -->
-                <div class="sidebar-nav-group">
-                    <div class="sidebar-group-title">YAPAY ZEKA</div>
-                    <a asp-page="/AiCoach/Index" class="sidebar-nav-item">AI Koç</a>
+                <!-- Klasör: Yapay Zeka & Sistem -->
+                <div class="sidebar-folder" data-folder-id="intelligence">
+                    <button type="button" class="sidebar-folder-header" aria-expanded="true">
+                        <span class="folder-title">Yapay Zeka & Sistem</span>
+                        <span class="folder-caret" aria-hidden="true"></span>
+                    </button>
+                    <div class="sidebar-folder-items">
+                        <a asp-page="/AiCoach/Index" class="sidebar-nav-item">AI Koç & Vektör Bellek</a>
+                        <a asp-page="/Jobs/Index" class="sidebar-nav-item">Cron Görevleri</a>
+                    </div>
                 </div>
 
-                <!-- Grup: Sistem & Görevler -->
-                <div class="sidebar-nav-group">
-                    <div class="sidebar-group-title">SİSTEM & GÖREVLER</div>
-                    <a asp-page="/Jobs/Index" class="sidebar-nav-item">Cron Görevleri</a>
-                    <a asp-page="/Audit/Index" class="sidebar-nav-item">Oturum Logları</a>
-                </div>
-
-                <!-- Grup: Geliştirici -->
-                <div class="sidebar-nav-group">
-                    <div class="sidebar-group-title">GELİŞTİRİCİ</div>
-                    <a asp-page="/ApiDocs/Index" class="sidebar-nav-item">API Dokümanı</a>
-                    <a asp-page="/ApiLab/Index" class="sidebar-nav-item">API Test (Lab)</a>
-                </div>
-
-                <!-- Grup: Yan Araçlar (Harici Paneller) -->
-                <div class="sidebar-nav-group">
-                    <div class="sidebar-group-title">YAN ARAÇLAR</div>
-                    <a href="http://localhost:5000/swagger" target="_blank" class="sidebar-nav-item" id="sidebarSwaggerLink">Swagger UI</a>
-                    <a href="/hangfire" target="_blank" class="sidebar-nav-item">Hangfire Panel</a>
+                <!-- Klasör: Geliştirici (Folder / Dropdown) -->
+                <div class="sidebar-folder" data-folder-id="developer">
+                    <button type="button" class="sidebar-folder-header" aria-expanded="true">
+                        <span class="folder-title">Geliştirici</span>
+                        <span class="folder-caret" aria-hidden="true"></span>
+                    </button>
+                    <div class="sidebar-folder-items">
+                        <a asp-page="/ApiDocs/Index" class="sidebar-nav-item">API Dokümantasyonu</a>
+                        <a asp-page="/ApiLab/Index" class="sidebar-nav-item">API Test (Lab)</a>
+                        <a href="http://localhost:5000/swagger" target="_blank" class="sidebar-nav-item" id="sidebarSwaggerLink">Swagger UI</a>
+                        <a href="/hangfire" target="_blank" class="sidebar-nav-item">Hangfire Panel</a>
+                        <a asp-page="/Audit/Index" class="sidebar-nav-item">Oturum Logları</a>
+                    </div>
                 </div>
             </div>
 
@@ -124,14 +134,54 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const currentPath = window.location.pathname.toLowerCase();
+            // Aktif sayfa linkini belirleme
+            const currentPath = window.location.pathname.toLowerCase().replace(/\/index$/, '') || '/';
             document.querySelectorAll('.sidebar-nav-item').forEach(link => {
-                const href = link.getAttribute('href')?.toLowerCase() || '';
-                if (href === currentPath || (currentPath.startsWith(href) && href !== '/')) {
-                    link.classList.add('active');
-                } else if ((currentPath === '/' || currentPath === '/index') && (href === '/' || href === '/index')) {
+                let href = link.getAttribute('href')?.toLowerCase() || '';
+                href = href.split('?')[0].replace(/\/index$/, '') || '/';
+                if (href === currentPath || (currentPath !== '/' && href !== '/' && currentPath.startsWith(href))) {
                     link.classList.add('active');
                 }
+            });
+
+            // Klasör / Dropdown Mantığı (Shopify Polaris Sidebar Folders)
+            const folderStorageKey = 'focus_sidebar_folders';
+            let folderStates = {};
+            try {
+                const saved = localStorage.getItem(folderStorageKey);
+                if (saved) folderStates = JSON.parse(saved);
+            } catch (e) {
+                folderStates = {};
+            }
+
+            const folders = document.querySelectorAll('.sidebar-folder');
+            folders.forEach(folder => {
+                const folderId = folder.dataset.folderId;
+                const header = folder.querySelector('.sidebar-folder-header');
+                const hasActiveChild = !!folder.querySelector('.sidebar-nav-item.active');
+
+                if (hasActiveChild) {
+                    folder.classList.add('has-active-child');
+                    folder.classList.remove('collapsed');
+                    header?.setAttribute('aria-expanded', 'true');
+                    folderStates[folderId] = true;
+                } else if (folderStates[folderId] === false) {
+                    folder.classList.add('collapsed');
+                    header?.setAttribute('aria-expanded', 'false');
+                } else {
+                    folder.classList.remove('collapsed');
+                    header?.setAttribute('aria-expanded', 'true');
+                }
+
+                header?.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const isCollapsed = folder.classList.toggle('collapsed');
+                    header.setAttribute('aria-expanded', (!isCollapsed).toString());
+                    folderStates[folderId] = !isCollapsed;
+                    try {
+                        localStorage.setItem(folderStorageKey, JSON.stringify(folderStates));
+                    } catch (err) {}
+                });
             });
 
             // Özel API Adresi senkronu
