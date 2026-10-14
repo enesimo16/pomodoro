@@ -1,0 +1,258 @@
+@page
+@model Focus.Admin.Pages.AiCoach.GlobalModel
+@{
+    ViewData["Title"] = "Kolektif Global AI Havuzu";
+}
+
+<div class="admin-page-header">
+    <div>
+        <h1 class="admin-page-title">Kolektif Global AI Bilgileri & Havuz</h1>
+        <p class="admin-page-subtitle">Kişisel verilerden (PII) arındırılmış kolektif hafıza, platform geneli odak trendleri ve bilgelik sentezi</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <a asp-page="/AiCoach/Personal" class="polaris-btn polaris-btn-secondary">
+            Kişisel AI Bilgileri
+        </a>
+        <a asp-page="/Index" class="polaris-btn polaris-btn-secondary">
+            Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- PANEL 1: Global AI KPI Metrik Kartları -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="polaris-metric-card">
+            <div class="polaris-metric-label">
+                <span>Kolektif Global Bellek</span>
+                <span class="polaris-badge polaris-badge-dark">Anonim</span>
+            </div>
+            <div class="polaris-metric-value">@Model.TotalGlobalMemories.ToString("N0")</div>
+            <div class="polaris-metric-subtext">PII-arındırılmış ortak model hafızası</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="polaris-metric-card">
+            <div class="polaris-metric-label">
+                <span>Platform Tamamlama Oranı</span>
+                <span class="polaris-badge">Seans Başarısı</span>
+            </div>
+            <div class="polaris-metric-value">%@Model.GlobalCompletionRate.ToString("F1")</div>
+            <div class="polaris-metric-subtext">Toplam @Model.TotalPlatformSessions.ToString("N0") seans üzerinden</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="polaris-metric-card">
+            <div class="polaris-metric-label">
+                <span>Kişisel Veri Kalkanı (PII)</span>
+                <span class="polaris-badge">%100 İzole</span>
+            </div>
+            <div class="polaris-metric-value">@Model.TotalPiiSanitizedEntries.ToString("N0")</div>
+            <div class="polaris-metric-subtext">E-posta, ad ve IP temizlenmiş kayıt</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="polaris-metric-card">
+            <div class="polaris-metric-label">
+                <span>Sistem Öğrenme Havuzu</span>
+                <span class="polaris-badge polaris-badge-dark">pgvector</span>
+            </div>
+            <div class="polaris-metric-value">Aktif</div>
+            <div class="polaris-metric-subtext">Soğuk başlangıçta yeni kullanıcılara rehberlik</div>
+        </div>
+    </div>
+</div>
+
+<!-- PANEL 2: Kolektif Bilgelik Sentezi Kartları -->
+<div class="polaris-card mb-4">
+    <div class="polaris-card-header">
+        <h6>Platform Genelinde Sentezlenen Kolektif İçgörüler</h6>
+        <span class="polaris-badge">@Model.CollectiveInsights.Count Çıkarım</span>
+    </div>
+    <div class="polaris-card-body p-3">
+        <div class="row g-3">
+            @foreach (var insight in Model.CollectiveInsights)
+            {
+                <div class="col-md-6">
+                    <div class="p-3 bg-light border rounded h-100">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fw-bold text-dark">@insight.Title</span>
+                            <span class="polaris-badge polaris-badge-dark font-monospace" style="font-size: 10px;">@insight.Category</span>
+                        </div>
+                        <p class="text-muted small m-0 mb-2">@insight.Finding</p>
+                        <span class="text-secondary font-monospace" style="font-size: 10.5px;">Güvenilirlik: <strong>@insight.Reliability</strong></span>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- PANEL 3: Seans Süresi Verimlilik Matrisi & Sirkadiyen Ritim -->
+<div class="row g-4 mb-4">
+    <!-- Seans Süresi Matrisi -->
+    <div class="col-lg-6">
+        <div class="polaris-card h-100">
+            <div class="polaris-card-header">
+                <h6>Seans Süresi Dayanıklılık & Tamamlanma Matrisi</h6>
+                <span class="polaris-badge">Optimum Süre</span>
+            </div>
+            @if (!Model.DurationStats.Any())
+            {
+                <div class="p-4 text-center text-muted small">Yeterli seans verisi bulunmuyor.</div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="polaris-table">
+                        <thead>
+                            <tr>
+                                <th>Süre Dilimi</th>
+                                <th>Seans Sayısı</th>
+                                <th>Tamamlama</th>
+                                <th>Terk Oranı</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var d in Model.DurationStats)
+                            {
+                                <tr>
+                                    <td class="fw-semibold text-dark">@d.Label</td>
+                                    <td>@d.SessionCount</td>
+                                    <td>
+                                        <span class="fw-semibold">%@d.CompletionRate.ToString("F1")</span>
+                                    </td>
+                                    <td class="text-muted small">
+                                        %@d.AbandonRate.ToString("F1")
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Sirkadiyen Ritim Isı Haritası Dağılımı -->
+    <div class="col-lg-6">
+        <div class="polaris-card h-100">
+            <div class="polaris-card-header">
+                <h6>Günün Saatlerine Göre Odaklanma Dağılımı</h6>
+                <span class="polaris-badge polaris-badge-dark">Sirkadiyen</span>
+            </div>
+            @if (!Model.CircadianStats.Any())
+            {
+                <div class="p-4 text-center text-muted small">Yeterli zamanlama verisi bulunmuyor.</div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="polaris-table">
+                        <thead>
+                            <tr>
+                                <th>Zaman Dilimi</th>
+                                <th>Hacim</th>
+                                <th>Pay</th>
+                                <th>Bilişsel Odak</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var c in Model.CircadianStats)
+                            {
+                                <tr>
+                                    <td class="fw-semibold text-dark">@c.TimeSlot</td>
+                                    <td>@c.SessionCount</td>
+                                    <td>
+                                        <span class="fw-semibold">%@c.Percentage.ToString("F1")</span>
+                                    </td>
+                                    <td>
+                                        <span class="polaris-badge">@c.PeakActivity</span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- PANEL 4: Anonimleştirilmiş Global pgvector Bellek Kataloğu -->
+<div class="polaris-card">
+    <div class="polaris-filter-bar">
+        <div class="polaris-tabs">
+            <a asp-page="/AiCoach/Global" asp-route-Search="@Model.Search" class="polaris-tab-item @(string.IsNullOrEmpty(Model.CategoryFilter) ? "active" : "")">
+                Tümü (@Model.TotalGlobalMemories)
+            </a>
+            <a asp-page="/AiCoach/Global" asp-route-CategoryFilter="HabitPattern" asp-route-Search="@Model.Search" class="polaris-tab-item @(Model.CategoryFilter == "HabitPattern" ? "active" : "")">
+                Alışkanlıklar
+            </a>
+            <a asp-page="/AiCoach/Global" asp-route-CategoryFilter="WorkStyle" asp-route-Search="@Model.Search" class="polaris-tab-item @(Model.CategoryFilter == "WorkStyle" ? "active" : "")">
+                Çalışma Tarzı
+            </a>
+            <a asp-page="/AiCoach/Global" asp-route-CategoryFilter="AtmospherePreference" asp-route-Search="@Model.Search" class="polaris-tab-item @(Model.CategoryFilter == "AtmospherePreference" ? "active" : "")">
+                Atmosfer Tercihleri
+            </a>
+        </div>
+
+        <form method="get" class="d-flex align-items-center gap-2">
+            <input type="hidden" name="CategoryFilter" value="@Model.CategoryFilter" />
+            <input type="text" name="Search" value="@Model.Search" class="form-control form-control-sm" style="width: 240px;" placeholder="Anonim hafıza içeriği ara..." />
+            <button type="submit" class="polaris-btn polaris-btn-primary polaris-btn-sm">Ara</button>
+            @if (!string.IsNullOrEmpty(Model.Search) || !string.IsNullOrEmpty(Model.CategoryFilter))
+            {
+                <a asp-page="/AiCoach/Global" class="polaris-btn polaris-btn-secondary polaris-btn-sm">Temizle</a>
+            }
+        </form>
+    </div>
+
+    @if (!Model.Memories.Any())
+    {
+        <div class="p-5 text-center text-muted">
+            <div class="fw-semibold">Global bellek kaydı bulunamadı</div>
+            <div class="small mt-1">Kullanıcı seansları anonimleştirildikçe ortak havuz zenginleşir.</div>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="polaris-table">
+                <thead>
+                    <tr>
+                        <th>Kategori</th>
+                        <th>PII-Arındırılmış Anlamsal Çıkarım</th>
+                        <th>Önem</th>
+                        <th>Kullanım</th>
+                        <th>Oluşturulma</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var mem in Model.Memories)
+                    {
+                        <tr>
+                            <td>
+                                <span class="polaris-badge polaris-badge-dark font-monospace">@mem.Category</span>
+                            </td>
+                            <td>
+                                <div class="text-dark fw-medium small" style="max-width: 580px; white-space: normal;">
+                                    @mem.Content
+                                </div>
+                            </td>
+                            <td>
+                                <span class="fw-semibold">@mem.Importance / 5</span>
+                            </td>
+                            <td>
+                                <span class="text-muted small">@mem.UsageCount kez</span>
+                            </td>
+                            <td class="text-muted font-monospace small">
+                                @mem.CreatedAt.ToString("dd.MM.yyyy HH:mm")
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

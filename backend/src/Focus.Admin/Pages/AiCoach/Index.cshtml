@@ -6,13 +6,53 @@
 
 <div class="admin-page-header">
     <div>
-        <h1 class="admin-page-title">Yapay Zeka Koç & pgvector Bellek</h1>
-        <p class="admin-page-subtitle">Faz 5 Çift vektörlü RAG hafıza mimarisi, kişisel seans koçluğu ve anonim küresel içgörüler</p>
+        <h1 class="admin-page-title">Yapay Zeka Mimari Merkezi & Vektör Bellek</h1>
+        <p class="admin-page-subtitle">Kullanıcı bazlı kişisel bilişsel profiller, kolektif PII-arındırılmış hafıza ve akustik atmosfer sentezi</p>
     </div>
-    <div>
-        <a asp-page="/Index" class="polaris-btn polaris-btn-secondary">
-            Dashboard
+    <div class="d-flex gap-2 flex-wrap">
+        <a asp-page="/AiCoach/Personal" class="polaris-btn polaris-btn-primary">
+            Kişisel AI Bilgileri
         </a>
+        <a asp-page="/AiCoach/Global" class="polaris-btn polaris-btn-secondary">
+            Kolektif Global AI
+        </a>
+        <a asp-page="/AiCoach/Atmosphere" class="polaris-btn polaris-btn-secondary">
+            Atmosfer Sentezi
+        </a>
+    </div>
+</div>
+
+<!-- HIZLI MODÜL GEÇİŞ KARTLARI -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="polaris-card p-3 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="fw-bold text-dark">1. Kişisel AI Bilgileri</span>
+                <span class="polaris-badge polaris-badge-dark">İzole</span>
+            </div>
+            <p class="text-muted small mb-3">Her kullanıcının yorgunluk skorları, odak kalitesi, check-in duygu verileri ve özel pgvector hafızası.</p>
+            <a asp-page="/AiCoach/Personal" class="polaris-btn polaris-btn-secondary polaris-btn-sm w-100">Kişisel Profili İncele</a>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="polaris-card p-3 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="fw-bold text-dark">2. Kolektif Global AI</span>
+                <span class="polaris-badge">Anonim</span>
+            </div>
+            <p class="text-muted small mb-3">PII-arındırılmış platform geneli seans trendleri, optimum süre matrisi ve sirkadiyen ritim sentezi.</p>
+            <a asp-page="/AiCoach/Global" class="polaris-btn polaris-btn-secondary polaris-btn-sm w-100">Global Havuzu İncele</a>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="polaris-card p-3 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="fw-bold text-dark">3. Atmosfer & Mikser Sentezi</span>
+                <span class="polaris-badge polaris-badge-dark">Web Audio</span>
+            </div>
+            <p class="text-muted small mb-3">Gemini ve kural motoruyla üretilen 4-kanallı lofi/ambiyans mikserleri ve piksel oda renk paletleri.</p>
+            <a asp-page="/AiCoach/Atmosphere" class="polaris-btn polaris-btn-secondary polaris-btn-sm w-100">Atmosferleri İncele</a>
+        </div>
     </div>
 </div>
 

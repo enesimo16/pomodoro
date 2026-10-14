@@ -1,0 +1,156 @@
+@page
+@model Focus.Admin.Pages.AiCoach.AtmosphereModel
+@{
+    ViewData["Title"] = "AI Atmosfer & Tema Sentezi";
+}
+
+<div class="admin-page-header">
+    <div>
+        <h1 class="admin-page-title">AI Atmosfer &amp; Tema Sentezi</h1>
+        <p class="admin-page-subtitle">Faz 5 Çift katmanlı prompt &amp; sirkadiyen ritim sentezi, 4-kanallı akustik mikser profilleri</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <a asp-page="/ApiLab/Index" class="polaris-btn polaris-btn-primary">
+            Canlı Atmosfer Üretim Konsolu (Lab)
+        </a>
+        <a asp-page="/Index" class="polaris-btn polaris-btn-secondary">
+            Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- PANEL 1: Atmosfer KPI Metrik Kartları -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="polaris-metric-card">
+            <div class="polaris-metric-label">
+                <span>Kayıtlı Atmosfer</span>
+                <span class="polaris-badge">Toplam</span>
+            </div>
+            <div class="polaris-metric-value">@Model.TotalSavedAtmospheres</div>
+            <div class="polaris-metric-subtext">Kullanıcıların kütüphanelerindeki temalar</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="polaris-metric-card">
+            <div class="polaris-metric-label">
+                <span>AI Üretimli Temalar</span>
+                <span class="polaris-badge polaris-badge-dark">Gemini / Algoritmik</span>
+            </div>
+            <div class="polaris-metric-value">@Model.AiGeneratedCount</div>
+            <div class="polaris-metric-subtext">Prompt ve sirkadiyen ritim üretimi</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="polaris-metric-card">
+            <div class="polaris-metric-label">
+                <span>Canlı Hava Senkronu</span>
+                <span class="polaris-badge">Open-Meteo</span>
+            </div>
+            <div class="polaris-metric-value" style="font-size: 19px;">@Model.CurrentTemperature.ToString("F1")°C</div>
+            <div class="polaris-metric-subtext">@Model.CurrentWeatherSummary</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="polaris-metric-card">
+            <div class="polaris-metric-label">
+                <span>4-Kanallı Akustik Mikser</span>
+                <span class="polaris-badge polaris-badge-dark">Web Audio</span>
+            </div>
+            <div class="polaris-metric-value" style="font-size: 19px;">Aktif</div>
+            <div class="polaris-metric-subtext">Lo-Fi, Yağmur, Brown Noise, Tuş Sesi</div>
+        </div>
+    </div>
+</div>
+
+<!-- PANEL 2: Atmosfer Kataloğu & Filtre Barı -->
+<div class="polaris-card">
+    <div class="polaris-filter-bar">
+        <div class="polaris-tabs">
+            <a asp-page="/AiCoach/Atmosphere" asp-route-Search="@Model.Search" class="polaris-tab-item @(string.IsNullOrEmpty(Model.Filter) ? "active" : "")">
+                Tümü (@Model.TotalSavedAtmospheres)
+            </a>
+            <a asp-page="/AiCoach/Atmosphere" asp-route-Filter="ai" asp-route-Search="@Model.Search" class="polaris-tab-item @(Model.Filter == "ai" ? "active" : "")">
+                AI Üretimi (@Model.AiGeneratedCount)
+            </a>
+            <a asp-page="/AiCoach/Atmosphere" asp-route-Filter="manual" asp-route-Search="@Model.Search" class="polaris-tab-item @(Model.Filter == "manual" ? "active" : "")">
+                Manuel Hazırlananlar
+            </a>
+        </div>
+
+        <form method="get" class="d-flex align-items-center gap-2">
+            <input type="hidden" name="Filter" value="@Model.Filter" />
+            <input type="text" name="Search" value="@Model.Search" class="form-control form-control-sm" style="width: 240px;" placeholder="Tema adı veya prompt ara..." />
+            <button type="submit" class="polaris-btn polaris-btn-primary polaris-btn-sm">Ara</button>
+            @if (!string.IsNullOrEmpty(Model.Search) || !string.IsNullOrEmpty(Model.Filter))
+            {
+                <a asp-page="/AiCoach/Atmosphere" class="polaris-btn polaris-btn-secondary polaris-btn-sm">Temizle</a>
+            }
+        </form>
+    </div>
+
+    @if (!Model.Atmospheres.Any())
+    {
+        <div class="p-5 text-center text-muted">
+            <div class="fw-semibold">Kayıtlı atmosfer profili bulunamadı</div>
+            <div class="small mt-1">API Lab Modül 10 üzerinden yeni AI atmosferleri sentezleyebilirsiniz.</div>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="polaris-table">
+                <thead>
+                    <tr>
+                        <th>Tema Adı &amp; Sahibi</th>
+                        <th>Estetik &amp; Renk Paleti</th>
+                        <th>Hava Durumu</th>
+                        <th>4-Kanal Akustik Mikser</th>
+                        <th>Kaynak &amp; Prompt</th>
+                        <th>Tarih</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var atm in Model.Atmospheres)
+                    {
+                        <tr>
+                            <td>
+                                <div class="fw-bold text-dark">@atm.Name</div>
+                                <div class="text-muted small">@atm.OwnerName</div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div style="width: 14px; height: 14px; border-radius: 3px; background-color: @atm.WallColor; border: 1px solid #d2d5d8;" title="Duvar: @atm.WallColor"></div>
+                                    <div style="width: 14px; height: 14px; border-radius: 3px; background-color: @atm.FloorColor; border: 1px solid #d2d5d8;" title="Zemin: @atm.FloorColor"></div>
+                                    <span class="small fw-semibold">@atm.Aesthetic</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="polaris-badge">@atm.WeatherEffect</span>
+                            </td>
+                            <td>
+                                <div class="small text-dark">
+                                    <span>@atm.MusicGenre</span> • 
+                                    <span class="text-muted">@atm.AmbienceType</span>
+                                </div>
+                            </td>
+                            <td>
+                                @if (atm.IsAiGenerated)
+                                {
+                                    <span class="polaris-badge polaris-badge-dark" title="@(atm.PromptUsed ?? "AI Otomatik")">AI Üretimi</span>
+                                }
+                                else
+                                {
+                                    <span class="polaris-badge">Manuel</span>
+                                }
+                            </td>
+                            <td class="text-muted font-monospace small">
+                                @atm.CreatedAt.ToString("dd.MM.yyyy HH:mm")
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

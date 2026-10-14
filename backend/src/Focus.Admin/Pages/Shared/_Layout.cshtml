@@ -57,15 +57,16 @@
                     </div>
                 </div>
 
-                <!-- Klasör: Yapay Zeka & Sistem -->
-                <div class="sidebar-folder" data-folder-id="intelligence">
+                <!-- Klasör: Yapay Zeka (Kullanıcı ve Sistem Bazlı Sentez) -->
+                <div class="sidebar-folder" data-folder-id="ai">
                     <button type="button" class="sidebar-folder-header" aria-expanded="true">
-                        <span class="folder-title">Yapay Zeka & Sistem</span>
+                        <span class="folder-title">Yapay Zeka</span>
                         <span class="folder-caret" aria-hidden="true"></span>
                     </button>
                     <div class="sidebar-folder-items">
-                        <a asp-page="/AiCoach/Index" class="sidebar-nav-item">AI Koç & Vektör Bellek</a>
-                        <a asp-page="/Jobs/Index" class="sidebar-nav-item">Cron Görevleri</a>
+                        <a asp-page="/AiCoach/Personal" class="sidebar-nav-item">Kişisel AI Bilgileri</a>
+                        <a asp-page="/AiCoach/Global" class="sidebar-nav-item">Kolektif Global AI</a>
+                        <a asp-page="/AiCoach/Atmosphere" class="sidebar-nav-item">Atmosfer &amp; Tema Sentezi</a>
                     </div>
                 </div>
 
@@ -78,6 +79,7 @@
                     <div class="sidebar-folder-items">
                         <a asp-page="/ApiDocs/Index" class="sidebar-nav-item">API Dokümantasyonu</a>
                         <a asp-page="/ApiLab/Index" class="sidebar-nav-item">API Test (Lab)</a>
+                        <a asp-page="/Jobs/Index" class="sidebar-nav-item">Cron Görevleri</a>
                         <a href="http://localhost:5000/swagger" target="_blank" class="sidebar-nav-item" id="sidebarSwaggerLink">Swagger UI</a>
                         <a href="/hangfire" target="_blank" class="sidebar-nav-item">Hangfire Panel</a>
                         <a asp-page="/Audit/Index" class="sidebar-nav-item">Oturum Logları</a>
