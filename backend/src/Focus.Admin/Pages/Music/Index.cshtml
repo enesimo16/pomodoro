@@ -1,0 +1,183 @@
+@page
+@model Focus.Admin.Pages.Music.IndexModel
+@{
+    ViewData["Title"] = "Müzik & Sesler";
+}
+
+<div style="max-width: 1140px; margin: 0 auto; padding-bottom: 60px;">
+    <!-- Üst Başlık (Shopify Polaris Header) -->
+    <div class="admin-page-header">
+        <div>
+            <h1 class="admin-page-title">Müzik &amp; 4-Kanal Akustik Kütüphanesi</h1>
+            <p class="admin-page-subtitle">Jamendo telifsiz Lo-Fi parçaları, yapay zekâ 4-kanallı mikserleri ve bilişsel odak seslerinin birleşik arşivi</p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <a asp-page="/ApiLab/Index" class="polaris-btn polaris-btn-primary polaris-btn-sm">
+                API Test Konsolu
+            </a>
+            <a asp-page="/Themes/Index" class="polaris-btn polaris-btn-secondary polaris-btn-sm">
+                Görsel Temalar
+            </a>
+        </div>
+    </div>
+
+    <!-- Metrik Kartları -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="polaris-card p-3">
+                <span class="text-muted small d-block mb-1">Toplam Akustik Varlık</span>
+                <div class="fs-4 fw-bold text-dark font-monospace">@Model.TotalCount</div>
+                <span class="text-muted" style="font-size: 11px;">Aktif Kütüphane</span>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="polaris-card p-3">
+                <span class="text-muted small d-block mb-1">Jamendo Lo-Fi</span>
+                <div class="fs-4 fw-bold text-primary font-monospace">@Model.JamendoCount</div>
+                <span class="text-muted" style="font-size: 11px;">Telifsiz Parçalar</span>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="polaris-card p-3">
+                <span class="text-muted small d-block mb-1">AI 4-Kanal Mikser</span>
+                <div class="fs-4 fw-bold text-dark font-monospace">@Model.AiMixerCount</div>
+                <span class="text-muted" style="font-size: 11px;">Dengeli Ritim Presets</span>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="polaris-card p-3">
+                <span class="text-muted small d-block mb-1">Doğa &amp; Gürültü</span>
+                <div class="fs-4 fw-bold text-success font-monospace">@Model.AmbientNoiseCount</div>
+                <span class="text-muted" style="font-size: 11px;">Bilişsel Odak Kalkanı</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtreler ve Arama Çubuğu (Polaris Toolbar) -->
+    <div class="polaris-card p-3 mb-4">
+        <form method="get" class="row g-2 align-items-center">
+            <div class="col-md-7">
+                <div class="input-group input-group-sm">
+                    <input type="text" name="Search" value="@Model.Search" class="form-control" placeholder="Parça adı, sanatçı, janr veya enstrüman ara..." />
+                    @if (!string.IsNullOrWhiteSpace(Model.Search) || !string.IsNullOrWhiteSpace(Model.SourceFilter))
+                    {
+                        <a asp-page="/Music/Index" class="btn btn-outline-secondary">Temizle</a>
+                    }
+                    <button type="submit" class="btn btn-dark">Ara</button>
+                </div>
+            </div>
+            <div class="col-md-5">
+                <div class="d-flex gap-1 flex-wrap justify-content-md-end">
+                    <a asp-page="/Music/Index" asp-route-Search="@Model.Search" class="polaris-btn polaris-btn-sm @(string.IsNullOrEmpty(Model.SourceFilter) || Model.SourceFilter == "All" ? "polaris-btn-primary" : "polaris-btn-secondary")">
+                        Tümü
+                    </a>
+                    <a asp-page="/Music/Index" asp-route-SourceFilter="Yapay Zeka Mikser" asp-route-Search="@Model.Search" class="polaris-btn polaris-btn-sm @(Model.SourceFilter == "Yapay Zeka Mikser" ? "polaris-btn-primary" : "polaris-btn-secondary")">
+                        AI Mikserleri
+                    </a>
+                    <a asp-page="/Music/Index" asp-route-SourceFilter="Jamendo API" asp-route-Search="@Model.Search" class="polaris-btn polaris-btn-sm @(Model.SourceFilter == "Jamendo API" ? "polaris-btn-primary" : "polaris-btn-secondary")">
+                        Jamendo Lo-Fi
+                    </a>
+                    <a asp-page="/Music/Index" asp-route-SourceFilter="Doğa & Gürültü" asp-route-Search="@Model.Search" class="polaris-btn polaris-btn-sm @(Model.SourceFilter == "Doğa & Gürültü" ? "polaris-btn-primary" : "polaris-btn-secondary")">
+                        Doğa &amp; Gürültü
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Parçalar Listesi -->
+    @if (!Model.Tracks.Any())
+    {
+        <div class="polaris-card p-5 text-center text-muted">
+            <p class="mb-2">Arama kriterlerine uygun müzik veya ses kaydı bulunamadı.</p>
+            <a asp-page="/Music/Index" class="polaris-btn polaris-btn-secondary polaris-btn-sm">Tüm Parçaları Göster</a>
+        </div>
+    }
+    else
+    {
+        <div class="d-flex flex-column gap-3">
+            @foreach (var track in Model.Tracks)
+            {
+                <div class="polaris-card p-3">
+                    <div class="row g-3 align-items-center">
+                        <!-- Sol: Görsel & Temel Başlık -->
+                        <div class="col-md-4 d-flex align-items-center gap-3">
+                            <img src="@track.CoverUrl" alt="@track.Title" class="rounded border flex-shrink-0" style="width: 54px; height: 54px; object-fit: cover;" />
+                            <div class="overflow-hidden">
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <h6 class="fw-bold text-dark mb-0 text-truncate" title="@track.Title">@track.Title</h6>
+                                    @if (track.Bpm > 0)
+                                    {
+                                        <span class="badge bg-light text-dark border font-monospace" style="font-size: 10px;">@track.Bpm BPM</span>
+                                    }
+                                </div>
+                                <span class="text-muted d-block small text-truncate">@track.Artist</span>
+                                <div class="d-flex gap-1 mt-1">
+                                    @if (track.Source == "Yapay Zeka Mikser")
+                                    {
+                                        <span class="polaris-badge polaris-badge-dark" style="font-size: 10px;">AI Mikser</span>
+                                    }
+                                    else if (track.Source == "Jamendo API")
+                                    {
+                                        <span class="polaris-badge polaris-badge-neutral" style="font-size: 10px;">Jamendo API</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="polaris-badge polaris-badge-success" style="font-size: 10px;">Doğa / Gürültü</span>
+                                    }
+                                    <span class="badge bg-light text-secondary border" style="font-size: 10px;">@track.Genre</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Orta: Ses Oynatıcı -->
+                        <div class="col-md-4">
+                            <audio controls class="w-100" style="height: 38px;" src="@track.AudioUrl"></audio>
+                            <span class="d-block text-muted mt-1 small text-truncate" style="font-size: 11px;">@track.Description</span>
+                        </div>
+
+                        <!-- Sağ: 4-Kanal Akustik Denge Çubukları -->
+                        <div class="col-md-4">
+                            <div class="p-2 bg-light rounded border">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="small fw-semibold text-dark" style="font-size: 11px;">4-Kanal Akustik Denge</span>
+                                    <a href="/ApiLab?admin_key=focus_master_key_9971x#tab-music-ai" class="btn btn-sm btn-outline-dark py-0 px-2" style="font-size: 10px;">Miksere Aktar</a>
+                                </div>
+                                <div class="row g-1 text-center" style="font-size: 10px;">
+                                    <div class="col-3">
+                                        <span class="text-muted d-block" style="font-size: 9px;">Melodi</span>
+                                        <div class="progress my-1" style="height: 4px;">
+                                            <div class="progress-bar bg-primary" style="width: @track.MelodyPercent%;"></div>
+                                        </div>
+                                        <span class="font-monospace fw-bold text-dark">@track.MelodyPercent%</span>
+                                    </div>
+                                    <div class="col-3">
+                                        <span class="text-muted d-block" style="font-size: 9px;">Ambiyans</span>
+                                        <div class="progress my-1" style="height: 4px;">
+                                            <div class="progress-bar bg-info" style="width: @track.AmbiencePercent%;"></div>
+                                        </div>
+                                        <span class="font-monospace fw-bold text-dark">@track.AmbiencePercent%</span>
+                                    </div>
+                                    <div class="col-3">
+                                        <span class="text-muted d-block" style="font-size: 9px;">Gürültü</span>
+                                        <div class="progress my-1" style="height: 4px;">
+                                            <div class="progress-bar bg-warning" style="width: @track.NoisePercent%;"></div>
+                                        </div>
+                                        <span class="font-monospace fw-bold text-dark">@track.NoisePercent%</span>
+                                    </div>
+                                    <div class="col-3">
+                                        <span class="text-muted d-block" style="font-size: 9px;">Doku</span>
+                                        <div class="progress my-1" style="height: 4px;">
+                                            <div class="progress-bar bg-secondary" style="width: @track.TexturePercent%;"></div>
+                                        </div>
+                                        <span class="font-monospace fw-bold text-dark">@track.TexturePercent%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

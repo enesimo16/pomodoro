@@ -1,0 +1,238 @@
+@page
+@model Focus.Admin.Pages.Themes.IndexModel
+@{
+    ViewData["Title"] = "Görsel Temalar";
+}
+
+<div style="max-width: 1140px; margin: 0 auto; padding-bottom: 60px;">
+    <!-- Üst Başlık (Shopify Polaris Header) -->
+    <div class="admin-page-header">
+        <div>
+            <h1 class="admin-page-title">Görsel Temalar &amp; Piksel Odalar</h1>
+            <p class="admin-page-subtitle">Pixabay API video döngüleri, yapay zekâ renk paletleri ve kayıtlı oda temalarının birleşik vitrini</p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <a asp-page="/ApiLab/Index" class="polaris-btn polaris-btn-primary polaris-btn-sm">
+                API Test Konsolu
+            </a>
+            <a asp-page="/AiCoach/Atmosphere" class="polaris-btn polaris-btn-secondary polaris-btn-sm">
+                Atmosfer Sentezi
+            </a>
+        </div>
+    </div>
+
+    <!-- Metrik Kartları -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="polaris-card p-3">
+                <span class="text-muted small d-block mb-1">Toplam Tema</span>
+                <div class="fs-4 fw-bold text-dark font-monospace">@Model.TotalCount</div>
+                <span class="text-muted" style="font-size: 11px;">Aktif Katalog</span>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="polaris-card p-3">
+                <span class="text-muted small d-block mb-1">Pixabay API Döngüsü</span>
+                <div class="fs-4 fw-bold text-primary font-monospace">@Model.PixabayCount</div>
+                <span class="text-muted" style="font-size: 11px;">HD Video Arka Planı</span>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="polaris-card p-3">
+                <span class="text-muted small d-block mb-1">Yapay Zeka Paleti</span>
+                <div class="fs-4 fw-bold text-dark font-monospace">@Model.AiPresetCount</div>
+                <span class="text-muted" style="font-size: 11px;">Piksel Renk Formülü</span>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="polaris-card p-3">
+                <span class="text-muted small d-block mb-1">Kayıtlı Kütüphane</span>
+                <div class="fs-4 fw-bold text-success font-monospace">@Model.SavedDbCount</div>
+                <span class="text-muted" style="font-size: 11px;">Özel Kullanıcı Teması</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtreler ve Arama Çubuğu (Polaris Toolbar) -->
+    <div class="polaris-card p-3 mb-4">
+        <form method="get" class="row g-2 align-items-center">
+            <div class="col-md-7">
+                <div class="input-group input-group-sm">
+                    <input type="text" name="Search" value="@Model.Search" class="form-control" placeholder="Tema adı, estetik şablonu veya etiketlerde ara..." />
+                    @if (!string.IsNullOrWhiteSpace(Model.Search) || !string.IsNullOrWhiteSpace(Model.SourceFilter))
+                    {
+                        <a asp-page="/Themes/Index" class="btn btn-outline-secondary">Temizle</a>
+                    }
+                    <button type="submit" class="btn btn-dark">Ara</button>
+                </div>
+            </div>
+            <div class="col-md-5">
+                <div class="d-flex gap-1 flex-wrap justify-content-md-end">
+                    <a asp-page="/Themes/Index" asp-route-Search="@Model.Search" class="polaris-btn polaris-btn-sm @(string.IsNullOrEmpty(Model.SourceFilter) || Model.SourceFilter == "All" ? "polaris-btn-primary" : "polaris-btn-secondary")">
+                        Tümü
+                    </a>
+                    <a asp-page="/Themes/Index" asp-route-SourceFilter="Yapay Zeka" asp-route-Search="@Model.Search" class="polaris-btn polaris-btn-sm @(Model.SourceFilter == "Yapay Zeka" ? "polaris-btn-primary" : "polaris-btn-secondary")">
+                        Yapay Zeka
+                    </a>
+                    <a asp-page="/Themes/Index" asp-route-SourceFilter="Pixabay API" asp-route-Search="@Model.Search" class="polaris-btn polaris-btn-sm @(Model.SourceFilter == "Pixabay API" ? "polaris-btn-primary" : "polaris-btn-secondary")">
+                        Pixabay API
+                    </a>
+                    <a asp-page="/Themes/Index" asp-route-SourceFilter="Kayıtlı Kütüphane" asp-route-Search="@Model.Search" class="polaris-btn polaris-btn-sm @(Model.SourceFilter == "Kayıtlı Kütüphane" ? "polaris-btn-primary" : "polaris-btn-secondary")">
+                        Kayıtlı Temalar
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Temalar Izgarası -->
+    @if (!Model.Themes.Any())
+    {
+        <div class="polaris-card p-5 text-center text-muted">
+            <p class="mb-2">Arama kriterlerine uygun görsel tema bulunamadı.</p>
+            <a asp-page="/Themes/Index" class="polaris-btn polaris-btn-secondary polaris-btn-sm">Tüm Temaları Göster</a>
+        </div>
+    }
+    else
+    {
+        <div class="row g-3">
+            @foreach (var theme in Model.Themes)
+            {
+                <div class="col-md-6 col-lg-4">
+                    <div class="polaris-card h-100 d-flex flex-column overflow-hidden" style="border-top: 3px solid @theme.AccentColor;">
+                        <!-- Video veya Küçük Resim Önizleme Ekranı -->
+                        <div class="position-relative bg-dark" style="height: 180px; overflow: hidden;">
+                            <video style="width: 100%; height: 100%; object-fit: cover;"
+                                   poster="@theme.ThumbnailUrl"
+                                   src="@theme.VideoUrl"
+                                   muted loop playsinline
+                                   onmouseover="this.play().catch(()=>{})"
+                                   onmouseout="this.pause()">
+                            </video>
+                            
+                            <!-- Üst Rozetler -->
+                            <div class="position-absolute top-0 start-0 p-2 d-flex gap-1">
+                                @if (theme.Source == "Yapay Zeka")
+                                {
+                                    <span class="polaris-badge polaris-badge-dark" style="font-size: 10px;">Yapay Zeka</span>
+                                }
+                                else if (theme.Source == "Pixabay API")
+                                {
+                                    <span class="polaris-badge polaris-badge-neutral" style="font-size: 10px;">Pixabay API</span>
+                                }
+                                else
+                                {
+                                    <span class="polaris-badge polaris-badge-success" style="font-size: 10px;">Kayıtlı Kütüphane</span>
+                                }
+                                <span class="badge bg-dark bg-opacity-75 text-white border border-secondary" style="font-size: 10px;">@theme.WeatherEffect</span>
+                            </div>
+
+                            <!-- Sağ Üst Süre Önerisi -->
+                            <div class="position-absolute top-0 end-0 p-2">
+                                <span class="badge bg-dark bg-opacity-75 text-warning font-monospace" style="font-size: 10px;">@theme.RecommendedMinutes dk</span>
+                            </div>
+                        </div>
+
+                        <!-- Kart Gövdesi -->
+                        <div class="p-3 d-flex flex-column flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <h6 class="fw-bold text-dark mb-0 text-truncate" title="@theme.Title">@theme.Title</h6>
+                                <span class="badge bg-light text-secondary border" style="font-size: 10px;">@theme.Aesthetic</span>
+                            </div>
+                            <p class="text-muted small flex-grow-1 mb-3" style="font-size: 12px; line-height: 1.4;">
+                                @theme.Description
+                            </p>
+
+                            <!-- Renk Paleti Çipleri -->
+                            <div class="d-flex align-items-center justify-content-between pt-2 border-top mt-auto">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="text-muted" style="font-size: 10px;">Palet:</span>
+                                    <span class="d-inline-flex align-items-center gap-1">
+                                        <span class="rounded border" style="width: 14px; height: 14px; background-color: @theme.WallColor;" title="Duvar: @theme.WallColor"></span>
+                                        <span class="rounded border" style="width: 14px; height: 14px; background-color: @theme.FloorColor;" title="Zemin: @theme.FloorColor"></span>
+                                        <span class="rounded border" style="width: 14px; height: 14px; background-color: @theme.AccentColor;" title="Işık: @theme.AccentColor"></span>
+                                    </span>
+                                </div>
+                                <span class="text-muted font-monospace" style="font-size: 10px;">@theme.AccentColor</span>
+                            </div>
+                        </div>
+
+                        <!-- Kart Altı Aksiyonları -->
+                        <div class="p-2 bg-light border-top d-flex gap-1">
+                            <button type="button" class="btn btn-sm btn-outline-dark flex-fill py-1 btn-preview-theme" 
+                                    data-title="@theme.Title" 
+                                    data-video="@theme.VideoUrl" 
+                                    data-wall="@theme.WallColor" 
+                                    data-floor="@theme.FloorColor" 
+                                    data-accent="@theme.AccentColor"
+                                    style="font-size: 11px;">
+                                Tam Ekran Önizle
+                            </button>
+                            <a href="/ApiLab?admin_key=focus_master_key_9971x#tab-theme-ai" class="btn btn-sm btn-dark px-2 py-1" style="font-size: 11px;" title="ApiLab Test Konsolunda Aç">
+                                Test Et
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<!-- Önizleme Modal Penceresi -->
+<div class="modal fade" id="themePreviewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header py-2 bg-dark text-white border-bottom border-secondary">
+                <span class="fw-bold small" id="modalThemeTitle">Tema Önizleme</span>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Kapat"></button>
+            </div>
+            <div class="modal-body p-0 bg-black">
+                <div style="height: 380px; width: 100%;">
+                    <video id="modalVideoPlayer" style="width: 100%; height: 100%; object-fit: cover;" controls autoplay loop playsinline></video>
+                </div>
+            </div>
+            <div class="modal-footer py-2 bg-white d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="small text-muted">Seçili Palet:</span>
+                    <span id="modalSwatchWall" class="d-inline-block rounded border" style="width: 18px; height: 18px;"></span>
+                    <span id="modalSwatchFloor" class="d-inline-block rounded border" style="width: 18px; height: 18px;"></span>
+                    <span id="modalSwatchAccent" class="d-inline-block rounded border" style="width: 18px; height: 18px;"></span>
+                </div>
+                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Kapat</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    document.querySelectorAll('.btn-preview-theme').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const title = btn.getAttribute('data-title');
+            const video = btn.getAttribute('data-video');
+            const wall = btn.getAttribute('data-wall');
+            const floor = btn.getAttribute('data-floor');
+            const accent = btn.getAttribute('data-accent');
+
+            document.getElementById('modalThemeTitle').textContent = title;
+            const player = document.getElementById('modalVideoPlayer');
+            player.src = video;
+            player.play().catch(() => {});
+
+            document.getElementById('modalSwatchWall').style.backgroundColor = wall;
+            document.getElementById('modalSwatchFloor').style.backgroundColor = floor;
+            document.getElementById('modalSwatchAccent').style.backgroundColor = accent;
+
+            const modal = new bootstrap.Modal(document.getElementById('themePreviewModal'));
+            modal.show();
+        });
+    });
+
+    document.getElementById('themePreviewModal').addEventListener('hidden.bs.modal', () => {
+        const player = document.getElementById('modalVideoPlayer');
+        player.pause();
+        player.src = '';
+    });
+</script>
+}

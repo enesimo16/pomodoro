@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-10-14T19:58:33.328Z",
+  "timestamp": "2026-10-14T20:21:16.886Z",
   "adminPages": [
     {
       "name": "Sayfa: Dashboard (/)",
@@ -67,6 +67,16 @@
       "details": "HTTP 200, Title: \"API Test - Dashboard\""
     },
     {
+      "name": "Sayfa: Görsel Temalar (/Themes)",
+      "passed": true,
+      "details": "HTTP 200, Title: \"Görsel Temalar - Dashboard\""
+    },
+    {
+      "name": "Sayfa: Müzik & Sesler (/Music)",
+      "passed": true,
+      "details": "HTTP 200, Title: \"Müzik & Sesler - Dashboard\""
+    },
+    {
       "name": "Sayfa: Hangfire Dashboard (/hangfire)",
       "passed": true,
       "details": "HTTP 200, Title: \"Genel Bakış – Focus Hangfire Kontrol Paneli\""
@@ -76,12 +86,12 @@
     {
       "name": "Otomatik Test Hesabı Provizyonu",
       "passed": true,
-      "details": "Aktif Hesap: \"TestUser_7786\""
+      "details": "Aktif Hesap: \"TestUser_5325\""
     },
     {
       "name": "Modül 1 (Auth) - Profil Getir",
       "passed": true,
-      "details": "Kullanıcı: TestUser_7786"
+      "details": "Kullanıcı: TestUser_5325"
     },
     {
       "name": "Modül 1 (Auth) - Token Yenile",
@@ -101,7 +111,7 @@
     {
       "name": "Modül 3 (Room) - Oda Bilgisi Getir",
       "passed": true,
-      "details": "Oda: TestUser_7786'in Odası"
+      "details": "Oda: TestUser_5325'in Odası"
     },
     {
       "name": "Modül 3 (Room) - Eşya Ekle",
@@ -146,7 +156,7 @@
     {
       "name": "Modül 5 (Media) - Lo-Fi Müzik Ara & Plak Çalara Yükle",
       "passed": true,
-      "details": "6 parça listelendi"
+      "details": "3 parça listelendi"
     },
     {
       "name": "Modül 5 (Media) - Canlı Hava Senkronu",
@@ -256,7 +266,7 @@
     {
       "name": "Üst Bar: Yeni Test Hesabı Açma (Sıfır Sürtünme)",
       "passed": true,
-      "details": "Yeni Kullanıcı: \"TestUser_1930\""
+      "details": "Yeni Kullanıcı: \"TestUser_8240\""
     }
   ],
   "restApis": [
@@ -288,7 +298,7 @@
     {
       "name": "GET /api/v1/media/weather",
       "passed": true,
-      "details": "HTTP 200, Temp: 16.9°C"
+      "details": "HTTP 200, Temp: 16.8°C"
     },
     {
       "name": "GET /api/v1/shop/catalog",
@@ -322,8 +332,8 @@
     }
   ],
   "summary": {
-    "passed": 63,
+    "passed": 65,
     "failed": 0,
-    "total": 63
+    "total": 65
   }
 }

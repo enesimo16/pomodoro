@@ -190,6 +190,8 @@ async function runBrowserAudit() {
         { path: '/Audit', name: 'Oturum Logları' },
         { path: '/ApiDocs', name: 'API Dokümanı' },
         { path: '/ApiLab', name: 'API Test Laboratuvarı' },
+        { path: '/Themes', name: 'Görsel Temalar' },
+        { path: '/Music', name: 'Müzik & Sesler' },
         { path: '/hangfire', name: 'Hangfire Dashboard' }
     ];
 

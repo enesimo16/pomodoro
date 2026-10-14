@@ -25,43 +25,74 @@
     </div>
 </div>
 
-<div class="row g-4">
-    <!-- Sol Kolon: Kontroller ve Arama Sekmeleri -->
-    <div class="col-lg-5">
-        <!-- Modül Seçici (Shopify Polaris Dropdown Menüsü) -->
-        <div class="polaris-card mb-3">
-            <div class="polaris-card-header py-2 px-3 d-flex justify-content-between align-items-center">
-                <span class="small fw-bold text-uppercase" style="letter-spacing: 0.05em; font-size: 11px;">Test Modülü</span>
-                <span class="polaris-badge polaris-badge-dark" id="lblActiveModule">1. Kimlik</span>
+<div style="max-width: 1040px; margin: 0 auto; padding-bottom: 60px;">
+    <!-- Aktif Oturum ve Karakter Kompakt Durum Barı -->
+    <div class="polaris-card p-3 mb-3">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-2">
+                <span class="text-muted small">Aktif Profil:</span>
+                <span id="lblDisplayName" class="fw-bold text-dark small"></span>
+                <span id="lblUserType" class="polaris-badge polaris-badge-neutral" style="font-size: 11px;"></span>
+                <span id="sessionStatusBadge" class="polaris-badge polaris-badge-neutral" style="font-size: 11px;">Oturum Yok</span>
             </div>
-            <div class="p-3">
-                <div class="position-relative">
-                    <select id="moduleSelectDropdown" class="form-select polaris-select w-100" onchange="onModuleTabChange(this)">
-                        <option value="#tab-auth" selected>1. Kimlik & Token Doğrulama (Auth)</option>
-                        <option value="#tab-avatar">2. Piksel Karakter & Gardırop (Avatar)</option>
-                        <option value="#tab-room">3. İzometrik Piksel Oda & Dekorasyon (Room)</option>
-                        <option value="#tab-session">4. Odak Sayacı & Flow Shield (Session)</option>
-                        <option value="#tab-media">5. Medya, Canlı Video & Ambiyans (Media)</option>
-                        <option value="#tab-shop">6. Mağaza, Katalog & Ekonomi (Shop)</option>
-                        <option value="#tab-stats">7. İstatistikler, Seri (Streak) & Heatmap</option>
-                        <option value="#tab-social">8. Sosyal Ortak Çalışma Odası (Social)</option>
-                        <option value="#tab-coach">9. Masaüstü Yapay Zeka Koç & Vektör Bellek (AI Coach)</option>
-                        <option value="#tab-atmosphere">10. AI Atmosfer & Sirkadiyen Orkestrasyon (Atmosphere AI)</option>
-                        <option value="#tab-theme-ai">11. AI Görsel Tema & Piksel Oda Paleti (Theme AI)</option>
-                        <option value="#tab-music-ai">12. AI Müzik & 4-Kanal Akustik Ses Mikseri (Music AI)</option>
-                    </select>
-                </div>
-                <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
-                    <button type="button" class="polaris-btn polaris-btn-secondary polaris-btn-sm" onclick="navigateModule(-1)">
-                        Önceki
-                    </button>
-                    <span class="text-muted" style="font-size: 11px;" id="moduleStepIndicator">Modül 1 / 12</span>
-                    <button type="button" class="polaris-btn polaris-btn-secondary polaris-btn-sm" onclick="navigateModule(1)">
-                        Sonraki
-                    </button>
-                </div>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="polaris-badge polaris-badge-dark px-2 py-1" style="font-size: 11px;">
+                    <span id="lblCoins">0</span> Coin • <span id="lblLevel">Seviye 1</span>
+                </span>
+                <span class="polaris-badge polaris-badge-neutral px-2 py-1" style="font-size: 11px;">
+                    Seri: <strong id="lblLiveStreak" class="text-danger">0 Gün</strong> • <span id="lblLiveFreezes">1 Hak</span>
+                </span>
+                <span id="lblStreakStatusBadge" class="badge bg-secondary-subtle text-secondary border" style="font-size: 10px;">Bugün Yapılmadı</span>
+                <span class="text-muted small">Oda: <strong id="lblRoomName" class="text-dark">-</strong> (<span id="lblThemeSummary">Standart</span>)</span>
             </div>
         </div>
+        <!-- DOM ve JS Uyumluluğu için Gizli Durum Kapsayıcıları -->
+        <div style="display: none;">
+            <div id="sessionEmptyAlert"></div>
+            <div id="sessionContent"></div>
+            <div id="lblAvatarSummary"></div>
+            <div id="lblItemCount">0</div>
+            <div id="listRoomItems"></div>
+            <span id="lblTokenPreview"></span>
+            <button id="btnCopyToken">Kopyala</button>
+            <div id="studioPreviewCard"></div>
+        </div>
+    </div>
+
+    <!-- Modül Seçici (Shopify Polaris Dropdown & Navigasyon Menüsü) -->
+    <div class="polaris-card mb-3">
+        <div class="polaris-card-header py-2 px-3 d-flex justify-content-between align-items-center">
+            <span class="small fw-bold text-uppercase" style="letter-spacing: 0.05em; font-size: 11px;">Test Modülü</span>
+            <span class="polaris-badge polaris-badge-dark" id="lblActiveModule">1. Kimlik</span>
+        </div>
+        <div class="p-3">
+            <div class="position-relative">
+                <select id="moduleSelectDropdown" class="form-select polaris-select w-100" onchange="onModuleTabChange(this)">
+                    <option value="#tab-auth" selected>1. Kimlik & Token Doğrulama (Auth)</option>
+                    <option value="#tab-avatar">2. Piksel Karakter & Gardırop (Avatar)</option>
+                    <option value="#tab-room">3. İzometrik Piksel Oda & Dekorasyon (Room)</option>
+                    <option value="#tab-session">4. Odak Sayacı & Flow Shield (Session)</option>
+                    <option value="#tab-media">5. Medya, Canlı Video & Ambiyans (Media)</option>
+                    <option value="#tab-shop">6. Mağaza, Katalog & Ekonomi (Shop)</option>
+                    <option value="#tab-stats">7. İstatistikler, Seri (Streak) & Heatmap</option>
+                    <option value="#tab-social">8. Sosyal Ortak Çalışma Odası (Social)</option>
+                    <option value="#tab-coach">9. Masaüstü Yapay Zeka Koç & Vektör Bellek (AI Coach)</option>
+                    <option value="#tab-atmosphere">10. AI Atmosfer & Sirkadiyen Orkestrasyon (Atmosphere AI)</option>
+                    <option value="#tab-theme-ai">11. AI Görsel Tema & Piksel Oda Paleti (Theme AI)</option>
+                    <option value="#tab-music-ai">12. AI Müzik & 4-Kanal Akustik Ses Mikseri (Music AI)</option>
+                </select>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
+                <button type="button" class="polaris-btn polaris-btn-secondary polaris-btn-sm" onclick="navigateModule(-1)">
+                    Önceki
+                </button>
+                <span class="text-muted" style="font-size: 11px;" id="moduleStepIndicator">Modül 1 / 12</span>
+                <button type="button" class="polaris-btn polaris-btn-secondary polaris-btn-sm" onclick="navigateModule(1)">
+                    Sonraki
+                </button>
+            </div>
+        </div>
+    </div>
 
         <div class="tab-content" id="pills-tabContent">
             <!-- TAB 1: AUTH -->
@@ -315,10 +346,40 @@
                     </div>
                 </div>
 
-                <div class="card card-custom p-3">
+                <div class="card card-custom p-3 mb-3">
                     <button id="btnGetActiveSession" class="btn btn-outline-secondary w-100">
                         Aktif Seansı Sorgula (GET /api/v1/sessions/active)
                     </button>
+                </div>
+
+                <!-- Canlı Sayaç & Odaklanma Durumu Kartı (Seans Modülüne Özel) -->
+                <div class="polaris-card p-4 mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="fw-bold text-dark fs-6">Canlı Odaklanma Sayacı</span>
+                            <span id="badgeTimerMode" class="polaris-badge polaris-badge-neutral">Hazır</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span id="deskLampBadge" class="polaris-badge polaris-badge-neutral px-3 py-1">
+                                Masa Lambası: Sönük
+                            </span>
+                            <span id="lblRoundProgress" class="badge bg-light text-secondary border px-3 py-1">Tur 1 / 4</span>
+                        </div>
+                    </div>
+
+                    <div class="text-center py-2 mb-3">
+                        <div class="text-muted small text-uppercase fw-semibold mb-1" id="lblTimerSubHeader">Kalan Süre</div>
+                        <div id="lblTimerDisplay" class="display-3 fw-bold text-dark font-monospace mb-1">48:00</div>
+                        <div class="d-flex justify-content-center align-items-center gap-3 text-secondary small">
+                            <span>Durum: <strong id="lblTimerStatus" class="text-dark">Beklemede</strong></span>
+                            <span>•</span>
+                            <span>Çalışılan: <strong id="lblNetDuration" class="text-dark">0 sn</strong></span>
+                        </div>
+                    </div>
+
+                    <div class="progress" style="height: 6px;">
+                        <div id="timerProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: 100%;"></div>
+                    </div>
                 </div>
             </div>
 
@@ -921,7 +982,7 @@
                         <span id="badgeActiveAtmosphereStatus" class="badge bg-secondary-subtle text-secondary border">Üretilmedi</span>
                     </div>
 
-                    <div id="cardCurrentAtmosphereInfo" class="p-2 bg-light rounded border mb-3">
+                    <div id="cardCurrentAtmosphereInfo" class="p-3 bg-light rounded border mb-3">
                         <div class="d-flex justify-content-between align-items-center mb-1">
                             <strong class="text-dark small" id="lblAtmoTitle">Henüz bir atmosfer üretilmedi</strong>
                             <span class="badge bg-white text-secondary border small" id="lblAtmoAesthetic">-</span>
@@ -929,6 +990,18 @@
                         <p class="text-muted small mb-2" id="lblAtmoTagline" style="font-size: 11px;">
                             Yukarıdaki butonları kullanarak yapay zekadan yeni bir görsel palet ve 4-kanal mikser isteyebilirsiniz.
                         </p>
+                        <div id="previewSoundscapeDesc" class="small fw-semibold text-warning mb-2" style="font-size: 11px;"></div>
+                        <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                            <span class="badge bg-dark small" id="badgeAtmospherePreset">Varsayılan</span>
+                            <span class="badge bg-white text-secondary border small" id="lblAtmosphereDuration">Öneri: 45 dk</span>
+                            <span class="badge bg-white text-secondary border small" id="lblAtmosphereShield">Flow Shield: Strict</span>
+                            <div class="d-flex align-items-center gap-1 ms-auto">
+                                <span class="small text-muted" style="font-size: 10px;">Renkler:</span>
+                                <span id="swatchWallColor" style="width: 14px; height: 14px; border-radius: 3px; background-color: #1a1a2e; border: 1px solid #ccc;" title="Duvar Rengi"></span>
+                                <span id="swatchFloorColor" style="width: 14px; height: 14px; border-radius: 3px; background-color: #16213e; border: 1px solid #ccc;" title="Zemin Rengi"></span>
+                                <span id="swatchAccentLight" style="width: 14px; height: 14px; border-radius: 3px; background-color: #00fff5; border: 1px solid #ccc;" title="Vurgu Işığı"></span>
+                            </div>
+                        </div>
                         <div id="boxAtmoCoachAdvice" class="p-2 bg-white rounded border small text-secondary" style="font-size: 11px; display: none;">
                             <strong>Koç Fısıltısı:</strong> <span id="lblAtmoCoachAdviceText"></span>
                         </div>
@@ -1003,7 +1076,36 @@
                     </button>
                 </div>
 
-                <!-- Kart 1: Görsel Tema ve Renk Paleti Ayarları -->
+                <!-- Kart 1: Canlı Video ve Pencere Manzarası Önizlemesi (Görsel Temaya Özel) -->
+                <div class="card card-custom overflow-hidden mb-3 border shadow-sm" id="studioPreviewCard" style="border-top: 3px solid #00fff5;">
+                    <div class="card-header bg-white py-2 px-3 border-bottom d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="small fw-bold text-dark text-uppercase" style="letter-spacing: 0.05em; font-size: 11px;">Piksel Oda Pencere Manzarası & Efekt</span>
+                            <span id="badgeStudioTheme" class="badge bg-primary-subtle text-primary border">Siberpunk Neon</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-1">
+                            <button id="btnToggleVideoPlay" type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size: 11px;">Durdur</button>
+                            <button id="btnToggleVideoMute" type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size: 11px;">Ses Aç</button>
+                        </div>
+                    </div>
+                    <div class="position-relative bg-dark" style="height: 220px; overflow: hidden;">
+                        <video id="previewVideoPlayer"
+                               style="width: 100%; height: 100%; object-fit: cover; filter: brightness(0.9);"
+                               autoplay loop muted playsinline
+                               poster="https://images.unsplash.com/photo-1519692933481-e162a57d6721?w=640"
+                               src="https://cdn.pixabay.com/video/2017/08/30/11722-231759069_medium.mp4">
+                        </video>
+                        <div class="position-absolute top-0 start-0 p-2 d-flex gap-1">
+                            <span id="previewWeatherBadge" class="badge bg-dark bg-opacity-75 text-white border border-secondary px-2 py-1" style="font-size: 10px;">Yağmurlu • 18.5°C</span>
+                            <span id="previewWindowEffectBadge" class="badge bg-primary bg-opacity-75 text-white border px-2 py-1" style="font-size: 10px;">Yağmur Damlaları</span>
+                        </div>
+                        <div class="position-absolute bottom-0 start-0 p-2 text-white" style="background: linear-gradient(0deg, rgba(0,0,0,0.7) 0%, transparent 100%); width: 100%;">
+                            <div id="previewAtmosphereDesc" class="small fw-light text-white-50" style="font-size: 11px;">Piksel odanın duvar ve zemin kaplamaları canlı stüdyoya senkronize edildi.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kart 2: Görsel Tema ve Renk Paleti Ayarları -->
                 <div class="card card-custom p-3 mb-3">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <h6 class="fw-bold text-dark mb-0">AI Görsel Tema & Piksel Renk Paleti</h6>
@@ -1133,7 +1235,80 @@
                     </button>
                 </div>
 
-                <!-- Kart 1: Müzik ve 4 Kanallı Mikser Sentezi -->
+                <!-- Kart 1: Canlı Müzik & 4-Kanal Akustik Önizleme (Yalnızca Müzik Modülüne Özel) -->
+                <div class="card card-custom p-3 mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="small fw-bold text-dark text-uppercase" style="letter-spacing: 0.05em; font-size: 11px;">Canlı Akustik Akış & Plak Çalar</span>
+                        <span class="badge bg-success-subtle text-success border small" id="lblMusicLiveStatus">Hazır</span>
+                    </div>
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 p-2 bg-light rounded border mb-3" id="musicPlayerBar">
+                        <div class="d-flex align-items-center gap-2">
+                            <img id="playerTrackImg" src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=120" style="width: 44px; height: 44px; border-radius: 6px; object-fit: cover; border: 1px solid #cbd5e1;" />
+                            <div style="max-width: 220px;">
+                                <strong id="playerTrackTitle" class="d-block text-dark small text-truncate">Midnight Lofi Study</strong>
+                                <span id="playerArtistName" class="text-muted small text-truncate d-block" style="font-size: 11px;">Focus Chill Lab</span>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1" style="min-width: 200px;">
+                            <audio id="previewAudioPlayer" controls class="w-100" style="height: 36px;" src="https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3"></audio>
+                        </div>
+                    </div>
+
+                    <!-- 4-Kanal Akustik Mikser Canlı Düzeyleri -->
+                    <span class="small fw-semibold text-dark d-block mb-2">4-Kanal Akustik Denge Seviyeleri:</span>
+                    <div class="row g-2" id="atmosphereMixerBar">
+                        <div class="col-6 col-md-3">
+                            <div class="p-2 rounded bg-light border">
+                                <div class="d-flex justify-content-between small mb-1">
+                                    <span class="text-muted" style="font-size: 11px;">1. Melodi</span>
+                                    <strong class="text-dark" id="valMixerMelody" style="font-size: 11px;">%65</strong>
+                                </div>
+                                <div class="progress" style="height: 5px;">
+                                    <div id="barMixerMelody" class="progress-bar bg-primary" style="width: 65%;"></div>
+                                </div>
+                                <span class="d-block text-truncate text-secondary mt-1" id="lblMixerMelodyName" style="font-size: 10px;">Lofi Synth Piano</span>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="p-2 rounded bg-light border">
+                                <div class="d-flex justify-content-between small mb-1">
+                                    <span class="text-muted" style="font-size: 11px;">2. Ambiyans</span>
+                                    <strong class="text-dark" id="valMixerAmbience" style="font-size: 11px;">%80</strong>
+                                </div>
+                                <div class="progress" style="height: 5px;">
+                                    <div id="barMixerAmbience" class="progress-bar bg-info" style="width: 80%;"></div>
+                                </div>
+                                <span class="d-block text-truncate text-secondary mt-1" id="lblMixerAmbienceName" style="font-size: 10px;">Pencere Yağmuru</span>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="p-2 rounded bg-light border">
+                                <div class="d-flex justify-content-between small mb-1">
+                                    <span class="text-muted" style="font-size: 11px;">3. Gürültü</span>
+                                    <strong class="text-dark" id="valMixerNoise" style="font-size: 11px;">%40</strong>
+                                </div>
+                                <div class="progress" style="height: 5px;">
+                                    <div id="barMixerNoise" class="progress-bar bg-warning" style="width: 40%;"></div>
+                                </div>
+                                <span class="d-block text-truncate text-secondary mt-1" id="lblMixerNoiseName" style="font-size: 10px;">Brown Noise (Web Audio)</span>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="p-2 rounded bg-light border">
+                                <div class="d-flex justify-content-between small mb-1">
+                                    <span class="text-muted" style="font-size: 11px;">4. Doku</span>
+                                    <strong class="text-dark" id="valMixerTexture" style="font-size: 11px;">%25</strong>
+                                </div>
+                                <div class="progress" style="height: 5px;">
+                                    <div id="barMixerTexture" class="progress-bar bg-secondary" style="width: 25%;"></div>
+                                </div>
+                                <span class="d-block text-truncate text-secondary mt-1" id="lblMixerTextureName" style="font-size: 10px;">Vinyl Cızırtısı</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kart 2: Müzik ve 4 Kanallı Mikser Sentezi -->
                 <div class="card card-custom p-3 mb-3">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <h6 class="fw-bold text-dark mb-0">AI Müzik & 4-Kanal Akustik Mikser</h6>
@@ -1264,274 +1439,30 @@
                     </button>
                 </div>
 
-                <!-- Kart 2: Çalan Parça Bilgisi -->
+                <!-- Kart 3: Çalan Parça Bilgisi -->
                 <div class="card card-custom p-3">
-                    <h6 class="fw-bold text-dark mb-2">Canlı Akustik Akış</h6>
+                    <h6 class="fw-bold text-dark mb-2">Canlı Akustik Akış Bilgisi</h6>
                     <div class="p-2 bg-light rounded border d-flex justify-content-between align-items-center">
                         <div>
                             <strong class="d-block text-dark small" id="lblMusicCurrentTrackName">Midnight Lofi Study</strong>
                             <span class="text-muted small" id="lblMusicCurrentArtistName">Focus Chill Lab • 78 BPM</span>
                         </div>
-                        <span class="badge bg-success-subtle text-success border small" id="lblMusicLiveStatus">Hazır</span>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Sağ Kolon: Canlı Stüdyo & Atmosfer Önizleme, Sayaç, Karakter ve Log Konsolu -->
-    <div class="col-lg-7">
-        <!-- CANLI STÜDYO VE ATMOSFER ÖNİZLEME ALANI (FAZ 2) -->
-        <div class="card card-custom mb-4 overflow-hidden border shadow-sm" id="studioPreviewCard" style="border-top: 4px solid #202223; transition: all 0.3s ease;">
-            <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
-                <div class="d-flex align-items-center gap-2">
-                    <span class="fs-6 fw-bold text-dark mb-0">Canlı Atmosfer & Önizleme Stüdyosu</span>
-                    <span id="badgeStudioTheme" class="badge bg-primary-subtle text-primary border border-primary-subtle">Yağmurlu Pencere</span>
-                </div>
-                <div class="d-flex align-items-center gap-2">
-                    <span id="deskLampBadge" class="badge px-3 py-2 border rounded-pill bg-light text-secondary">
-                        Masa Lambası: Sönük
-                    </span>
-                </div>
-            </div>
-
-            <!-- Video Arka Plan Ekranı (Canlı Döngü) -->
-            <div class="position-relative bg-dark" style="height: 240px; overflow: hidden;">
-                <video id="previewVideoPlayer"
-                       style="width: 100%; height: 100%; object-fit: cover; filter: brightness(0.85);"
-                       autoplay loop muted playsinline
-                       poster="https://images.unsplash.com/photo-1519692933481-e162a57d6721?w=640"
-                       src="https://cdn.pixabay.com/video/2017/08/30/11722-231759069_medium.mp4">
-                </video>
-
-                <!-- Video Üzeri Atmosfer & Hava Durumu Overlay'i -->
-                <div class="position-absolute top-0 start-0 p-3 text-white" style="background: linear-gradient(180deg, rgba(0,0,0,0.6) 0%, transparent 100%); width: 100%;">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div class="d-flex align-items-center gap-2">
-                            <span id="previewWeatherBadge" class="badge bg-dark bg-opacity-75 border border-secondary px-2 py-1">Yağmurlu • 18.5°C</span>
-                            <span id="previewWindowEffectBadge" class="badge bg-primary bg-opacity-75 border px-2 py-1">Camda Yağmur Damlaları</span>
-                        </div>
-                        <div class="d-flex gap-1">
-                            <button id="btnToggleVideoPlay" class="btn btn-sm btn-dark bg-opacity-75 border text-white py-0 px-2">Durdur</button>
-                            <button id="btnToggleVideoMute" class="btn btn-sm btn-dark bg-opacity-75 border text-white py-0 px-2">Ses Aç</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Video Üzeri Alt Bilgi: Atmosfer Açıklaması -->
-                <div class="position-absolute bottom-0 start-0 p-3 text-white" style="background: linear-gradient(0deg, rgba(0,0,0,0.7) 0%, transparent 100%); width: 100%;">
-                    <div id="previewAtmosphereDesc" class="small fw-light text-white-50">Dışarıda sağanak yağmur var. Masa lambasının altında çalışmak harika hissettiriyor.</div>
-                    <div id="previewSoundscapeDesc" class="small fw-semibold text-warning mt-1">Önerilen Ambiyans: Pencereye Vuran Yağmur & Lo-Fi Piyano</div>
-                </div>
-            </div>
-
-            <!-- Müzik & Plak Çalar Barı -->
-            <div class="p-3 bg-light border-top d-flex flex-wrap align-items-center justify-content-between gap-3" id="musicPlayerBar">
-                <div class="d-flex align-items-center gap-2">
-                    <img id="playerTrackImg" src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=120" style="width: 44px; height: 44px; border-radius: 6px; object-fit: cover; border: 1px solid #cbd5e1;" />
-                    <div style="max-width: 200px;">
-                        <strong id="playerTrackTitle" class="d-block text-dark small text-truncate">Midnight Lofi Study</strong>
-                        <span id="playerArtistName" class="text-muted small text-truncate d-block">Focus Chill Lab</span>
-                    </div>
-                </div>
-                <!-- Dahili Ses Oynatıcı -->
-                <div class="flex-grow-1" style="min-width: 220px;">
-                    <audio id="previewAudioPlayer" controls class="w-100" style="height: 36px;" src="https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3"></audio>
-                </div>
-            </div>
-
-            <!-- 4 Kanallı Akustik Mikser & Renk Paleti (AI Atmosfer Entegrasyonu) -->
-            <div class="p-3 bg-white border-top" id="atmosphereMixerBar">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="small fw-bold text-dark text-uppercase" style="letter-spacing: 0.05em; font-size: 11px;">4-Kanal Akustik Mikser (Web Audio + Sentez)</span>
-                    <span class="badge bg-dark small" id="badgeAtmospherePreset">Varsayılan</span>
-                </div>
-                <div class="row g-2 mb-2">
-                    <div class="col-6 col-md-3">
-                        <div class="p-2 rounded bg-light border">
-                            <div class="d-flex justify-content-between small mb-1">
-                                <span class="text-muted" style="font-size: 11px;">1. Melodi</span>
-                                <strong class="text-dark" id="valMixerMelody" style="font-size: 11px;">%65</strong>
-                            </div>
-                            <div class="progress" style="height: 5px;">
-                                <div id="barMixerMelody" class="progress-bar bg-primary" style="width: 65%;"></div>
-                            </div>
-                            <span class="d-block text-truncate text-secondary mt-1" id="lblMixerMelodyName" style="font-size: 10px;">Lofi Synth Piano</span>
-                        </div>
-                    </div>
-                    <div class="col-6 col-md-3">
-                        <div class="p-2 rounded bg-light border">
-                            <div class="d-flex justify-content-between small mb-1">
-                                <span class="text-muted" style="font-size: 11px;">2. Ambiyans</span>
-                                <strong class="text-dark" id="valMixerAmbience" style="font-size: 11px;">%80</strong>
-                            </div>
-                            <div class="progress" style="height: 5px;">
-                                <div id="barMixerAmbience" class="progress-bar bg-info" style="width: 80%;"></div>
-                            </div>
-                            <span class="d-block text-truncate text-secondary mt-1" id="lblMixerAmbienceName" style="font-size: 10px;">Pencere Yağmuru</span>
-                        </div>
-                    </div>
-                    <div class="col-6 col-md-3">
-                        <div class="p-2 rounded bg-light border">
-                            <div class="d-flex justify-content-between small mb-1">
-                                <span class="text-muted" style="font-size: 11px;">3. Gürültü</span>
-                                <strong class="text-dark" id="valMixerNoise" style="font-size: 11px;">%40</strong>
-                            </div>
-                            <div class="progress" style="height: 5px;">
-                                <div id="barMixerNoise" class="progress-bar bg-warning" style="width: 40%;"></div>
-                            </div>
-                            <span class="d-block text-truncate text-secondary mt-1" id="lblMixerNoiseName" style="font-size: 10px;">Brown Noise (Web Audio)</span>
-                        </div>
-                    </div>
-                    <div class="col-6 col-md-3">
-                        <div class="p-2 rounded bg-light border">
-                            <div class="d-flex justify-content-between small mb-1">
-                                <span class="text-muted" style="font-size: 11px;">4. Doku</span>
-                                <strong class="text-dark" id="valMixerTexture" style="font-size: 11px;">%25</strong>
-                            </div>
-                            <div class="progress" style="height: 5px;">
-                                <div id="barMixerTexture" class="progress-bar bg-secondary" style="width: 25%;"></div>
-                            </div>
-                            <span class="d-block text-truncate text-secondary mt-1" id="lblMixerTextureName" style="font-size: 10px;">Vinyl Cızırtısı</span>
-                        </div>
-                    </div>
-                </div>
-                <!-- Renk Paleti ve Önerilen Seans Barı -->
-                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 pt-2 border-top">
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="text-muted small" style="font-size: 11px;">Renkler:</span>
-                        <span class="d-inline-flex align-items-center gap-1">
-                            <span id="swatchWallColor" style="width: 14px; height: 14px; border-radius: 3px; background-color: #1a1a2e; border: 1px solid #ccc;" title="Duvar Rengi"></span>
-                            <span class="small text-muted" style="font-size: 10px;">Duvar</span>
-                        </span>
-                        <span class="d-inline-flex align-items-center gap-1">
-                            <span id="swatchFloorColor" style="width: 14px; height: 14px; border-radius: 3px; background-color: #16213e; border: 1px solid #ccc;" title="Zemin Rengi"></span>
-                            <span class="small text-muted" style="font-size: 10px;">Zemin</span>
-                        </span>
-                        <span class="d-inline-flex align-items-center gap-1">
-                            <span id="swatchAccentLight" style="width: 14px; height: 14px; border-radius: 3px; background-color: #00fff5; border: 1px solid #ccc;" title="Vurgu Işığı"></span>
-                            <span class="small text-muted" style="font-size: 10px;">Işık</span>
-                        </span>
-                    </div>
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="badge bg-light text-secondary border small" id="lblAtmosphereDuration">Öneri: 45 dk</span>
-                        <span class="badge bg-light text-secondary border small" id="lblAtmosphereShield">Flow Shield: Strict</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Canlı Sayaç Kartı -->
-            <div class="p-4 bg-white border-top">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="fw-bold text-dark fs-6">Odaklanma Durumu</span>
-                        <span id="badgeTimerMode" class="badge bg-secondary-subtle text-secondary border">Hazır</span>
-                    </div>
-                    <span id="lblRoundProgress" class="badge bg-light text-secondary border px-3 py-1">Tur 1 / 4</span>
-                </div>
-
-                <div class="text-center py-2 mb-3">
-                    <div class="text-muted small text-uppercase fw-semibold mb-1" id="lblTimerSubHeader">Kalan Süre</div>
-                    <div id="lblTimerDisplay" class="display-3 fw-bold text-dark font-monospace mb-1">48:00</div>
-                    <div class="d-flex justify-content-center align-items-center gap-3 text-secondary small">
-                        <span>Durum: <strong id="lblTimerStatus" class="text-dark">Beklemede</strong></span>
-                        <span>•</span>
-                        <span>Çalışılan: <strong id="lblNetDuration" class="text-dark">0 sn</strong></span>
-                    </div>
-                </div>
-
-                <!-- İlerleme Çubuğu -->
-                <div class="progress" style="height: 6px;">
-                    <div id="timerProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: 100%;"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Oturum ve Karakter Özeti -->
-        <div class="card card-custom p-4 mb-4">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h6 class="fw-bold text-dark mb-0">Aktif Oturum & Karakter Özeti</h6>
-                <span id="sessionStatusBadge" class="badge rounded-pill badge-status-guest">Oturum Yok</span>
-            </div>
-
-            <div id="sessionEmptyAlert" class="p-3 bg-light rounded text-muted small text-center">
-                Henüz oturum açılmadı. Soldaki panelden <strong>Misafir Hesabı Aç</strong> butonuna tıklayabilirsiniz.
-            </div>
-
-            <div id="sessionContent" style="display: none;">
-                <div class="row g-2 mb-3">
-                    <div class="col-sm-6">
-                        <div class="p-3 rounded bg-light border">
-                            <span class="text-muted small d-block mb-1">Kullanıcı & Tür</span>
-                            <div id="lblDisplayName" class="fw-bold text-dark fs-6"></div>
-                            <span id="lblUserType" class="badge rounded-pill mt-1"></span>
-                        </div>
-                    </div>
-                    <div class="col-sm-6">
-                        <div class="p-3 rounded bg-light border">
-                            <span class="text-muted small d-block mb-1">Seviye ve Bakiye</span>
-                            <div class="fw-bold text-dark fs-6"><span id="lblCoins">0</span> Coin</div>
-                            <span id="lblLevel" class="badge rounded-pill badge-status-level mt-1"></span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Seri ve Dondurucu (Faz 3) -->
-                <div class="row g-2 mb-3">
-                    <div class="col-sm-6">
-                        <div class="p-3 rounded bg-light border">
-                            <span class="text-muted small d-block mb-1">Odaklanma Serisi</span>
-                            <div class="fw-bold text-danger fs-6" id="lblLiveStreak">0 Gün</div>
-                            <span id="lblStreakStatusBadge" class="badge bg-secondary-subtle text-secondary small mt-1">Bugün Yapılmadı</span>
-                        </div>
-                    </div>
-                    <div class="col-sm-6">
-                        <div class="p-3 rounded bg-light border">
-                            <span class="text-muted small d-block mb-1">Seri Dondurucu (Freeze)</span>
-                            <div class="fw-bold text-info fs-6" id="lblLiveFreezes">1 / 2 Hak</div>
-                            <span class="badge bg-light text-secondary border small mt-1">Oto-Koruma Aktif</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Avatar Detay -->
-                <div class="p-3 rounded bg-light border mb-3">
-                    <span class="text-muted small fw-semibold d-block mb-1">Avatar Görünümü</span>
-                    <div id="lblAvatarSummary" class="small text-secondary"></div>
-                </div>
-
-                <!-- Piksel Oda & Mobilyalar -->
-                <div class="p-3 rounded bg-light border mb-3">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="text-muted small">Oda: <strong id="lblRoomName" class="text-dark"></strong> (<span id="lblThemeSummary"></span>)</span>
-                        <span id="lblItemCount" class="badge bg-white text-secondary border small">0 Mobilya</span>
-                    </div>
-                    <div id="listRoomItems" class="d-flex flex-column gap-1 small text-secondary"></div>
-                </div>
-
-                <!-- Token -->
-                <div class="p-3 rounded bg-light border">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <span class="text-muted small">Access Token (JWT)</span>
-                        <button id="btnCopyToken" class="btn btn-sm btn-link p-0 text-decoration-none small text-primary">Kopyala</button>
-                    </div>
-                    <code id="lblTokenPreview" class="d-block text-secondary small text-break"></code>
-                </div>
-            </div>
-        </div>
-
-        <!-- Terminal Log Konsolu -->
-        <div class="card card-custom p-3">
+        <!-- Terminal Log Konsolu (Polaris Card) -->
+        <div class="polaris-card p-3 mt-4">
             <div class="d-flex justify-content-between align-items-center mb-2">
-                <span class="text-muted small text-uppercase fw-semibold">Canlı İstek & Yanıt Günlüğü</span>
-                <button id="btnClearLog" class="btn btn-sm btn-link text-secondary text-decoration-none p-0 small">Temizle</button>
+                <span class="text-muted small text-uppercase fw-semibold" style="letter-spacing: 0.05em; font-size: 11px;">Canlı İstek & Yanıt Günlüğü</span>
+                <button id="btnClearLog" type="button" class="polaris-btn polaris-btn-secondary polaris-btn-sm">Temizle</button>
             </div>
-            <div id="terminalLog" class="terminal-box">
-[Sistem] API Test Konsolu hazır. Faz 0 (Auth), Faz 1 (Avatar, Oda) ve Faz 2 (Sayaç, Pixabay Video, Lo-Fi Müzik & Hava Senkronu) hazır.
+            <div id="terminalLog" class="terminal-box" style="height: 180px; overflow-y: auto; background: #1a1a1a; color: #e1e3e5; font-family: monospace; font-size: 12px; padding: 12px; border-radius: 6px;">
+[Sistem] API Test Konsolu hazır. Shopify Polaris modüler görünüm aktif.
             </div>
         </div>
     </div>
-</div>
 
 @section Scripts {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
