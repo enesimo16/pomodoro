@@ -1272,11 +1272,11 @@
             targetPane.classList.add('active', 'show');
         }
         const lbl = document.getElementById('lblActiveModule');
-        if (lbl && selectElement.selectedIndex >= 0) {
+        if (lbl && selectElement.options && selectElement.selectedIndex >= 0) {
             lbl.textContent = selectElement.options[selectElement.selectedIndex].text.split('(')[0].trim();
         }
         const step = document.getElementById('moduleStepIndicator');
-        if (step && selectElement.selectedIndex >= 0) {
+        if (step && selectElement.options && selectElement.selectedIndex >= 0) {
             step.textContent = `Modül ${selectElement.selectedIndex + 1} / ${selectElement.options.length}`;
         }
     }
@@ -1354,7 +1354,7 @@
         return null;
     }
 
-    document.addEventListener('DOMContentLoaded', async function () {
+    async function initApiLab() {
         const select = document.getElementById('moduleSelectDropdown');
         if (select) {
             onModuleTabChange(select);
@@ -1375,7 +1375,13 @@
         } else {
             await ensureAuthToken(true);
         }
-    });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initApiLab);
+    } else {
+        initApiLab();
+    }
 
     function saveTokens(accessToken, refreshToken) {
         currentTokens.accessToken = accessToken;
@@ -1419,28 +1425,39 @@
     }
 
     function updateSessionUI(data) {
-        document.getElementById('sessionEmptyAlert').style.display = 'none';
-        document.getElementById('sessionContent').style.display = 'block';
+        if (!data) return;
+        const emptyAlert = document.getElementById('sessionEmptyAlert');
+        const contentBox = document.getElementById('sessionContent');
+        if (emptyAlert) emptyAlert.style.display = 'none';
+        if (contentBox) contentBox.style.display = 'block';
 
-        if (data.user) {
-            currentUserId = data.user.id;
-            document.getElementById('lblDisplayName').textContent = data.user.displayName;
-            document.getElementById('lblCoins').textContent = data.user.totalCoins;
-            document.getElementById('lblLevel').textContent = `Seviye ${data.user.level} (${data.user.currentXp} XP)`;
+        const userObj = data.user || (data.displayName ? data : null);
+        if (userObj) {
+            currentUserId = userObj.id;
+            const lblName = document.getElementById('lblDisplayName');
+            if (lblName) lblName.textContent = userObj.displayName;
+            const lblCoin = document.getElementById('lblCoins');
+            if (lblCoin) lblCoin.textContent = data.totalCoins ?? userObj.totalCoins ?? 0;
+            const lblLvl = document.getElementById('lblLevel');
+            if (lblLvl) lblLvl.textContent = `Seviye ${userObj.level} (${userObj.currentXp} XP)`;
 
             const badgeUserType = document.getElementById('lblUserType');
-            if (data.user.isGuest) {
-                badgeUserType.textContent = 'Misafir Kullanıcı';
-                badgeUserType.className = 'badge rounded-pill badge-status-guest mt-1';
-            } else {
-                badgeUserType.textContent = 'Kayıtlı Kullanıcı';
-                badgeUserType.className = 'badge rounded-pill badge-status-registered mt-1';
+            if (badgeUserType) {
+                if (userObj.isGuest) {
+                    badgeUserType.textContent = 'Misafir Kullanıcı';
+                    badgeUserType.className = 'badge rounded-pill badge-status-guest mt-1';
+                } else {
+                    badgeUserType.textContent = 'Kayıtlı Kullanıcı';
+                    badgeUserType.className = 'badge rounded-pill badge-status-registered mt-1';
+                }
             }
 
             const statusBadge = document.getElementById('sessionStatusBadge');
-            statusBadge.textContent = 'Aktif Oturum';
-            statusBadge.className = 'badge rounded-pill badge-status-active';
-            updateAutoAccountBadge(data.user.displayName);
+            if (statusBadge) {
+                statusBadge.textContent = 'Aktif Oturum';
+                statusBadge.className = 'badge rounded-pill badge-status-active';
+            }
+            updateAutoAccountBadge(userObj.displayName);
         }
 
         if (data.tokens && data.tokens.accessToken) {
@@ -1482,6 +1499,7 @@
                     list.appendChild(row);
                 });
             }
+        }
         fetchLiveStreak();
     }
 
@@ -1672,9 +1690,10 @@
                 credentials: 'include'
             });
             if (res.ok) {
-                const user = await res.json();
-                log(`HTTP 200 OK: Kullanıcı profili alındı! (${user.displayName})`, 'success');
-                updateSessionUI({ user: user });
+                const data = await res.json();
+                const userObj = data.user || data;
+                log(`HTTP 200 OK: Kullanıcı profili alındı! (${userObj.displayName})`, 'success');
+                updateSessionUI(data);
                 document.getElementById('btnGetAvatar').click();
                 document.getElementById('btnGetRoom').click();
                 document.getElementById('btnGetActiveSession').click();
@@ -2977,9 +2996,9 @@
     document.getElementById('btnSubmitCheckIn').addEventListener('click', async () => {
         await ensureAuthToken();
 
-        const mood = document.getElementById('checkInMood').value;
-        const energy = parseInt(document.getElementById('checkInEnergy').value);
-        const target = document.getElementById('checkInTarget').value.trim();
+        const mood = document.getElementById('checkInMood')?.value || 'Calm';
+        const energy = parseInt(document.getElementById('checkInEnergy')?.value || '3');
+        const target = document.getElementById('checkInTarget')?.value?.trim() || '';
 
         log(`POST ${apiBase}/api/v1/coach/check-in (${mood}, Enerji: ${energy})...`);
         try {
@@ -2998,7 +3017,8 @@
                 const data = await res.json();
                 log(`HTTP 200 OK: Check-In kaydedildi (ID: ${data.id})`, 'success');
                 appendCoachTerminalMessage('Masa Asistanı', `Seans başı niyetin alındı (${mood}, Enerji: ${energy}/5). İyi odaklanmalar!`, true);
-                document.getElementById('checkInTarget').value = '';
+                const tgt = document.getElementById('checkInTarget');
+                if (tgt) tgt.value = '';
             } else {
                 log(`HTTP ${res.status}: Check-In kaydedilemedi.`, 'error');
             }
@@ -3011,9 +3031,9 @@
     document.getElementById('btnSubmitReflection').addEventListener('click', async () => {
         await ensureAuthToken();
 
-        const quality = parseInt(document.getElementById('refFocusQuality').value);
-        const moodAfter = document.getElementById('refMoodAfter').value;
-        const note = document.getElementById('refNote').value.trim();
+        const quality = parseInt(document.getElementById('refFocusQuality')?.value || '5');
+        const moodAfter = document.getElementById('refMoodAfter')?.value || 'Accomplished';
+        const note = document.getElementById('refNote')?.value?.trim() || '';
 
         log(`POST ${apiBase}/api/v1/coach/reflection (Kalite: ${quality}, ${moodAfter})...`);
         try {

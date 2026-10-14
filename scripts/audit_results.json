@@ -1,0 +1,319 @@
+{
+  "timestamp": "2026-10-14T18:36:35.577Z",
+  "adminPages": [
+    {
+      "name": "Sayfa: Dashboard (/)",
+      "passed": true,
+      "details": "HTTP 200, Title: \"Dashboard - Dashboard\""
+    },
+    {
+      "name": "Sayfa: Analitik (/Analytics)",
+      "passed": true,
+      "details": "HTTP 200, Title: \"Analitik & BI Raporları - Dashboard\""
+    },
+    {
+      "name": "Sayfa: Kullanıcılar (/Users)",
+      "passed": true,
+      "details": "HTTP 200, Title: \"Kullanıcı Yönetimi - Dashboard\""
+    },
+    {
+      "name": "Sayfa: Seanslar (/Sessions)",
+      "passed": true,
+      "details": "HTTP 200, Title: \"Odak Seansları - Dashboard\""
+    },
+    {
+      "name": "Sayfa: Çalışma Odaları (/StudyRooms)",
+      "passed": true,
+      "details": "HTTP 200, Title: \"Odalar & Kütüphaneler - Dashboard\""
+    },
+    {
+      "name": "Sayfa: Ziyaretçi Defteri (/Guestbook)",
+      "passed": true,
+      "details": "HTTP 200, Title: \"Ziyaretçi Defteri & Bildirimler - Dashboard\""
+    },
+    {
+      "name": "Sayfa: Mağaza (/Shop)",
+      "passed": true,
+      "details": "HTTP 200, Title: \"Mağaza Kataloğu - Dashboard\""
+    },
+    {
+      "name": "Sayfa: Coin Defteri (/Economy)",
+      "passed": true,
+      "details": "HTTP 200, Title: \"Coin Muhasebesi - Dashboard\""
+    },
+    {
+      "name": "Sayfa: AI Koç (/AiCoach)",
+      "passed": true,
+      "details": "HTTP 200, Title: \"AI Koç & Vektör Bellek - Dashboard\""
+    },
+    {
+      "name": "Sayfa: Cron Görevleri (/Jobs)",
+      "passed": true,
+      "details": "HTTP 200, Title: \"Cron Görevleri - Dashboard\""
+    },
+    {
+      "name": "Sayfa: Oturum Logları (/Audit)",
+      "passed": true,
+      "details": "HTTP 200, Title: \"Oturum & Cihaz Logları - Dashboard\""
+    },
+    {
+      "name": "Sayfa: API Dokümanı (/ApiDocs)",
+      "passed": true,
+      "details": "HTTP 200, Title: \"API Dokümantasyonu - Dashboard\""
+    },
+    {
+      "name": "Sayfa: API Test Laboratuvarı (/ApiLab)",
+      "passed": true,
+      "details": "HTTP 200, Title: \"API Test - Dashboard\""
+    },
+    {
+      "name": "Sayfa: Hangfire Dashboard (/hangfire)",
+      "passed": true,
+      "details": "HTTP 200, Title: \"Genel Bakış – Focus Hangfire Kontrol Paneli\""
+    }
+  ],
+  "apiLabModules": [
+    {
+      "name": "Otomatik Test Hesabı Provizyonu",
+      "passed": true,
+      "details": "Aktif Hesap: \"TestUser_1699\""
+    },
+    {
+      "name": "Modül 1 (Auth) - Profil Getir",
+      "passed": true,
+      "details": "Kullanıcı: TestUser_1699"
+    },
+    {
+      "name": "Modül 1 (Auth) - Token Yenile",
+      "passed": true,
+      "details": "Token başarıyla yenilendi"
+    },
+    {
+      "name": "Modül 2 (Avatar) - Bilgi Getir",
+      "passed": true,
+      "details": "Ten: tone_1 | Saç: messy_short (dark_brown) | Üst: undefined | Alt: undefined | Şapka: Yok"
+    },
+    {
+      "name": "Modül 2 (Avatar) - Güncelle",
+      "passed": true,
+      "details": "Avatar ten tonu güncellendi"
+    },
+    {
+      "name": "Modül 3 (Room) - Oda Bilgisi Getir",
+      "passed": true,
+      "details": "Oda: TestUser_1699'in Odası"
+    },
+    {
+      "name": "Modül 3 (Room) - Eşya Ekle",
+      "passed": true,
+      "details": "Eşya odaya yerleştirildi"
+    },
+    {
+      "name": "Modül 3 (Room) - Duvar & Zemin Teması Güncelle",
+      "passed": true,
+      "details": "Oda teması güncellendi"
+    },
+    {
+      "name": "Modül 4 (Session) - Seans Başlat (Lamba Yanar)",
+      "passed": true,
+      "details": "Durum: Running"
+    },
+    {
+      "name": "Modül 4 (Session) - Seans Duraklat",
+      "passed": true,
+      "details": "Durum: Paused"
+    },
+    {
+      "name": "Modül 4 (Session) - Seans Devam Et",
+      "passed": true,
+      "details": "Sayaç devam ediyor"
+    },
+    {
+      "name": "Modül 4 (Session) - Seansı +10 Dk Uzat",
+      "passed": true,
+      "details": "Süreye +10 dk eklendi"
+    },
+    {
+      "name": "Modül 4 (Session) - Seansı Tamamla (+XP, +Coin)",
+      "passed": true,
+      "details": "XP ve coin ödülü teslim alındı"
+    },
+    {
+      "name": "Modül 5 (Media) - Pixabay Video Temaları Ara",
+      "passed": true,
+      "details": "6 tema videosu listelendi"
+    },
+    {
+      "name": "Modül 5 (Media) - Lo-Fi Müzik Ara & Plak Çalara Yükle",
+      "passed": true,
+      "details": "6 parça listelendi"
+    },
+    {
+      "name": "Modül 5 (Media) - Canlı Hava Senkronu",
+      "passed": true,
+      "details": "Sağanak Yağmurlu • 17.1°C"
+    },
+    {
+      "name": "Modül 6 (Shop) - Katalog Eşyaları Getir",
+      "passed": true,
+      "details": "36 katalog eşyası listelendi"
+    },
+    {
+      "name": "Modül 6 (Shop) - Kişisel Envanter Listele",
+      "passed": true,
+      "details": "Envanter sorgulandı"
+    },
+    {
+      "name": "Modül 6 (Shop) - Seri Dondurucu Satın Al",
+      "passed": true,
+      "details": "Dondurucu satın alma işlemi test edildi"
+    },
+    {
+      "name": "Modül 7 (Stats) - Seri (Streak) Bilgisi Getir",
+      "passed": true,
+      "details": "Güncel Seri: 1 gün"
+    },
+    {
+      "name": "Modül 7 (Stats) - İstatistikler & 7-Günlük Çubuk Grafik",
+      "passed": true,
+      "details": "Haftalık: 0 dk"
+    },
+    {
+      "name": "Modül 8 (Social) - Genel Çalışma Odaları Listele",
+      "passed": true,
+      "details": "4 oda listelendi"
+    },
+    {
+      "name": "Modül 8 (Social) - Çok Kanallı Davet Linki Üret",
+      "passed": true,
+      "details": "Davet linkleri ve WhatsApp/Telegram butonları oluşturuldu"
+    },
+    {
+      "name": "Modül 9 (Coach) - Asistan Sohbet & RAG Yanıtı",
+      "passed": true,
+      "details": "Terminalde 4 mesaj mevcut"
+    },
+    {
+      "name": "Modül 9 (Coach) - Seans Başı Check-In",
+      "passed": true,
+      "details": "Enerji ve niyet kaydedildi"
+    },
+    {
+      "name": "Modül 9 (Coach) - Seans Sonu Değerlendirme & Hafıza",
+      "passed": true,
+      "details": "Kişisel ve kolektif hafızaya işlendi"
+    },
+    {
+      "name": "Modül 9 (Coach) - Anomali & Yorgunluk Tanısı",
+      "passed": true,
+      "details": "Yorgunluk: 0 / 100"
+    },
+    {
+      "name": "Modül 9 (Coach) - Çift Katmanlı Vektör Belleği Listele",
+      "passed": true,
+      "details": "10 hafıza girdisi listelendi"
+    },
+    {
+      "name": "Modül 10 (Atmosphere) - Prompt ile Atmosfer & Mikser Sentezi",
+      "passed": true,
+      "details": "Üretilen: \"Siber Gece & Neon Yağmur\""
+    },
+    {
+      "name": "Modül 10 (Atmosphere) - Sirkadiyen Otomatik Ritim Önerisi",
+      "passed": true,
+      "details": "Hava ve biyolojik saate göre atmosfer üretildi"
+    },
+    {
+      "name": "Modül 10 (Atmosphere) - Odaya & 4-Kanallı Miksere Uygula",
+      "passed": true,
+      "details": "Piksel oda paletine ve mikser barlarına aktarıldı"
+    },
+    {
+      "name": "Modül 10 (Atmosphere) - Kütüphaneye Kaydet",
+      "passed": true,
+      "details": "Kişisel temalara kaydedildi"
+    },
+    {
+      "name": "Modül 10 (Atmosphere) - Kayıtlı Atmosfer Kütüphanesi",
+      "passed": true,
+      "details": "1 kayıtlı atmosfer listelendi"
+    },
+    {
+      "name": "Modül 10 (Atmosphere) - Kolektif Global AI Havuzuna PII-Arındırılmış Katkı",
+      "passed": true,
+      "details": "Kolektif bilgelik havuzuna anonim veri aktarıldı"
+    },
+    {
+      "name": "Üst Bar: Yeni Test Hesabı Açma (Sıfır Sürtünme)",
+      "passed": true,
+      "details": "Yeni Kullanıcı: \"TestUser_8041\""
+    }
+  ],
+  "restApis": [
+    {
+      "name": "POST /api/v1/auth/guest",
+      "passed": true,
+      "details": "HTTP 200, User: AuditTestUser"
+    },
+    {
+      "name": "GET /api/v1/auth/me",
+      "passed": true,
+      "details": "HTTP 200, Level: undefined"
+    },
+    {
+      "name": "GET /api/v1/avatar",
+      "passed": true,
+      "details": "HTTP 200, Skin: tone_1"
+    },
+    {
+      "name": "GET /api/v1/room",
+      "passed": true,
+      "details": "HTTP 200, Items: 3"
+    },
+    {
+      "name": "GET /api/v1/media/themes",
+      "passed": true,
+      "details": "HTTP 200, Found: 3"
+    },
+    {
+      "name": "GET /api/v1/media/weather",
+      "passed": true,
+      "details": "HTTP 200, Temp: 17.1°C"
+    },
+    {
+      "name": "GET /api/v1/shop/catalog",
+      "passed": true,
+      "details": "HTTP 200, Catalog: 36"
+    },
+    {
+      "name": "GET /api/v1/streak",
+      "passed": true,
+      "details": "HTTP 200, Streak: 0"
+    },
+    {
+      "name": "GET /api/v1/stats",
+      "passed": true,
+      "details": "HTTP 200, Total: 0m"
+    },
+    {
+      "name": "GET /api/v1/study-rooms/public",
+      "passed": true,
+      "details": "HTTP 200, Public Rooms: 4"
+    },
+    {
+      "name": "POST /api/v1/coach/chat",
+      "passed": true,
+      "details": "HTTP 200, Reply length: 257"
+    },
+    {
+      "name": "POST /api/v1/ai-atmosphere/generate",
+      "passed": true,
+      "details": "HTTP 200, Theme: Siber Gece & Neon Yağmur"
+    }
+  ],
+  "summary": {
+    "passed": 61,
+    "failed": 0,
+    "total": 61
+  }
+}

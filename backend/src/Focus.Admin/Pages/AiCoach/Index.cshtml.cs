@@ -63,6 +63,17 @@ public class IndexModel : PageModel
         }
 
         var list = await query
+            .Select(m => new
+            {
+                m.Id,
+                m.UserId,
+                IsGlobal = m.UserId == null,
+                m.Category,
+                m.Content,
+                m.Importance,
+                m.UsageCount,
+                m.CreatedAt
+            })
             .OrderByDescending(m => m.CreatedAt)
             .Take(100)
             .ToListAsync();
