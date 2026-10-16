@@ -177,27 +177,27 @@ async function runBrowserAudit() {
     });
 
     const adminPages = [
-        { path: '/', name: 'Genel Bakış (Dashboard)' },
-        { path: '/Analytics', name: 'Performans & Telemetri' },
-        { path: '/Users', name: 'Kullanıcı Yönetimi' },
-        { path: '/Sessions', name: 'Odaklanma Oturumları' },
-        { path: '/StudyRooms', name: 'Sanal Çalışma Odaları' },
-        { path: '/Guestbook', name: 'Topluluk & Etkileşim' },
-        { path: '/Shop', name: 'Öğe & Envanter Kataloğu' },
-        { path: '/Economy', name: 'Mali Defter (Ledger)' },
-        { path: '/AiCoach', name: 'Vektör Bellek & Sentez' },
-        { path: '/AiCoach/Personal', name: 'Bilişsel Kullanıcı Belleği' },
-        { path: '/AiCoach/Global', name: 'Kolektif Model Havuzu' },
-        { path: '/AiCoach/Atmosphere', name: 'Üretken Ortam Motoru' },
-        { path: '/Jobs', name: 'Zamanlanmış İşler (Cron)' },
-        { path: '/Audit', name: 'Güvenlik & Denetim Günlüğü' },
-        { path: '/ApiDocs', name: 'API Sözleşmesi (OpenAPI)' },
-        { path: '/ApiLab', name: 'Entegrasyon Test Konsolu' },
-        { path: '/Themes', name: 'Görsel Tema Kütüphanesi (Sayfa 1)' },
-        { path: '/Themes?page=2&query=rain', name: 'Görsel Tema Kütüphanesi (Sayfa 2 & Arama)' },
-        { path: '/Music', name: 'Ses & Akustik Kütüphanesi (Sayfa 1)' },
-        { path: '/Music?page=2&query=lofi', name: 'Ses & Akustik Kütüphanesi (Sayfa 2 & Arama)' },
-        { path: '/hangfire', name: 'Hangfire Görev Yöneticisi' }
+        { path: '/', name: 'Genel Bakış' },
+        { path: '/Analytics', name: 'İstatistikler' },
+        { path: '/Users', name: 'Kullanıcılar' },
+        { path: '/Sessions', name: 'Seanslar' },
+        { path: '/StudyRooms', name: 'Çalışma Odaları' },
+        { path: '/Guestbook', name: 'Ziyaretçi Defteri' },
+        { path: '/Shop', name: 'Mağaza' },
+        { path: '/Economy', name: 'Coin Geçmişi' },
+        { path: '/AiCoach', name: 'Yapay Zekâ (AI) Merkezi' },
+        { path: '/AiCoach/Personal', name: 'Kullanıcı AI Hafızası' },
+        { path: '/AiCoach/Global', name: 'Sistem AI Hafızası' },
+        { path: '/AiCoach/Atmosphere', name: 'AI ile Atmosfer' },
+        { path: '/Jobs', name: 'Zamanlanmış İşler' },
+        { path: '/Audit', name: 'Sistem Logları' },
+        { path: '/ApiDocs', name: 'API Dokümanı' },
+        { path: '/ApiLab', name: 'API Test (Lab)' },
+        { path: '/Themes', name: 'Temalar (Sayfa 1)' },
+        { path: '/Themes?page=2&query=rain', name: 'Temalar (Sayfa 2 & Arama)' },
+        { path: '/Music', name: 'Müzikler & Sesler (Sayfa 1)' },
+        { path: '/Music?page=2&query=lofi', name: 'Müzikler & Sesler (Sayfa 2 & Arama)' },
+        { path: '/hangfire', name: 'Hangfire' }
     ];
 
     for (const p of adminPages) {

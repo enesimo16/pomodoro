@@ -26,69 +26,69 @@
                 </button>
             </div>
 
-            <!-- Menü Grupları & Klasör Hiyerarşisi (Kurumsal Shopify Polaris Hiyerarşisi) -->
+            <!-- Menü Grupları & Klasör Hiyerarşisi -->
             <div class="sidebar-nav-container">
-                <!-- Sabit Linkler: Yönetim & Metrikler -->
+                <!-- Sabit Linkler: Genel -->
                 <div class="sidebar-nav-group">
-                    <div class="sidebar-group-title">YÖNETİM &amp; METRİKLER</div>
+                    <div class="sidebar-group-title">GENEL</div>
                     <a asp-page="/Index" class="sidebar-nav-item">Genel Bakış</a>
-                    <a asp-page="/Analytics/Index" class="sidebar-nav-item">Analitik &amp; Performans</a>
+                    <a asp-page="/Analytics/Index" class="sidebar-nav-item">İstatistikler</a>
                 </div>
 
-                <!-- Klasör: Çalışma Alanları -->
+                <!-- Klasör: Kullanıcılar & Odalar -->
                 <div class="sidebar-folder" data-folder-id="workspaces">
                     <button type="button" class="sidebar-folder-header" aria-expanded="true">
-                        <span class="folder-title">Çalışma Alanları</span>
+                        <span class="folder-title">Kullanıcılar &amp; Odalar</span>
                         <span class="folder-caret" aria-hidden="true"></span>
                     </button>
                     <div class="sidebar-folder-items">
-                        <a asp-page="/Users/Index" class="sidebar-nav-item">Kullanıcı Yönetimi</a>
-                        <a asp-page="/Sessions/Index" class="sidebar-nav-item">Odaklanma Seansları</a>
-                        <a asp-page="/StudyRooms/Index" class="sidebar-nav-item">Sanal Çalışma Odaları</a>
-                        <a asp-page="/Guestbook/Index" class="sidebar-nav-item">Topluluk &amp; Etkileşim</a>
+                        <a asp-page="/Users/Index" class="sidebar-nav-item">Kullanıcılar</a>
+                        <a asp-page="/Sessions/Index" class="sidebar-nav-item">Seanslar</a>
+                        <a asp-page="/StudyRooms/Index" class="sidebar-nav-item">Çalışma Odaları</a>
+                        <a asp-page="/Guestbook/Index" class="sidebar-nav-item">Ziyaretçi Defteri</a>
                     </div>
                 </div>
 
-                <!-- Klasör: Katalog & Finans -->
+                <!-- Klasör: Mağaza & Coin -->
                 <div class="sidebar-folder" data-folder-id="catalog_finance">
                     <button type="button" class="sidebar-folder-header" aria-expanded="true">
-                        <span class="folder-title">Katalog &amp; Finans</span>
+                        <span class="folder-title">Mağaza &amp; Coin</span>
                         <span class="folder-caret" aria-hidden="true"></span>
                     </button>
                     <div class="sidebar-folder-items">
-                        <a asp-page="/Shop/Index" class="sidebar-nav-item">Öğe &amp; Envanter Kataloğu</a>
-                        <a asp-page="/Economy/Index" class="sidebar-nav-item">Mali Defter &amp; Bakiye (Ledger)</a>
+                        <a asp-page="/Shop/Index" class="sidebar-nav-item">Mağaza</a>
+                        <a asp-page="/Economy/Index" class="sidebar-nav-item">Coin Geçmişi</a>
                     </div>
                 </div>
 
-                <!-- Klasör: Ortam & Bilişsel Motor -->
+                <!-- Klasör: Temalar, Sesler & AI -->
                 <div class="sidebar-folder" data-folder-id="ambience_engine">
                     <button type="button" class="sidebar-folder-header" aria-expanded="true">
-                        <span class="folder-title">Ortam &amp; Bilişsel Motor</span>
+                        <span class="folder-title">Temalar, Sesler &amp; AI</span>
                         <span class="folder-caret" aria-hidden="true"></span>
                     </button>
                     <div class="sidebar-folder-items">
-                        <a asp-page="/Themes/Index" class="sidebar-nav-item">Görsel Temalar &amp; Video</a>
-                        <a asp-page="/Music/Index" class="sidebar-nav-item">Akustik Ses Kütüphanesi</a>
-                        <a asp-page="/AiCoach/Atmosphere" class="sidebar-nav-item">Üretken Ortam Motoru</a>
-                        <a asp-page="/AiCoach/Personal" class="sidebar-nav-item">Bilişsel Kullanıcı Belleği</a>
-                        <a asp-page="/AiCoach/Global" class="sidebar-nav-item">Kolektif Model Havuzu</a>
+                        <a asp-page="/Themes/Index" class="sidebar-nav-item">Temalar &amp; Videolar</a>
+                        <a asp-page="/Music/Index" class="sidebar-nav-item">Sesler &amp; Müzikler</a>
+                        <a asp-page="/AiCoach/Atmosphere" class="sidebar-nav-item">AI ile Atmosfer</a>
+                        <a asp-page="/AiCoach/Personal" class="sidebar-nav-item">Kullanıcı AI Hafızası</a>
+                        <a asp-page="/AiCoach/Global" class="sidebar-nav-item">Sistem AI Hafızası</a>
                     </div>
                 </div>
 
-                <!-- Klasör: Sistem & Entegrasyon -->
+                <!-- Klasör: Geliştirici & Sistem -->
                 <div class="sidebar-folder" data-folder-id="infrastructure">
                     <button type="button" class="sidebar-folder-header" aria-expanded="true">
-                        <span class="folder-title">Sistem &amp; Entegrasyon</span>
+                        <span class="folder-title">Geliştirici &amp; Sistem</span>
                         <span class="folder-caret" aria-hidden="true"></span>
                     </button>
                     <div class="sidebar-folder-items">
-                        <a asp-page="/ApiDocs/Index" class="sidebar-nav-item">API Referans Dokümantasyonu</a>
-                        <a asp-page="/ApiLab/Index" class="sidebar-nav-item">Uç Nokta Simülatörü (API Lab)</a>
-                        <a asp-page="/Jobs/Index" class="sidebar-nav-item">Zamanlanmış İşler (Scheduled Jobs)</a>
-                        <a href="http://localhost:5000/swagger" target="_blank" class="sidebar-nav-item" id="sidebarSwaggerLink">OpenAPI / Swagger</a>
-                        <a href="/hangfire" target="_blank" class="sidebar-nav-item">Hangfire İş Dağıtıcısı</a>
-                        <a asp-page="/Audit/Index" class="sidebar-nav-item">Güvenlik &amp; Denetim Günlüğü</a>
+                        <a asp-page="/ApiDocs/Index" class="sidebar-nav-item">API Dokümanı</a>
+                        <a asp-page="/ApiLab/Index" class="sidebar-nav-item">API Test (Lab)</a>
+                        <a asp-page="/Jobs/Index" class="sidebar-nav-item">Zamanlanmış İşler</a>
+                        <a href="http://localhost:5000/swagger" target="_blank" class="sidebar-nav-item" id="sidebarSwaggerLink">Swagger UI</a>
+                        <a href="/hangfire" target="_blank" class="sidebar-nav-item">Hangfire</a>
+                        <a asp-page="/Audit/Index" class="sidebar-nav-item">Sistem Logları</a>
                     </div>
                 </div>
             </div>
@@ -96,8 +96,8 @@
             <!-- Alt Profil Kutusu -->
             <div class="sidebar-footer">
                 <div class="sidebar-user-info">
-                    <div class="sidebar-user-name">Platform Yöneticisi</div>
-                    <div class="sidebar-user-role">SecOps / Root Authority</div>
+                    <div class="sidebar-user-name">Yönetici</div>
+                    <div class="sidebar-user-role">Admin</div>
                 </div>
             </div>
         </aside>

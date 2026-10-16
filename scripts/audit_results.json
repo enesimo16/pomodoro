@@ -1,108 +1,108 @@
 {
-  "timestamp": "2026-10-16T15:46:11.028Z",
+  "timestamp": "2026-10-16T18:08:53.848Z",
   "adminPages": [
     {
-      "name": "Sayfa: Genel Bakış (Dashboard) (/)",
+      "name": "Sayfa: Genel Bakış (/)",
       "passed": true,
       "details": "HTTP 200, Title: \"Dashboard - Dashboard\""
     },
     {
-      "name": "Sayfa: Performans & Telemetri (/Analytics)",
+      "name": "Sayfa: İstatistikler (/Analytics)",
       "passed": true,
       "details": "HTTP 200, Title: \"Analitik & BI Raporları - Dashboard\""
     },
     {
-      "name": "Sayfa: Kullanıcı Yönetimi (/Users)",
+      "name": "Sayfa: Kullanıcılar (/Users)",
       "passed": true,
       "details": "HTTP 200, Title: \"Kullanıcı Yönetimi - Dashboard\""
     },
     {
-      "name": "Sayfa: Odaklanma Oturumları (/Sessions)",
+      "name": "Sayfa: Seanslar (/Sessions)",
       "passed": true,
       "details": "HTTP 200, Title: \"Odak Seansları - Dashboard\""
     },
     {
-      "name": "Sayfa: Sanal Çalışma Odaları (/StudyRooms)",
+      "name": "Sayfa: Çalışma Odaları (/StudyRooms)",
       "passed": true,
       "details": "HTTP 200, Title: \"Sanal Çalışma Odaları - Dashboard\""
     },
     {
-      "name": "Sayfa: Topluluk & Etkileşim (/Guestbook)",
+      "name": "Sayfa: Ziyaretçi Defteri (/Guestbook)",
       "passed": true,
       "details": "HTTP 200, Title: \"Topluluk & Etkileşim - Dashboard\""
     },
     {
-      "name": "Sayfa: Öğe & Envanter Kataloğu (/Shop)",
+      "name": "Sayfa: Mağaza (/Shop)",
       "passed": true,
       "details": "HTTP 200, Title: \"Öğe & Envanter Kataloğu - Dashboard\""
     },
     {
-      "name": "Sayfa: Mali Defter (Ledger) (/Economy)",
+      "name": "Sayfa: Coin Geçmişi (/Economy)",
       "passed": true,
       "details": "HTTP 200, Title: \"Mali Defter & Bakiye (Ledger) - Dashboard\""
     },
     {
-      "name": "Sayfa: Vektör Bellek & Sentez (/AiCoach)",
+      "name": "Sayfa: Yapay Zekâ (AI) Merkezi (/AiCoach)",
       "passed": true,
-      "details": "HTTP 200, Title: \"Vektör Bellek & Sentez - Dashboard\""
+      "details": "HTTP 200, Title: \"Yapay Zekâ (AI) Merkezi - Dashboard\""
     },
     {
-      "name": "Sayfa: Bilişsel Kullanıcı Belleği (/AiCoach/Personal)",
+      "name": "Sayfa: Kullanıcı AI Hafızası (/AiCoach/Personal)",
       "passed": true,
-      "details": "HTTP 200, Title: \"Bilişsel Kullanıcı Belleği - Dashboard\""
+      "details": "HTTP 200, Title: \"Kullanıcı AI Hafızası - Dashboard\""
     },
     {
-      "name": "Sayfa: Kolektif Model Havuzu (/AiCoach/Global)",
+      "name": "Sayfa: Sistem AI Hafızası (/AiCoach/Global)",
       "passed": true,
-      "details": "HTTP 200, Title: \"Kolektif Model Havuzu - Dashboard\""
+      "details": "HTTP 200, Title: \"Sistem AI Hafızası - Dashboard\""
     },
     {
-      "name": "Sayfa: Üretken Ortam Motoru (/AiCoach/Atmosphere)",
+      "name": "Sayfa: AI ile Atmosfer (/AiCoach/Atmosphere)",
       "passed": true,
-      "details": "HTTP 200, Title: \"Üretken Ortam Motoru - Dashboard\""
+      "details": "HTTP 200, Title: \"AI ile Atmosfer - Dashboard\""
     },
     {
-      "name": "Sayfa: Zamanlanmış İşler (Cron) (/Jobs)",
+      "name": "Sayfa: Zamanlanmış İşler (/Jobs)",
       "passed": true,
       "details": "HTTP 200, Title: \"Zamanlanmış İşler (Scheduled Jobs) - Dashboard\""
     },
     {
-      "name": "Sayfa: Güvenlik & Denetim Günlüğü (/Audit)",
+      "name": "Sayfa: Sistem Logları (/Audit)",
       "passed": true,
       "details": "HTTP 200, Title: \"Güvenlik & Denetim Günlüğü - Dashboard\""
     },
     {
-      "name": "Sayfa: API Sözleşmesi (OpenAPI) (/ApiDocs)",
+      "name": "Sayfa: API Dokümanı (/ApiDocs)",
       "passed": true,
       "details": "HTTP 200, Title: \"API Sözleşmesi (OpenAPI) - Dashboard\""
     },
     {
-      "name": "Sayfa: Entegrasyon Test Konsolu (/ApiLab)",
+      "name": "Sayfa: API Test (Lab) (/ApiLab)",
       "passed": true,
       "details": "HTTP 200, Title: \"Entegrasyon Test Konsolu - Dashboard\""
     },
     {
-      "name": "Sayfa: Görsel Tema Kütüphanesi (Sayfa 1) (/Themes)",
+      "name": "Sayfa: Temalar (Sayfa 1) (/Themes)",
       "passed": true,
       "details": "HTTP 200, Title: \"Görsel Temalar - Dashboard\""
     },
     {
-      "name": "Sayfa: Görsel Tema Kütüphanesi (Sayfa 2 & Arama) (/Themes?page=2&query=rain)",
+      "name": "Sayfa: Temalar (Sayfa 2 & Arama) (/Themes?page=2&query=rain)",
       "passed": true,
       "details": "HTTP 200, Title: \"Görsel Temalar - Dashboard\""
     },
     {
-      "name": "Sayfa: Ses & Akustik Kütüphanesi (Sayfa 1) (/Music)",
+      "name": "Sayfa: Müzikler & Sesler (Sayfa 1) (/Music)",
       "passed": true,
       "details": "HTTP 200, Title: \"Müzik & Sesler - Dashboard\""
     },
     {
-      "name": "Sayfa: Ses & Akustik Kütüphanesi (Sayfa 2 & Arama) (/Music?page=2&query=lofi)",
+      "name": "Sayfa: Müzikler & Sesler (Sayfa 2 & Arama) (/Music?page=2&query=lofi)",
       "passed": true,
       "details": "HTTP 200, Title: \"Müzik & Sesler - Dashboard\""
     },
     {
-      "name": "Sayfa: Hangfire Görev Yöneticisi (/hangfire)",
+      "name": "Sayfa: Hangfire (/hangfire)",
       "passed": true,
       "details": "HTTP 200, Title: \"Genel Bakış – Focus Hangfire Kontrol Paneli\""
     },
@@ -121,12 +121,12 @@
     {
       "name": "Otomatik Test Hesabı Provizyonu",
       "passed": true,
-      "details": "Aktif Hesap: \"TestUser_6169\""
+      "details": "Aktif Hesap: \"TestUser_5881\""
     },
     {
       "name": "Modül 1 (Auth) - Profil Getir",
       "passed": true,
-      "details": "Kullanıcı: TestUser_6169"
+      "details": "Kullanıcı: TestUser_5881"
     },
     {
       "name": "Modül 1 (Auth) - Token Yenile",
@@ -146,7 +146,7 @@
     {
       "name": "Modül 3 (Room) - Oda Bilgisi Getir",
       "passed": true,
-      "details": "Oda: TestUser_6169'in Odası"
+      "details": "Oda: TestUser_5881'in Odası"
     },
     {
       "name": "Modül 3 (Room) - Eşya Ekle",
@@ -196,7 +196,7 @@
     {
       "name": "Modül 5 (Media) - Canlı Hava Senkronu",
       "passed": true,
-      "details": "Kapalı / Yoğun Bulutlu • 12.2°C"
+      "details": "Kapalı / Yoğun Bulutlu • 11.8°C"
     },
     {
       "name": "Modül 6 (Shop) - Katalog Eşyaları Getir",
@@ -301,7 +301,7 @@
     {
       "name": "Üst Bar: Yeni Test Hesabı Açma (Sıfır Sürtünme)",
       "passed": true,
-      "details": "Yeni Kullanıcı: \"TestUser_6548\""
+      "details": "Yeni Kullanıcı: \"TestUser_7451\""
     }
   ],
   "restApis": [
@@ -333,7 +333,7 @@
     {
       "name": "GET /api/v1/media/weather",
       "passed": true,
-      "details": "HTTP 200, Temp: 12.2°C"
+      "details": "HTTP 200, Temp: 11.8°C"
     },
     {
       "name": "GET /api/v1/shop/catalog",
