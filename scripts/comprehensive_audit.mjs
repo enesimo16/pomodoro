@@ -177,26 +177,32 @@ async function runBrowserAudit() {
     });
 
     const adminPages = [
-        { path: '/', name: 'Dashboard' },
-        { path: '/Analytics', name: 'Analitik' },
-        { path: '/Users', name: 'Kullanıcılar' },
-        { path: '/Sessions', name: 'Seanslar' },
-        { path: '/StudyRooms', name: 'Çalışma Odaları' },
-        { path: '/Guestbook', name: 'Ziyaretçi Defteri' },
-        { path: '/Shop', name: 'Mağaza' },
-        { path: '/Economy', name: 'Coin Defteri' },
-        { path: '/AiCoach', name: 'AI Koç' },
-        { path: '/Jobs', name: 'Cron Görevleri' },
-        { path: '/Audit', name: 'Oturum Logları' },
-        { path: '/ApiDocs', name: 'API Dokümanı' },
-        { path: '/ApiLab', name: 'API Test Laboratuvarı' },
-        { path: '/Themes', name: 'Görsel Temalar' },
-        { path: '/Music', name: 'Müzik & Sesler' },
-        { path: '/hangfire', name: 'Hangfire Dashboard' }
+        { path: '/', name: 'Genel Bakış (Dashboard)' },
+        { path: '/Analytics', name: 'Performans & Telemetri' },
+        { path: '/Users', name: 'Kullanıcı Yönetimi' },
+        { path: '/Sessions', name: 'Odaklanma Oturumları' },
+        { path: '/StudyRooms', name: 'Sanal Çalışma Odaları' },
+        { path: '/Guestbook', name: 'Topluluk & Etkileşim' },
+        { path: '/Shop', name: 'Öğe & Envanter Kataloğu' },
+        { path: '/Economy', name: 'Mali Defter (Ledger)' },
+        { path: '/AiCoach', name: 'Vektör Bellek & Sentez' },
+        { path: '/AiCoach/Personal', name: 'Bilişsel Kullanıcı Belleği' },
+        { path: '/AiCoach/Global', name: 'Kolektif Model Havuzu' },
+        { path: '/AiCoach/Atmosphere', name: 'Üretken Ortam Motoru' },
+        { path: '/Jobs', name: 'Zamanlanmış İşler (Cron)' },
+        { path: '/Audit', name: 'Güvenlik & Denetim Günlüğü' },
+        { path: '/ApiDocs', name: 'API Sözleşmesi (OpenAPI)' },
+        { path: '/ApiLab', name: 'Entegrasyon Test Konsolu' },
+        { path: '/Themes', name: 'Görsel Tema Kütüphanesi (Sayfa 1)' },
+        { path: '/Themes?page=2&query=rain', name: 'Görsel Tema Kütüphanesi (Sayfa 2 & Arama)' },
+        { path: '/Music', name: 'Ses & Akustik Kütüphanesi (Sayfa 1)' },
+        { path: '/Music?page=2&query=lofi', name: 'Ses & Akustik Kütüphanesi (Sayfa 2 & Arama)' },
+        { path: '/hangfire', name: 'Hangfire Görev Yöneticisi' }
     ];
 
     for (const p of adminPages) {
-        const url = `${ADMIN_BASE}${p.path}?admin_key=${ADMIN_KEY}`;
+        const sep = p.path.includes('?') ? '&' : '?';
+        const url = `${ADMIN_BASE}${p.path}${sep}admin_key=${ADMIN_KEY}`;
         try {
             const resp = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 15000 });
             const status = resp?.status() || 0;
@@ -206,6 +212,25 @@ async function runBrowserAudit() {
         } catch (e) {
             recordTest('adminPages', `Sayfa: ${p.name} (${p.path})`, false, e.message);
         }
+    }
+
+    // 2.1 Sol Panel İkonlu Açma/Kapatma & Kurumsal Terminoloji Denetimi
+    try {
+        await page.goto(`${ADMIN_BASE}/?admin_key=${ADMIN_KEY}`, { waitUntil: 'domcontentloaded' });
+        const collapseBtnText = (await page.locator('#sidebarCloseBtn').textContent() || '').trim();
+        const headerBtnText = (await page.locator('#sidebarToggleBtn').textContent() || '').trim();
+        const iconOnlyOk = collapseBtnText === '' && headerBtnText === '';
+        recordTest('adminPages', 'Sol Panel: Yalnızca Geometrik İkonlu Açma/Kapatma (Sıfır Metin)', iconOnlyOk, `SidebarBtnText="${collapseBtnText}", HeaderBtnText="${headerBtnText}"`);
+
+        await page.click('#sidebarCloseBtn');
+        await page.waitForTimeout(350);
+        const isCollapsed = await page.evaluate(() => document.body.classList.contains('sidebar-collapsed'));
+        await page.click('#sidebarToggleBtn');
+        await page.waitForTimeout(350);
+        const isExpandedAgain = await page.evaluate(() => !document.body.classList.contains('sidebar-collapsed'));
+        recordTest('adminPages', 'Sol Panel: Animasyonlu Daraltma & Genişletme İşlevi', isCollapsed && isExpandedAgain, `Collapsed=${isCollapsed}, Restored=${isExpandedAgain}`);
+    } catch (e) {
+        recordTest('adminPages', 'Sol Panel: Animasyonlu Daraltma & Genişletme İşlevi', false, e.message);
     }
 
     console.log('\n--- 3. ApiLab İnteraktif Modül ve Fonksiyon Simülasyonu ---');

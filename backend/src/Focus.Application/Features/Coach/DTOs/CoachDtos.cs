@@ -29,7 +29,8 @@ public record CoachChatResponseDto(
     bool GeneratedNewMemory);
 
 public record SessionCheckInRequest(
-    Guid SessionId,
+    Guid? SessionId,
+    [property: System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     SessionMood Mood,
     int EnergyLevel,
     string? TargetIntent);
@@ -44,10 +45,12 @@ public record SessionCheckInDto(
     DateTime CreatedAt);
 
 public record SessionReflectionRequest(
-    Guid SessionId,
+    Guid? SessionId,
     int FocusQuality,
+    [property: System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     SessionMoodAfter MoodAfter,
-    string? DistractionNote);
+    string? DistractionNote = null,
+    string? DistractionOrLearningNotes = null);
 
 public record SessionReflectionDto(
     Guid Id,

@@ -46,7 +46,7 @@ public class CoachController : BaseApiController
         {
             var result = await Mediator.Send(new SubmitSessionCheckInCommand(
                 userId,
-                request.SessionId,
+                request.SessionId ?? Guid.Empty,
                 request.Mood,
                 request.EnergyLevel,
                 request.TargetIntent), cancellationToken);
@@ -73,12 +73,16 @@ public class CoachController : BaseApiController
 
         try
         {
+            var note = !string.IsNullOrWhiteSpace(request.DistractionNote)
+                ? request.DistractionNote
+                : request.DistractionOrLearningNotes;
+
             var result = await Mediator.Send(new SubmitSessionReflectionCommand(
                 userId,
-                request.SessionId,
+                request.SessionId ?? Guid.Empty,
                 request.FocusQuality,
                 request.MoodAfter,
-                request.DistractionNote), cancellationToken);
+                note), cancellationToken);
 
             return Ok(result);
         }

@@ -53,13 +53,13 @@ public class PixabayVideoService : IThemeVideoService
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogWarning("Pixabay API returned {StatusCode}: {Reason}", response.StatusCode, response.ReasonPhrase);
-                return GetFallbackVideos();
+                return GetFallbackVideos(query, validPage, validPerPage);
             }
 
             var doc = await response.Content.ReadFromJsonAsync<JsonDocument>(cancellationToken: cancellationToken);
             if (doc == null || !doc.RootElement.TryGetProperty("hits", out var hitsElement))
             {
-                return GetFallbackVideos();
+                return GetFallbackVideos(query, validPage, validPerPage);
             }
 
             var list = new List<ThemeVideoDto>();
@@ -146,9 +146,17 @@ public class PixabayVideoService : IThemeVideoService
 
         if (filtered.Count == 0) filtered = allFallbacks;
 
-        return filtered
-            .Skip((page - 1) * perPage)
-            .Take(perPage)
-            .ToList();
+        var validPage = Math.Max(1, page);
+        var validPerPage = Math.Clamp(perPage, 1, 50);
+        var count = Math.Min(validPerPage, filtered.Count);
+        var startOffset = ((validPage - 1) * validPerPage) % filtered.Count;
+
+        var result = new List<ThemeVideoDto>(count);
+        for (var i = 0; i < count; i++)
+        {
+            result.Add(filtered[(startOffset + i) % filtered.Count]);
+        }
+
+        return result;
     }
 }

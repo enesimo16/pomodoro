@@ -32,8 +32,9 @@ public class SubmitSessionReflectionCommandHandler : IRequestHandler<SubmitSessi
 
     public async Task<SessionReflectionDto> Handle(SubmitSessionReflectionCommand request, CancellationToken cancellationToken)
     {
-        var session = await _context.FocusSessions
-            .FirstOrDefaultAsync(s => s.Id == request.SessionId && s.UserId == request.UserId, cancellationToken);
+        var session = request.SessionId != Guid.Empty
+            ? await _context.FocusSessions.FirstOrDefaultAsync(s => s.Id == request.SessionId && s.UserId == request.UserId, cancellationToken)
+            : await _context.FocusSessions.Where(s => s.UserId == request.UserId).OrderByDescending(s => s.StartedAt).FirstOrDefaultAsync(cancellationToken);
 
         if (session == null)
         {
@@ -41,7 +42,7 @@ public class SubmitSessionReflectionCommandHandler : IRequestHandler<SubmitSessi
         }
 
         var reflection = new SessionReflection(
-            request.SessionId,
+            session.Id,
             request.UserId,
             request.FocusQuality,
             request.MoodAfter,

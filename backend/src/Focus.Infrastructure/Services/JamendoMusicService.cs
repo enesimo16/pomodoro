@@ -55,13 +55,13 @@ public class JamendoMusicService : IMusicTrackService
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogWarning("Jamendo API returned {StatusCode}: {Reason}", response.StatusCode, response.ReasonPhrase);
-                return GetFallbackTracks(query);
+                return GetFallbackTracks(trimmedQuery, validPage, validLimit);
             }
 
             var doc = await response.Content.ReadFromJsonAsync<JsonDocument>(cancellationToken: cancellationToken);
             if (doc == null || !doc.RootElement.TryGetProperty("results", out var resultsElement))
             {
-                return GetFallbackTracks(query);
+                return GetFallbackTracks(trimmedQuery, validPage, validLimit);
             }
 
             var list = new List<MusicTrackDto>();
@@ -121,9 +121,17 @@ public class JamendoMusicService : IMusicTrackService
 
         if (filtered.Count == 0) filtered = allTracks;
 
-        return filtered
-            .Skip((page - 1) * limit)
-            .Take(limit)
-            .ToList();
+        var validPage = Math.Max(1, page);
+        var validLimit = Math.Clamp(limit, 1, 50);
+        var count = Math.Min(validLimit, filtered.Count);
+        var startOffset = ((validPage - 1) * validLimit) % filtered.Count;
+
+        var result = new List<MusicTrackDto>(count);
+        for (var i = 0; i < count; i++)
+        {
+            result.Add(filtered[(startOffset + i) % filtered.Count]);
+        }
+
+        return result;
     }
 }

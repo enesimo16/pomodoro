@@ -17,29 +17,39 @@ public class ExternalMediaApiTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
-    public async Task GetThemeVideos_ReturnsOkAndThemeList()
+    public async Task GetThemeVideos_ReturnsOkAndSupportsPagination()
     {
         var client = _factory.CreateClient();
 
-        var response = await client.GetAsync("/api/v1/media/themes?query=rain&perPage=4");
+        var responsePage1 = await client.GetAsync("/api/v1/media/themes?query=rain&perPage=4&page=1");
+        var responsePage2 = await client.GetAsync("/api/v1/media/themes?query=rain&perPage=4&page=2");
 
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var videos = await response.Content.ReadFromJsonAsync<List<ThemeVideoDto>>();
-        videos.Should().NotBeNull();
-        videos!.Should().NotBeEmpty();
+        responsePage1.StatusCode.Should().Be(HttpStatusCode.OK);
+        responsePage2.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var videosPage1 = await responsePage1.Content.ReadFromJsonAsync<List<ThemeVideoDto>>();
+        var videosPage2 = await responsePage2.Content.ReadFromJsonAsync<List<ThemeVideoDto>>();
+
+        videosPage1.Should().NotBeNull().And.NotBeEmpty();
+        videosPage2.Should().NotBeNull().And.NotBeEmpty();
     }
 
     [Fact]
-    public async Task GetLofiTracks_ReturnsOkAndTracksList()
+    public async Task GetLofiTracks_ReturnsOkAndSupportsQueryAndPagination()
     {
         var client = _factory.CreateClient();
 
-        var response = await client.GetAsync("/api/v1/media/tracks?limit=5");
+        var responsePage1 = await client.GetAsync("/api/v1/media/tracks?query=lofi&limit=4&page=1");
+        var responsePage2 = await client.GetAsync("/api/v1/media/tracks?query=lofi&limit=4&page=2");
 
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var tracks = await response.Content.ReadFromJsonAsync<List<MusicTrackDto>>();
-        tracks.Should().NotBeNull();
-        tracks!.Should().NotBeEmpty();
+        responsePage1.StatusCode.Should().Be(HttpStatusCode.OK);
+        responsePage2.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var tracksPage1 = await responsePage1.Content.ReadFromJsonAsync<List<MusicTrackDto>>();
+        var tracksPage2 = await responsePage2.Content.ReadFromJsonAsync<List<MusicTrackDto>>();
+
+        tracksPage1.Should().NotBeNull().And.NotBeEmpty();
+        tracksPage2.Should().NotBeNull().And.NotBeEmpty();
     }
 
     [Fact]

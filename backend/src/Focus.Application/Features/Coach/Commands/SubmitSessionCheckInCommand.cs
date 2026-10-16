@@ -29,8 +29,9 @@ public class SubmitSessionCheckInCommandHandler : IRequestHandler<SubmitSessionC
 
     public async Task<SessionCheckInDto> Handle(SubmitSessionCheckInCommand request, CancellationToken cancellationToken)
     {
-        var session = await _context.FocusSessions
-            .FirstOrDefaultAsync(s => s.Id == request.SessionId && s.UserId == request.UserId, cancellationToken);
+        var session = request.SessionId != Guid.Empty
+            ? await _context.FocusSessions.FirstOrDefaultAsync(s => s.Id == request.SessionId && s.UserId == request.UserId, cancellationToken)
+            : await _context.FocusSessions.Where(s => s.UserId == request.UserId).OrderByDescending(s => s.StartedAt).FirstOrDefaultAsync(cancellationToken);
 
         if (session == null)
         {
@@ -38,7 +39,7 @@ public class SubmitSessionCheckInCommandHandler : IRequestHandler<SubmitSessionC
         }
 
         var checkIn = new SessionCheckIn(
-            request.SessionId,
+            session.Id,
             request.UserId,
             request.Mood,
             request.EnergyLevel,
