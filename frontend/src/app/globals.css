@@ -1,0 +1,88 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=VT323&display=swap');
+@import "tailwindcss";
+
+:root {
+  --background: #0a0d12;
+  --foreground: #e6edf3;
+  --panel-bg: #10141a;
+  --panel-border: #262c36;
+  --crt-green: #38ef7d;
+  --crt-amber: #e5a93c;
+  --pixel-shadow: #040608;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: 'Space Mono', monospace;
+  image-rendering: pixelated;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Piksel Çerçeve & Katı Basamaklı Gölgeler */
+.pixel-box {
+  border: 2px solid var(--panel-border);
+  box-shadow: 4px 4px 0px 0px var(--pixel-shadow);
+  background-color: var(--panel-bg);
+}
+
+.pixel-btn {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  border: 2px solid var(--panel-border);
+  box-shadow: 3px 3px 0px 0px var(--pixel-shadow);
+  transition: transform 0.05s ease, box-shadow 0.05s ease;
+  cursor: pointer;
+  border-radius: 0px !important;
+}
+
+.pixel-btn:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0px 0px var(--pixel-shadow);
+}
+
+.pixel-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0px 0px var(--pixel-shadow);
+}
+
+.pixel-btn-primary {
+  background-color: var(--crt-green);
+  color: #040608;
+  border-color: #23c761;
+}
+
+.pixel-btn-secondary {
+  background-color: #161b22;
+  color: #e6edf3;
+  border-color: #30363d;
+}
+
+.pixel-btn-amber {
+  background-color: var(--crt-amber);
+  color: #040608;
+  border-color: #c9881e;
+}
+
+/* CRT Scanline & Fosfor Işıma */
+.crt-scanlines {
+  background-color: #0d1117;
+  background-image: linear-gradient(
+    rgba(255, 255, 255, 0.015) 50%, 
+    rgba(0, 0, 0, 0.25) 50%
+  );
+  background-size: 100% 4px;
+}
+
+.glow-green {
+  text-shadow: 0 0 10px rgba(56, 239, 125, 0.45);
+}
+
+.glow-amber {
+  text-shadow: 0 0 10px rgba(229, 169, 60, 0.45);
+}
+
+.font-pixel {
+  font-family: 'VT323', monospace;
+}
