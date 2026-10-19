@@ -1,315 +1,644 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import Link from "next/link";
 
-export default function HomePage() {
-  const [secondsLeft, setSecondsLeft] = useState(25 * 60);
-  const [isRunning, setIsRunning] = useState(false);
-  const [activeMode, setActiveMode] = useState<"pomodoro" | "shortBreak" | "longBreak">("pomodoro");
-  const [soundRain, setSoundRain] = useState(40);
-  const [soundNoise, setSoundNoise] = useState(25);
-  const [soundVinyl, setSoundVinyl] = useState(15);
-  const [soundLofi, setSoundLofi] = useState(60);
+export default function LandingHomePage() {
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authTab, setAuthTab] = useState<"guest" | "login" | "register">("guest");
+  const [guestName, setGuestName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
-    if (isRunning && secondsLeft > 0) {
-      interval = setInterval(() => {
-        setSecondsLeft((prev) => prev - 1);
-      }, 1000);
-    } else if (secondsLeft === 0) {
-      setIsRunning(false);
+  const handleGuestSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    try {
+      const res = await fetch("http://localhost:5000/api/v1/auth/guest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ preferredDisplayName: guestName.trim() || undefined })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (typeof window !== "undefined") {
+          localStorage.setItem("bokodoro_auth", JSON.stringify(data));
+        }
+        const name = data.user?.displayName || guestName || "Sakin";
+        window.location.href = `/room?guest=${encodeURIComponent(name)}`;
+        return;
+      }
+    } catch {
+      // API çevrimdışı olsa bile akışı kesme
     }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [isRunning, secondsLeft]);
-
-  const formatTime = (totalSeconds: number) => {
-    const mins = Math.floor(totalSeconds / 60);
-    const secs = totalSeconds % 60;
-    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-  };
-
-  const handleModeSwitch = (mode: "pomodoro" | "shortBreak" | "longBreak") => {
-    setIsRunning(false);
-    setActiveMode(mode);
-    if (mode === "pomodoro") setSecondsLeft(25 * 60);
-    if (mode === "shortBreak") setSecondsLeft(5 * 60);
-    if (mode === "longBreak") setSecondsLeft(15 * 60);
+    window.location.href = `/room?guest=${encodeURIComponent(guestName || "Sakin")}`;
   };
 
   return (
-    <div className="flex-1 flex flex-col justify-between max-w-6xl w-full mx-auto p-4 sm:p-6 lg:p-8">
-      {/* ÜST BAR (NAVBAR) */}
-      <header className="flex items-center justify-between border-b-2 border-[#262c36] pb-4 mb-8">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-[#38ef7d] flex items-center justify-center font-bold text-black border-2 border-[#23c761] shadow-[2px_2px_0px_#040608]">
-            ■
-          </div>
-          <span className="text-xl sm:text-2xl font-bold tracking-widest text-[#38ef7d] glow-green">
-            BOKODORO
-          </span>
-          <span className="hidden sm:inline-block text-[10px] uppercase tracking-widest px-2 py-0.5 border border-[#30363d] text-[#8b949e] bg-[#10141a]">
-            v1.0 retro
-          </span>
-        </div>
+    <div className="flex-1 flex flex-col min-h-screen">
+      {/* 1. ÜST GEZİNME ÇUBUĞU (NAVBAR) */}
+      <header className="sticky top-0 z-40 bg-[#0a0d12]/90 backdrop-blur-sm border-b-2 border-[#262c36]">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-3">
+            <div className="w-7 h-7 bg-[#38ef7d] flex items-center justify-center font-bold text-black border-2 border-[#23c761] shadow-[2px_2px_0px_#040608]">
+              ■
+            </div>
+            <span className="text-xl font-bold tracking-widest text-[#38ef7d] glow-green">
+              BOKODORO
+            </span>
+          </Link>
 
-        <nav className="flex items-center gap-3 sm:gap-4">
-          <a
-            href="http://localhost:5001/?admin_key=focus_master_key_9971x"
-            target="_blank"
-            rel="noreferrer"
-            className="pixel-btn pixel-btn-secondary text-xs px-3 py-2 text-[#8b949e] hover:text-[#38ef7d]"
-          >
-            Konsol [Admin]
-          </a>
-          <button className="pixel-btn pixel-btn-primary text-xs px-4 py-2">
-            Giriş / Misafir
-          </button>
-        </nav>
+          <nav className="hidden md:flex items-center gap-6 text-xs text-[#8b949e]">
+            <a href="#nasil-calisir" className="hover:text-[#38ef7d] transition-colors">
+              [ NASIL ÇALIŞIR? ]
+            </a>
+            <a href="#ozellikler" className="hover:text-[#38ef7d] transition-colors">
+              [ ÖZELLİKLER ]
+            </a>
+            <a href="#arkadas-sistemi" className="hover:text-[#38ef7d] transition-colors">
+              [ SESSİZ ORTAK ÇALIŞMA ]
+            </a>
+            <a href="#ekonomi" className="hover:text-[#38ef7d] transition-colors">
+              [ EKONOMİ &amp; EŞYALAR ]
+            </a>
+          </nav>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => {
+                setAuthTab("login");
+                setAuthModalOpen(true);
+              }}
+              className="pixel-btn pixel-btn-secondary text-xs px-3 py-2 text-[#8b949e] hover:text-white"
+            >
+              Giriş Yap
+            </button>
+            <button
+              onClick={() => {
+                setAuthTab("guest");
+                setAuthModalOpen(true);
+              }}
+              className="pixel-btn pixel-btn-primary text-xs px-4 py-2"
+            >
+              Hemen Başla (Misafir)
+            </button>
+          </div>
+        </div>
       </header>
 
-      {/* ANA MERKEZ BÖLÜMÜ (HERO & SAYAÇ) */}
-      <main className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start my-auto">
-        {/* SOL: SAYAÇ & ODAK KONTROL PANELİ (7 Sütun) */}
-        <section className="lg:col-span-7 flex flex-col gap-6">
-          {/* Seans Mod Seçici */}
-          <div className="flex gap-2">
-            <button
-              onClick={() => handleModeSwitch("pomodoro")}
-              className={`pixel-btn text-xs px-4 py-2 flex-1 ${
-                activeMode === "pomodoro" ? "pixel-btn-primary" : "pixel-btn-secondary"
-              }`}
-            >
-              Odaklanma (25d)
-            </button>
-            <button
-              onClick={() => handleModeSwitch("shortBreak")}
-              className={`pixel-btn text-xs px-4 py-2 flex-1 ${
-                activeMode === "shortBreak" ? "pixel-btn-amber" : "pixel-btn-secondary"
-              }`}
-            >
-              Kısa Mola (5d)
-            </button>
-            <button
-              onClick={() => handleModeSwitch("longBreak")}
-              className={`pixel-btn text-xs px-4 py-2 flex-1 ${
-                activeMode === "longBreak" ? "pixel-btn-amber" : "pixel-btn-secondary"
-              }`}
-            >
-              Uzun Mola (15d)
-            </button>
+      {/* 2. HERO BÖLÜMÜ (ANA MANŞET) */}
+      <section className="relative overflow-hidden pt-12 pb-16 sm:pt-20 sm:pb-24 border-b-2 border-[#262c36]">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col lg:flex-row items-center gap-12">
+          {/* Sol Kolon: Metin & CTA */}
+          <div className="flex-1 flex flex-col gap-6 text-left">
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#10141a] border border-[#30363d] text-xs text-[#38ef7d] w-fit">
+              <span className="w-2 h-2 bg-[#38ef7d] animate-pulse"></span>
+              RETRO PİKSEL DERİN ODAKLANMA EKOSİSTEMİ
+            </div>
+
+            <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-[#e6edf3] leading-[1.2]">
+              Dikkat Dağınıklığını Yok Eden,{" "}
+              <span className="text-[#38ef7d] glow-green">
+                Piksel Çalışma Odan
+              </span>{" "}
+              ve Ses Kalkanın.
+            </h1>
+
+            <p className="text-sm sm:text-base text-[#8b949e] leading-relaxed">
+              Bokodoro; sıradan ve ruhsuz 25/5 sayaçların ötesine geçer. Habbo tarzı
+              özelleştirilebilir izometrik retro çalışma odası, 4 kanallı atmosferik ses
+              mikseri, pencere hava durumu senkronu ve arkadaşlarınla sessizce odaklanabileceğin
+              ortak çalışma masaları sunar.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-4 pt-2">
+              <button
+                onClick={() => {
+                  setAuthTab("guest");
+                  setAuthModalOpen(true);
+                }}
+                className="pixel-btn pixel-btn-primary text-sm px-6 py-3.5 flex items-center gap-2"
+              >
+                <span>[ ODAYA GEÇ &gt; MİSAFİR MODU ]</span>
+              </button>
+              <Link
+                href="/room"
+                className="pixel-btn pixel-btn-secondary text-sm px-6 py-3.5 text-[#bacbb9] hover:text-white"
+              >
+                Canlı Önizleme
+              </Link>
+            </div>
+
+            <div className="flex items-center gap-6 pt-4 text-xs text-[#8b949e]">
+              <div className="flex items-center gap-2">
+                <span className="text-[#38ef7d]">✓</span> Sıfır Kayıt / Anında Başla
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[#38ef7d]">✓</span> Reklamsız &amp; Minimal
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[#38ef7d]">✓</span> %100 Web Audio
+              </div>
+            </div>
           </div>
 
-          {/* Retro LED Zaman Sayacı Kartı */}
-          <div className="pixel-box p-6 sm:p-10 flex flex-col items-center justify-center text-center relative overflow-hidden">
-            {/* Terminal Pencere Başlığı */}
-            <div className="w-full flex items-center justify-between border-b border-[#262c36] pb-3 mb-6 text-xs text-[#8b949e]">
-              <span>// SEANS_DURUMU: {isRunning ? "DEVAM_EDIYOR" : "BEKLEMEDE"}</span>
-              <span className="flex items-center gap-1.5">
-                <span className={`w-2 h-2 ${isRunning ? "bg-[#38ef7d] animate-pulse" : "bg-[#e5a93c]"}`}></span>
-                {activeMode.toUpperCase()}
+          {/* Sağ Kolon: Retro İzometrik Önizleme Kartı */}
+          <div className="flex-1 w-full max-w-lg">
+            <div className="pixel-box p-4 bg-[#10141a]">
+              <div className="flex items-center justify-between border-b border-[#262c36] pb-2 mb-3 text-xs text-[#8b949e]">
+                <span>// CANLI_ODA_ONIZLEMESI.RAW</span>
+                <span className="text-[#38ef7d]">25:00 ODAK MODU</span>
+              </div>
+
+              <div className="h-64 bg-[#06080b] border border-[#21262d] relative flex items-center justify-center overflow-hidden">
+                {/* Arka Pencere Yağmur Izgarası */}
+                <div className="absolute top-3 left-6 right-6 h-28 border border-[#30363d] bg-[#0a1017] flex items-center justify-center">
+                  <div className="absolute inset-0 opacity-40 bg-[radial-gradient(#38ef7d_1px,transparent_1px)] [background-size:8px_8px]"></div>
+                  <span className="text-[10px] text-[#484f58] tracking-widest">// DISARIDA_YAGMUR_YAGIYOR</span>
+                </div>
+
+                {/* Karakter & Masa Kompozisyonu */}
+                <div className="absolute bottom-4 flex flex-col items-center">
+                  <div className="w-64 flex justify-between items-end px-3 mb-[-8px] z-10">
+                    <div className="flex flex-col items-center">
+                      <div className="w-5 h-3 bg-[#38ef7d] border border-[#23c761] shadow-[0_0_12px_#38ef7d]"></div>
+                      <div className="w-1 h-5 bg-[#30363d]"></div>
+                    </div>
+                    <div className="w-8 h-6 bg-[#161b22] border border-[#30363d] flex items-center justify-center p-0.5">
+                      <div className="w-5 h-5 rounded-full border border-[#484f58] bg-[#0a0d12] flex items-center justify-center animate-spin">
+                        <div className="w-1.5 h-1.5 rounded-full bg-[#e5a93c]"></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 8-bit Karakter */}
+                  <div className="relative flex flex-col items-center z-20">
+                    <div className="w-6 h-2 bg-[#2d1b0d] border-t border-x border-[#5c3a1e]"></div>
+                    <div className="w-6 h-4 bg-[#f8d0b0] border-x border-[#c99f7d] flex items-center justify-center gap-1.5">
+                      <div className="w-1 h-1 bg-[#0a0d12]"></div>
+                      <div className="w-1 h-1 bg-[#0a0d12]"></div>
+                    </div>
+                    <div className="w-8 h-4 bg-[#1f3a2c] border-x border-[#38ef7d]/40 flex items-center justify-center">
+                      <div className="w-2 h-2 bg-[#e5a93c]/80"></div>
+                    </div>
+                  </div>
+
+                  {/* Ahşap Masa */}
+                  <div className="w-64 h-4 bg-[#231a14] border-t-2 border-b-2 border-[#5c3a1e] mt-[-2px] shadow-[0_4px_0_#0a0604] z-30 flex items-center justify-between px-3">
+                    <div className="w-1 h-1 bg-[#c99f7d]"></div>
+                    <div className="text-[8px] text-[#8b6848] font-mono tracking-widest">// BOKO-DESK #01</div>
+                    <div className="w-1 h-1 bg-[#c99f7d]"></div>
+                  </div>
+                </div>
+
+                <div className="absolute top-2 right-2 text-[9px] px-2 py-0.5 bg-[#10141a] border border-[#30363d] text-[#38ef7d]">
+                  ● 3 ARKADAŞIN ÇALIŞIYOR
+                </div>
+              </div>
+
+              {/* Alt Bilgi Barı */}
+              <div className="grid grid-cols-3 gap-2 mt-3 text-center text-[10px]">
+                <div className="p-2 border border-[#262c36] bg-[#0d1117]">
+                  <span className="text-[#8b949e] block">Sayaç</span>
+                  <span className="text-[#38ef7d] font-bold">25:00 Pomodoro</span>
+                </div>
+                <div className="p-2 border border-[#262c36] bg-[#0d1117]">
+                  <span className="text-[#8b949e] block">Akustik Kalkan</span>
+                  <span className="text-[#e5a93c] font-bold">Yağmur + Lo-Fi</span>
+                </div>
+                <div className="p-2 border border-[#262c36] bg-[#0d1117]">
+                  <span className="text-[#8b949e] block">Ödül</span>
+                  <span className="text-[#e6edf3] font-bold">+25 XP / +5 Coin</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 3. NASIL ÇALIŞIR? (3 ADIMDA DÖNGÜ) */}
+      <section id="nasil-calisir" className="py-16 border-b-2 border-[#262c36] bg-[#0d1117]">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="text-center max-w-2xl mx-auto mb-12">
+            <span className="text-xs uppercase tracking-widest text-[#38ef7d]">RİTÜEL &amp; MEKANİK</span>
+            <h2 className="text-2xl sm:text-3xl font-bold text-[#e6edf3] mt-2">
+              Bokodoro Döngüsü Nasıl Çalışır?
+            </h2>
+            <p className="text-xs sm:text-sm text-[#8b949e] mt-2">
+              Sadece butona basıp beklemek yok. Odaklanma bir çalışma ritüeline dönüşür.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Adım 1 */}
+            <div className="pixel-box p-6 flex flex-col gap-3">
+              <div className="text-2xl font-bold text-[#38ef7d] font-pixel"># 01</div>
+              <h3 className="text-base font-bold text-[#e6edf3]">Masaya Otur ve Lambayı Yak</h3>
+              <p className="text-xs text-[#8b949e] leading-relaxed">
+                Karakterin masaya geçer, retro çalışma lamban yanar. 25 dakikalık seans başlarken
+                dış dünyayla olan bildirim akışın kilitlenir.
+              </p>
+            </div>
+
+            {/* Adım 2 */}
+            <div className="pixel-box p-6 flex flex-col gap-3">
+              <div className="text-2xl font-bold text-[#38ef7d] font-pixel"># 02</div>
+              <h3 className="text-base font-bold text-[#e6edf3]">4 Kanallı Kalkanı Aç</h3>
+              <p className="text-xs text-[#8b949e] leading-relaxed">
+                Pencereden gelen yağmur sesi, arka plan kahverengi gürültüsü, vinil çıtırtısı ve
+                lo-fi plak çaları dilediğin seviyede karıştırarak dikkatini sabitle.
+              </p>
+            </div>
+
+            {/* Adım 3 */}
+            <div className="pixel-box p-6 flex flex-col gap-3">
+              <div className="text-2xl font-bold text-[#38ef7d] font-pixel"># 03</div>
+              <h3 className="text-base font-bold text-[#e6edf3]">XP &amp; Coin Kazan, Odanı Geliştir</h3>
+              <p className="text-xs text-[#8b949e] leading-relaxed">
+                Her tamamlanan seans sana XP ve Focus Coin kazandırır. Mağazadan yeni plaklar, neon
+                tabelalar, retro konsollar ve kıyafetler alarak odanı genişlet.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 4. TEMEL ÖZELLİKLER & MİMARİ */}
+      <section id="ozellikler" className="py-16 border-b-2 border-[#262c36]">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="text-center max-w-2xl mx-auto mb-12">
+            <span className="text-xs uppercase tracking-widest text-[#38ef7d]">SİSTEM MİMARİSİ</span>
+            <h2 className="text-2xl sm:text-3xl font-bold text-[#e6edf3] mt-2">
+              Neler Yapabilirsin?
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Kart 1 */}
+            <div className="pixel-box p-5 flex flex-col gap-2">
+              <div className="text-xl">🪟</div>
+              <h4 className="text-sm font-bold text-[#e6edf3]">Canlı Pencere &amp; Hava Senkronu</h4>
+              <p className="text-xs text-[#8b949e]">
+                Bulunduğun şehrin gerçek hava durumuna göre odanın penceresinde yağmur yağar, sis
+                oluşur veya kar birikir.
+              </p>
+            </div>
+
+            {/* Kart 2 */}
+            <div className="pixel-box p-5 flex flex-col gap-2">
+              <div className="text-xl">🛡️</div>
+              <h4 className="text-sm font-bold text-[#e6edf3]">Flow Shield (DEHB Kalkanı)</h4>
+              <p className="text-xs text-[#8b949e]">
+                Sekme değiştirdiğinde seni uyarır, hileli seansları engeller ve seans bölünmelerini
+                minimuma indirir.
+              </p>
+            </div>
+
+            {/* Kart 3 */}
+            <div className="pixel-box p-5 flex flex-col gap-2">
+              <div className="text-xl">📻</div>
+              <h4 className="text-sm font-bold text-[#e6edf3]">Lo-Fi Plak Çalar &amp; Mikser</h4>
+              <p className="text-xs text-[#8b949e]">
+                Jamendo lisanslı binlerce telifsiz lo-fi parçayı odandaki piksel plak çalar üzerinden
+                dinle.
+              </p>
+            </div>
+
+            {/* Kart 4 */}
+            <div className="pixel-box p-5 flex flex-col gap-2">
+              <div className="text-xl">🤖</div>
+              <h4 className="text-sm font-bold text-[#e6edf3]">Yapay Zekâ Koçu &amp; Vektör Bellek</h4>
+              <p className="text-xs text-[#8b949e]">
+                Hangi saatlerde en verimli olduğunu öğrenen, tükenmişlik durumunu teşhis eden kişisel
+                çalışma asistanı.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 5. HABBO TARZI ARKADAŞ SİSTEMİ (CO-WORKING) */}
+      <section id="arkadas-sistemi" className="py-16 border-b-2 border-[#262c36] bg-[#0d1117]">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col lg:flex-row items-center gap-10">
+          <div className="flex-1 flex flex-col gap-4 text-left">
+            <span className="text-xs uppercase tracking-widest text-[#38ef7d]">
+              SOSYAL ODAKLANMA
+            </span>
+            <h2 className="text-2xl sm:text-4xl font-bold text-[#e6edf3]">
+              Arkadaşlarınla Aynı Odada, Sessizce Yan Yana Çalışın.
+            </h2>
+            <p className="text-xs sm:text-sm text-[#8b949e] leading-relaxed">
+              Kütüphane masası disiplinini dijitale taşıdık. Tek bir davet linkiyle arkadaşını kendi
+              piksel odana davet et. Aynı odada yan masaya oturur; sesli sohbet veya dikkat dağıtıcı
+              mesajlar yoktur, yalnızca odaklanma durumu ve sessiz piksel reaksiyonlar bulunur.
+            </p>
+            <ul className="text-xs text-[#bacbb9] space-y-2">
+              <li className="flex items-center gap-2">
+                <span className="text-[#38ef7d]">■</span> 4-8 Kişilik Sanal Çalışma Masaları
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="text-[#38ef7d]">■</span> Tek Tıkla WhatsApp / Telegram Davet Linki
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="text-[#38ef7d]">■</span> Dikkat Dağıtmayan Sessiz Piksel Emojileri
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="text-[#38ef7d]">■</span> Kim Kaç Dakikadır Çalışıyor Canlı İzleme
+              </li>
+            </ul>
+          </div>
+
+          <div className="flex-1 w-full max-w-md">
+            <div className="pixel-box p-4 bg-[#10141a]">
+              <div className="flex items-center justify-between border-b border-[#262c36] pb-2 mb-3 text-xs text-[#8b949e]">
+                <span>// ORTAK_MASA_CANLI.NET</span>
+                <span className="text-[#38ef7d]">ODA: #KUTUPHANE-04</span>
+              </div>
+              <div className="space-y-2">
+                <div className="p-2.5 border border-[#30363d] bg-[#06080b] flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-5 h-5 bg-[#38ef7d] text-black font-bold flex items-center justify-center text-[10px]">
+                      S
+                    </div>
+                    <div>
+                      <span className="text-[#e6edf3] font-bold block">Sen</span>
+                      <span className="text-[10px] text-[#8b949e]">Masa #1 (23:14 kaldı)</span>
+                    </div>
+                  </div>
+                  <span className="px-2 py-0.5 bg-[#161b22] border border-[#23c761] text-[#38ef7d] text-[10px]">
+                    Odakta
+                  </span>
+                </div>
+
+                <div className="p-2.5 border border-[#30363d] bg-[#06080b] flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-5 h-5 bg-[#e5a93c] text-black font-bold flex items-center justify-center text-[10px]">
+                      A
+                    </div>
+                    <div>
+                      <span className="text-[#e6edf3] font-bold block">Ahmet</span>
+                      <span className="text-[10px] text-[#8b949e]">Masa #2 (14:02 kaldı)</span>
+                    </div>
+                  </div>
+                  <span className="px-2 py-0.5 bg-[#161b22] border border-[#30363d] text-[#e5a93c] text-[10px]">
+                    Odakta
+                  </span>
+                </div>
+
+                <div className="p-2.5 border border-[#30363d] bg-[#06080b] flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-5 h-5 bg-[#161b22] border border-[#30363d] text-[#8b949e] font-bold flex items-center justify-center text-[10px]">
+                      +
+                    </div>
+                    <div>
+                      <span className="text-[#8b949e] font-bold block">Boş Masa #3</span>
+                      <span className="text-[10px] text-[#484f58]">Arkadaşını davet et</span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setAuthTab("guest");
+                      setAuthModalOpen(true);
+                    }}
+                    className="pixel-btn pixel-btn-primary text-[10px] px-2 py-1"
+                  >
+                    Otur
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 6. ALT CTA & FOOTER */}
+      <section className="py-20 border-b-2 border-[#262c36] text-center bg-[#0a0d12]">
+        <div className="max-w-4xl mx-auto px-4">
+          <h2 className="text-3xl sm:text-4xl font-bold text-[#e6edf3]">
+            Bugün derin odaklanmaya başla.
+          </h2>
+          <p className="text-xs sm:text-sm text-[#8b949e] mt-3 max-w-xl mx-auto">
+            Kredi kartı gerekmez. Kayıt şartı yok. Tek bir tıkla misafir olarak odana geç ve ilk 25
+            dakikanı başlat.
+          </p>
+          <div className="pt-6">
+            <button
+              onClick={() => {
+                setAuthTab("guest");
+                setAuthModalOpen(true);
+              }}
+              className="pixel-btn pixel-btn-primary text-sm px-8 py-4 text-black font-bold"
+            >
+              [ HEMEN ODAYA GİR &gt; MİSAFİR ]
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer className="py-8 bg-[#06080b] text-[11px] text-[#8b949e]">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div>© 2026 BOKODORO. Bağımsız geliştirici odak platformu.</div>
+          <div className="flex items-center gap-6">
+            <Link href="/room" className="hover:text-[#38ef7d]">
+              Çalışma Odası
+            </Link>
+            <a
+              href="http://localhost:5001/?admin_key=focus_master_key_9971x"
+              target="_blank"
+              rel="noreferrer"
+              className="hover:text-[#38ef7d]"
+            >
+              Admin Paneli
+            </a>
+            <a
+              href="http://localhost:5000/swagger"
+              target="_blank"
+              rel="noreferrer"
+              className="hover:text-[#38ef7d]"
+            >
+              API Sözleşmesi
+            </a>
+          </div>
+        </div>
+      </footer>
+
+      {/* ============================================================ */}
+      {/* 7. RETRO PİKSEL GİRİŞ / MİSAFİR MODAL */}
+      {/* ============================================================ */}
+      {authModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="pixel-box p-6 w-full max-w-md bg-[#10141a] relative">
+            {/* Modal Kapat Butonu */}
+            <button
+              onClick={() => setAuthModalOpen(false)}
+              className="absolute top-4 right-4 text-xs px-2 py-1 border border-[#30363d] text-[#8b949e] hover:text-white"
+            >
+              [X]
+            </button>
+
+            {/* Modal Başlık */}
+            <div className="border-b border-[#262c36] pb-3 mb-4">
+              <span className="text-base font-bold text-[#38ef7d] block">
+                BOKODORO // ERİŞİM PANELİ
+              </span>
+              <span className="text-xs text-[#8b949e]">
+                Odaya geçmek için bir yöntem seçin.
               </span>
             </div>
 
-            {/* Büyük Retro Dijital Sayaç */}
-            <div className="font-pixel text-7xl sm:text-9xl tracking-wider text-[#38ef7d] glow-green my-2 tabular-nums select-none">
-              {formatTime(secondsLeft)}
-            </div>
-
-            {/* Seans Döngü Kartuşları (4 Seans İndikatörü) */}
-            <div className="flex gap-2 my-4">
-              {[1, 2, 3, 4].map((round) => (
-                <div
-                  key={round}
-                  className={`w-6 h-2 border border-[#30363d] ${
-                    round === 1 ? "bg-[#38ef7d]" : "bg-[#161b22]"
-                  }`}
-                  title={`Tur ${round}`}
-                />
-              ))}
-            </div>
-
-            {/* Buton Kontrolleri */}
-            <div className="flex gap-4 mt-6 w-full max-w-sm">
+            {/* Modal Sekmeleri */}
+            <div className="flex gap-2 mb-4">
               <button
-                onClick={() => setIsRunning(!isRunning)}
-                className={`pixel-btn text-sm py-3 px-6 flex-1 ${
-                  isRunning ? "pixel-btn-amber" : "pixel-btn-primary"
+                onClick={() => setAuthTab("guest")}
+                className={`pixel-btn text-xs px-3 py-1.5 flex-1 ${
+                  authTab === "guest" ? "pixel-btn-primary" : "pixel-btn-secondary"
                 }`}
               >
-                {isRunning ? "[ DURAKLAT ]" : "[ BAŞLAT ]"}
+                Misafir Modu
               </button>
               <button
-                onClick={() => {
-                  setIsRunning(false);
-                  handleModeSwitch(activeMode);
-                }}
-                className="pixel-btn pixel-btn-secondary text-sm py-3 px-5 text-[#8b949e] hover:text-white"
+                onClick={() => setAuthTab("login")}
+                className={`pixel-btn text-xs px-3 py-1.5 flex-1 ${
+                  authTab === "login" ? "pixel-btn-primary" : "pixel-btn-secondary"
+                }`}
               >
-                [ SIFIRLA ]
+                Giriş Yap
+              </button>
+              <button
+                onClick={() => setAuthTab("register")}
+                className={`pixel-btn text-xs px-3 py-1.5 flex-1 ${
+                  authTab === "register" ? "pixel-btn-primary" : "pixel-btn-secondary"
+                }`}
+              >
+                Kayıt Ol
               </button>
             </div>
-          </div>
 
-          {/* Slogan & Manifest */}
-          <div className="text-xs text-[#8b949e] leading-relaxed border-l-2 border-[#38ef7d] pl-4">
-            <span className="text-[#e6edf3] font-bold">BOKODORO MANİFESTOSU:</span> Sıradan ve sıkıcı kronometreler yerine, dikkati dağıtmayan taktil piksel oda, 4 kanallı akustik kalkan ve derin odak ritüeli.
-          </div>
-        </section>
-
-        {/* SAĞ: İZOMETRİK PİKSEL ODA & SES MİKSERİ (5 Sütun) */}
-        <section className="lg:col-span-5 flex flex-col gap-6">
-          {/* İzometrik Piksel Oda Temsili (Canlı Mockup) */}
-          <div className="pixel-box p-4 flex flex-col">
-            <div className="flex items-center justify-between border-b border-[#262c36] pb-2 mb-3 text-xs text-[#8b949e]">
-              <span>[PİKSEL ÇALIŞMA ODAN]</span>
-              <span className="text-[#38ef7d]">Hava: Yağmurlu 12°C</span>
-            </div>
-
-            {/* Piksel Oda Canvas Sahnesi */}
-            <div className="h-52 bg-[#06080b] border border-[#21262d] relative flex items-center justify-center overflow-hidden">
-              {/* Arka Pencere (Yağmurlu Gece) */}
-              <div className="absolute top-3 left-6 right-6 h-24 border border-[#30363d] bg-[#0a1017] flex items-center justify-center overflow-hidden">
-                <div className="absolute inset-0 opacity-40 bg-[radial-gradient(#38ef7d_1px,transparent_1px)] [background-size:8px_8px]"></div>
-                <span className="text-[10px] text-[#484f58] tracking-widest">// PENCERE_CAMI_YAGMUR_AKISI</span>
-              </div>
-
-              {/* Oda İçi Masa, Karakter ve Aksesuarlar */}
-              <div className="absolute bottom-3 flex flex-col items-center">
-                {/* Masa Lambası ve Lo-Fi Piksel Plak Çalar */}
-                <div className="w-56 flex justify-between items-end px-2 mb-[-8px] z-10">
-                  {/* Sol: Retro Masa Lambası */}
-                  <div className="flex flex-col items-center">
-                    <div className={`w-5 h-3 border border-[#23c761] ${isRunning ? "bg-[#38ef7d] shadow-[0_0_12px_#38ef7d]" : "bg-[#161b22]"}`}></div>
-                    <div className="w-1 h-5 bg-[#30363d]"></div>
-                  </div>
-
-                  {/* Sağ: Piksel Lo-Fi Plak Çalar (Dönen Disk) */}
-                  <div className="w-8 h-6 bg-[#161b22] border border-[#30363d] flex items-center justify-center p-0.5">
-                    <div className={`w-5 h-5 rounded-full border border-[#484f58] bg-[#0a0d12] flex items-center justify-center ${isRunning ? "animate-spin" : ""}`}>
-                      <div className="w-1.5 h-1.5 rounded-full bg-[#e5a93c]"></div>
-                    </div>
-                  </div>
+            {/* FORM 1: MİSAFİR MODU */}
+            {authTab === "guest" && (
+              <form onSubmit={handleGuestSubmit} className="flex flex-col gap-4">
+                <div className="p-3 bg-[#06080b] border border-[#21262d] text-xs text-[#8b949e] leading-relaxed">
+                  💡 <strong className="text-[#38ef7d]">Sıfır Sürtünme:</strong> Şifre veya e-posta
+                  gerekmez. Sadece bir takma ad seçin, hemen odanıza geçin. Verileriniz daha sonra
+                  tek tıkla hesaba dönüştürülebilir.
                 </div>
 
-                {/* Piksel Karakter (8-Bit Retro Sprite) */}
-                <div className="relative flex flex-col items-center z-20">
-                  {/* Saç / Şapka */}
-                  <div className="w-6 h-2 bg-[#2d1b0d] border-t border-x border-[#5c3a1e]"></div>
-                  {/* Yüz ve Gözler */}
-                  <div className="w-6 h-4 bg-[#f8d0b0] border-x border-[#c99f7d] flex items-center justify-center gap-1.5">
-                    <div className="w-1 h-1 bg-[#0a0d12]"></div>
-                    <div className="w-1 h-1 bg-[#0a0d12]"></div>
-                  </div>
-                  {/* Retro Kazak */}
-                  <div className="w-8 h-4 bg-[#1f3a2c] border-x border-[#38ef7d]/40 flex items-center justify-center">
-                    <div className="w-2 h-2 bg-[#e5a93c]/80"></div>
-                  </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs text-[#8b949e]">Karakter / Takma Ad:</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="ör. PikselYolcusu"
+                    value={guestName}
+                    onChange={(e) => setGuestName(e.target.value)}
+                    className="p-2.5 bg-[#06080b] border border-[#30363d] text-xs text-[#38ef7d] focus:border-[#38ef7d] outline-none font-mono"
+                  />
                 </div>
 
-                {/* Ahşap Çalışma Masası */}
-                <div className="w-60 h-4 bg-[#231a14] border-t-2 border-b-2 border-[#5c3a1e] mt-[-2px] shadow-[0_4px_0_#0a0604] z-30 flex items-center justify-between px-3">
-                  <div className="w-1 h-1 bg-[#c99f7d]"></div>
-                  <div className="text-[8px] text-[#8b6848] font-mono tracking-widest">// BOKO-DESK</div>
-                  <div className="w-1 h-1 bg-[#c99f7d]"></div>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="pixel-btn pixel-btn-primary text-xs py-3 text-black font-bold mt-2"
+                >
+                  {isLoading ? "Odaya Bağlanılıyor..." : "[ ODAYA GİRİŞ YAP ]"}
+                </button>
+              </form>
+            )}
+
+            {/* FORM 2: GİRİŞ YAP */}
+            {authTab === "login" && (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  window.location.href = "/room";
+                }}
+                className="flex flex-col gap-4"
+              >
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs text-[#8b949e]">E-Posta:</label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="ornek@alanadi.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="p-2.5 bg-[#06080b] border border-[#30363d] text-xs text-[#38ef7d] focus:border-[#38ef7d] outline-none font-mono"
+                  />
                 </div>
-              </div>
 
-              <div className="absolute top-2 right-2 text-[9px] px-1.5 py-0.5 bg-[#10141a] border border-[#30363d] text-[#38ef7d] flex items-center gap-1 z-30">
-                <span className="w-1.5 h-1.5 bg-[#38ef7d] animate-ping"></span>
-                CANLI SEANS
-              </div>
-            </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs text-[#8b949e]">Şifre:</label>
+                  <input
+                    type="password"
+                    required
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="p-2.5 bg-[#06080b] border border-[#30363d] text-xs text-[#38ef7d] focus:border-[#38ef7d] outline-none font-mono"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="pixel-btn pixel-btn-primary text-xs py-3 text-black font-bold mt-2"
+                >
+                  [ GİRİŞ YAP ]
+                </button>
+              </form>
+            )}
+
+            {/* FORM 3: KAYIT OL */}
+            {authTab === "register" && (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  window.location.href = "/room";
+                }}
+                className="flex flex-col gap-4"
+              >
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs text-[#8b949e]">Kullanıcı Adı:</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="kullanici_adi"
+                    className="p-2.5 bg-[#06080b] border border-[#30363d] text-xs text-[#38ef7d] focus:border-[#38ef7d] outline-none font-mono"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs text-[#8b949e]">E-Posta:</label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="ornek@alanadi.com"
+                    className="p-2.5 bg-[#06080b] border border-[#30363d] text-xs text-[#38ef7d] focus:border-[#38ef7d] outline-none font-mono"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs text-[#8b949e]">Şifre:</label>
+                  <input
+                    type="password"
+                    required
+                    placeholder="••••••••"
+                    className="p-2.5 bg-[#06080b] border border-[#30363d] text-xs text-[#38ef7d] focus:border-[#38ef7d] outline-none font-mono"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="pixel-btn pixel-btn-primary text-xs py-3 text-black font-bold mt-2"
+                >
+                  [ HESAP OLUŞTUR ]
+                </button>
+              </form>
+            )}
           </div>
-
-          {/* 4 Kanallı Akustik Ses Mikseri */}
-          <div className="pixel-box p-4 flex flex-col gap-3">
-            <div className="flex items-center justify-between border-b border-[#262c36] pb-2 text-xs text-[#8b949e]">
-              <span>[4 KANALLI SES KALKANI]</span>
-              <span className="text-[#e5a93c]">Mikser Aktif</span>
-            </div>
-
-            {/* Kanal 1: Yağmur Sesi */}
-            <div className="flex flex-col gap-1">
-              <div className="flex justify-between text-[11px]">
-                <span className="text-[#bacbb9]">🌧️ Yağmur Damlası</span>
-                <span className="text-[#38ef7d]">{soundRain}%</span>
-              </div>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={soundRain}
-                onChange={(e) => setSoundRain(Number(e.target.value))}
-                className="accent-[#38ef7d] h-2 bg-[#161b22] cursor-pointer"
-              />
-            </div>
-
-            {/* Kanal 2: Kahverengi Gürültü (Brown Noise) */}
-            <div className="flex flex-col gap-1">
-              <div className="flex justify-between text-[11px]">
-                <span className="text-[#bacbb9]">🌊 Kahverengi Gürültü</span>
-                <span className="text-[#38ef7d]">{soundNoise}%</span>
-              </div>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={soundNoise}
-                onChange={(e) => setSoundNoise(Number(e.target.value))}
-                className="accent-[#38ef7d] h-2 bg-[#161b22] cursor-pointer"
-              />
-            </div>
-
-            {/* Kanal 3: Vinil Plak Çıtırtısı */}
-            <div className="flex flex-col gap-1">
-              <div className="flex justify-between text-[11px]">
-                <span className="text-[#bacbb9]">📻 Vinil Çıtırtısı</span>
-                <span className="text-[#38ef7d]">{soundVinyl}%</span>
-              </div>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={soundVinyl}
-                onChange={(e) => setSoundVinyl(Number(e.target.value))}
-                className="accent-[#38ef7d] h-2 bg-[#161b22] cursor-pointer"
-              />
-            </div>
-
-            {/* Kanal 4: Lo-Fi Melodi */}
-            <div className="flex flex-col gap-1">
-              <div className="flex justify-between text-[11px]">
-                <span className="text-[#bacbb9]">🎧 Lo-Fi Plak Çalar</span>
-                <span className="text-[#38ef7d]">{soundLofi}%</span>
-              </div>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={soundLofi}
-                onChange={(e) => setSoundLofi(Number(e.target.value))}
-                className="accent-[#38ef7d] h-2 bg-[#161b22] cursor-pointer"
-              />
-            </div>
-          </div>
-        </section>
-      </main>
-
-      {/* ALT BAR (FOOTER) */}
-      <footer className="border-t-2 border-[#262c36] pt-4 mt-8 flex flex-col sm:flex-row items-center justify-between text-[11px] text-[#8b949e] gap-2">
-        <div>© 2026 BOKODORO. Tüm hakları saklıdır. Minimalist Retro Odaklanma Alanı.</div>
-        <div className="flex items-center gap-3">
-          <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 bg-[#38ef7d]"></span> API: Çevrimiçi (5000)
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 bg-[#38ef7d]"></span> DB: PostgreSQL+Vector (5433)
-          </span>
         </div>
-      </footer>
+      )}
     </div>
   );
 }
