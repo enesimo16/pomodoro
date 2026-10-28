@@ -1,9 +1,10 @@
 import { chromium } from './node_modules/playwright/index.mjs';
+import { requireAdminKey, screenshotPath } from './config.mjs';
 import fs from 'fs';
 import path from 'path';
 
 const ADMIN_BASE = 'http://localhost:5001';
-const ADMIN_KEY = 'focus_master_key_9971x';
+const ADMIN_KEY = requireAdminKey();
 
 async function testPolarisSidebar() {
     console.log('Testing Shopify Polaris Sidebar & Panels...');
@@ -23,7 +24,7 @@ async function testPolarisSidebar() {
     await page.goto(`${ADMIN_BASE}/?admin_key=${ADMIN_KEY}`, { waitUntil: 'networkidle' });
 
     // Take screenshot of Dashboard with Polaris theme
-    await page.screenshot({ path: 'C:/Users/enes yel/.gemini/antigravity/brain/3b108ce6-7f66-47a7-9462-d7f31dd328c3/polaris_dashboard.png', fullPage: false });
+    await page.screenshot({ path: screenshotPath('polaris_dashboard.png'), fullPage: false });
     console.log('Saved polaris_dashboard.png');
 
     // Count folders
@@ -70,7 +71,7 @@ async function testPolarisSidebar() {
         throw new Error('Developer folder should be expanded and have has-active-child on /ApiDocs!');
     }
 
-    await page.screenshot({ path: 'C:/Users/enes yel/.gemini/antigravity/brain/3b108ce6-7f66-47a7-9462-d7f31dd328c3/polaris_apidocs.png', fullPage: false });
+    await page.screenshot({ path: screenshotPath('polaris_apidocs.png'), fullPage: false });
     console.log('Saved polaris_apidocs.png');
 
     // 4. Test Navigation to /Shop and Economy Folder Expansion
@@ -81,13 +82,13 @@ async function testPolarisSidebar() {
     console.log('On /Shop - Economy folder has-active-child:', economyActive);
     if (!economyActive) throw new Error('Economy folder should have has-active-child on /Shop!');
 
-    await page.screenshot({ path: 'C:/Users/enes yel/.gemini/antigravity/brain/3b108ce6-7f66-47a7-9462-d7f31dd328c3/polaris_shop.png', fullPage: false });
+    await page.screenshot({ path: screenshotPath('polaris_shop.png'), fullPage: false });
     console.log('Saved polaris_shop.png');
 
     // 5. Test Navigation to /ApiLab
     console.log('\n--- 5. Testing ApiLab Page ---');
     await page.goto(`${ADMIN_BASE}/ApiLab?admin_key=${ADMIN_KEY}`, { waitUntil: 'networkidle' });
-    await page.screenshot({ path: 'C:/Users/enes yel/.gemini/antigravity/brain/3b108ce6-7f66-47a7-9462-d7f31dd328c3/polaris_apilab.png', fullPage: false });
+    await page.screenshot({ path: screenshotPath('polaris_apilab.png'), fullPage: false });
     console.log('Saved polaris_apilab.png');
 
     // 6. Test Mobile Responsiveness
@@ -100,7 +101,7 @@ async function testPolarisSidebar() {
     await toggleBtn.click();
     await page.waitForTimeout(400);
 
-    await page.screenshot({ path: 'C:/Users/enes yel/.gemini/antigravity/brain/3b108ce6-7f66-47a7-9462-d7f31dd328c3/polaris_mobile_sidebar.png', fullPage: false });
+    await page.screenshot({ path: screenshotPath('polaris_mobile_sidebar.png'), fullPage: false });
     console.log('Saved polaris_mobile_sidebar.png');
 
     // Verify no icon tags or emojis in the rendered HTML

@@ -1,7 +1,8 @@
 import { chromium } from 'playwright';
+import { requireAdminKey, screenshotPath } from './config.mjs';
 
 const ADMIN_BASE = 'http://localhost:5001';
-const ADMIN_KEY = 'focus_master_key_9971x';
+const ADMIN_KEY = requireAdminKey();
 
 async function main() {
     console.log('--- ApiLab Atmosfer, Tema ve Müzik Ayrıştırma Doğrulama Testi Başlıyor ---');
@@ -45,7 +46,7 @@ async function main() {
         const atmoTitle = await page.locator('#lblAtmoTitle').textContent();
         console.log(`- Üretilen Bütünsel Atmosfer: "${atmoTitle}"`);
 
-        await page.screenshot({ path: 'artifacts/test_tab_atmosphere.png', fullPage: false });
+        await page.screenshot({ path: screenshotPath('test_tab_atmosphere.png'), fullPage: false });
 
         // 2. Modül 11: Görsel Tema ve Renk Paleti (QuickJump ile geçiş)
         console.log('\n[2] Modül 11: Görsel Tema & Palet Test Ediliyor...');
@@ -70,7 +71,7 @@ async function main() {
         const studioThemeBadge = await page.locator('#badgeStudioTheme').textContent();
         console.log(`- Stüdyodaki Güncel Tema Rozeti: "${studioThemeBadge}"`);
 
-        await page.screenshot({ path: 'artifacts/test_tab_theme_ai.png', fullPage: false });
+        await page.screenshot({ path: screenshotPath('test_tab_theme_ai.png'), fullPage: false });
 
         // 3. Modül 12: Müzik ve 4-Kanal Akustik Mikser
         console.log('\n[3] Modül 12: Müzik & 4-Kanal Mikser Test Ediliyor...');
@@ -94,7 +95,7 @@ async function main() {
         console.log(`- Sentezlenen Canlı Parça: "${liveTrack}"`);
         console.log(`- Canlı Stüdyodaki Melodi Mikser Değeri: "${studioMelodyVal}"`);
 
-        await page.screenshot({ path: 'artifacts/test_tab_music_ai.png', fullPage: false });
+        await page.screenshot({ path: screenshotPath('test_tab_music_ai.png'), fullPage: false });
 
         console.log('\n--- TÜM TESTLER BAŞARIYLA TAMAMLANDI! ---');
     } catch (err) {

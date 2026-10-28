@@ -1,10 +1,11 @@
 import { chromium } from './node_modules/playwright/index.mjs';
+import { requireAdminKey, screenshotPath } from './config.mjs';
 
 async function verifyAiPages() {
     console.log('Testing newly created AI pages...');
     const browser = await chromium.launch({ channel: 'chrome', headless: true });
     const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
-    const ADMIN_KEY = 'focus_master_key_9971x';
+    const ADMIN_KEY = requireAdminKey();
 
     const urls = [
         { name: 'AI Hub Overview', path: '/AiCoach' },
@@ -24,17 +25,17 @@ async function verifyAiPages() {
 
     // Take screenshot of Personal AI
     await page.goto('http://localhost:5001/AiCoach/Personal?admin_key=' + ADMIN_KEY, { waitUntil: 'domcontentloaded' });
-    await page.screenshot({ path: 'C:/Users/enes yel/.gemini/antigravity/brain/3b108ce6-7f66-47a7-9462-d7f31dd328c3/polaris_ai_personal.png' });
+    await page.screenshot({ path: screenshotPath('polaris_ai_personal.png') });
     console.log('Saved polaris_ai_personal.png');
 
     // Take screenshot of Global AI
     await page.goto('http://localhost:5001/AiCoach/Global?admin_key=' + ADMIN_KEY, { waitUntil: 'domcontentloaded' });
-    await page.screenshot({ path: 'C:/Users/enes yel/.gemini/antigravity/brain/3b108ce6-7f66-47a7-9462-d7f31dd328c3/polaris_ai_global.png' });
+    await page.screenshot({ path: screenshotPath('polaris_ai_global.png') });
     console.log('Saved polaris_ai_global.png');
 
     // Take screenshot of Atmosphere
     await page.goto('http://localhost:5001/AiCoach/Atmosphere?admin_key=' + ADMIN_KEY, { waitUntil: 'domcontentloaded' });
-    await page.screenshot({ path: 'C:/Users/enes yel/.gemini/antigravity/brain/3b108ce6-7f66-47a7-9462-d7f31dd328c3/polaris_ai_atmosphere.png' });
+    await page.screenshot({ path: screenshotPath('polaris_ai_atmosphere.png') });
     console.log('Saved polaris_ai_atmosphere.png');
 
     // Zero icons check

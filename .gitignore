@@ -60,3 +60,7 @@ Desktop.ini
 
 # Test Ekrangörüntüleri ve Artifacts
 artifacts/
+
+# Kok dizin ekran goruntuleri ve betik ciktilari
+/*.png
+scripts/audit_results.json

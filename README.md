@@ -47,7 +47,7 @@ Proje kurumsal **Clean Architecture** prensiplerine uygun olarak katmanlara ayr�
 │   ├── temalar.md                     # Piksel oda tasarımları, video döngüleri ve pil tasarruf mimarisi
 │   └── veri-modeli.md                 # Avatar, PixelRoom, ItemCatalog, FocusSession ERD diyagramı
 │
-├── scripts/                           # Otomasyon ve test betikleri (Python)
+├── scripts/                           # Otomasyon ve test betikleri (Python, Playwright/Node; ADMIN_KEY ve SCREENSHOT_DIR ortam değişkenleri)
 ├── AGENTS.md                          # Antigravity yapay zekâ anayasası
 ├── baslamadan-once.md                 # Başlangıç ve vizyon rehberi
 ├── docker-compose.yml                 # PostgreSQL, Redis, API ve Admin orkestrasyonu

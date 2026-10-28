@@ -1,10 +1,10 @@
 import { chromium } from './node_modules/playwright/index.mjs';
+import { requireAdminKey, screenshotPath } from './config.mjs';
 import fs from 'fs';
-import path from 'path';
 
 const ADMIN_BASE = 'http://localhost:5001';
 const WEBAPI_BASE = 'http://localhost:5000';
-const ADMIN_KEY = 'focus_master_key_9971x';
+const ADMIN_KEY = requireAdminKey();
 
 const results = {
     timestamp: new Date().toISOString(),
@@ -472,7 +472,7 @@ async function runBrowserAudit() {
     }
 
     // Raporu JSON olarak diske yaz
-    fs.writeFileSync('scripts/audit_results.json', JSON.stringify(results, null, 2), 'utf-8');
+    fs.writeFileSync(screenshotPath('audit_results.json'), JSON.stringify(results, null, 2), 'utf-8');
     console.log(`\n======================================================`);
     console.log(`GENEL ÖZET: Toplam ${results.summary.total} Test Yapıldı.`);
     console.log(`BAŞARILI: ${results.summary.passed} | BAŞARISIZ: ${results.summary.failed}`);

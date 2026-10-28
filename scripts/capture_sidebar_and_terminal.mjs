@@ -1,7 +1,7 @@
 import { chromium } from './node_modules/playwright/index.mjs';
-import path from 'path';
+import { requireAdminKey, screenshotPath } from './config.mjs';
 
-const artifactsDir = 'C:/Users/enes yel/.gemini/antigravity/brain/3b108ce6-7f66-47a7-9462-d7f31dd328c3';
+const ADMIN_KEY = requireAdminKey();
 
 (async () => {
     const browser = await chromium.launch({ channel: 'chrome', headless: true });
@@ -9,11 +9,11 @@ const artifactsDir = 'C:/Users/enes yel/.gemini/antigravity/brain/3b108ce6-7f66-
     const page = await context.newPage();
 
     console.log('Navigating to root to authenticate...');
-    await page.goto('http://localhost:5001/?admin_key=focus_master_key_9971x', { waitUntil: 'domcontentloaded' });
+    await page.goto('http://localhost:5001/?admin_key=' + ADMIN_KEY, { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(500);
 
     console.log('Navigating to ApiLab...');
-    await page.goto('http://localhost:5001/ApiLab?admin_key=focus_master_key_9971x', { waitUntil: 'domcontentloaded' });
+    await page.goto('http://localhost:5001/ApiLab?admin_key=' + ADMIN_KEY, { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(1000);
 
     // Otomatik test hesabının bağlanmasını bekle
@@ -30,7 +30,7 @@ const artifactsDir = 'C:/Users/enes yel/.gemini/antigravity/brain/3b108ce6-7f66-
 
     // 1. Ekran Görüntüsü: Sol panel beyaz yazılar ve Gizle butonu (Açıkken)
     await page.screenshot({
-        path: path.join(artifactsDir, 'polaris_sidebar_whiter_text.png'),
+        path: screenshotPath('polaris_sidebar_whiter_text.png'),
         fullPage: false
     });
     console.log('Saved polaris_sidebar_whiter_text.png');
@@ -40,7 +40,7 @@ const artifactsDir = 'C:/Users/enes yel/.gemini/antigravity/brain/3b108ce6-7f66-
     if (terminalElement) {
         await terminalElement.scrollIntoViewIfNeeded();
         await page.screenshot({
-            path: path.join(artifactsDir, 'polaris_terminal_readable.png'),
+            path: screenshotPath('polaris_terminal_readable.png'),
             fullPage: false
         });
         console.log('Saved polaris_terminal_readable.png');
@@ -52,7 +52,7 @@ const artifactsDir = 'C:/Users/enes yel/.gemini/antigravity/brain/3b108ce6-7f66-
     await page.waitForTimeout(400);
 
     await page.screenshot({
-        path: path.join(artifactsDir, 'polaris_sidebar_collapsed.png'),
+        path: screenshotPath('polaris_sidebar_collapsed.png'),
         fullPage: false
     });
     console.log('Saved polaris_sidebar_collapsed.png');
@@ -63,7 +63,7 @@ const artifactsDir = 'C:/Users/enes yel/.gemini/antigravity/brain/3b108ce6-7f66-
     await page.waitForTimeout(400);
 
     await page.screenshot({
-        path: path.join(artifactsDir, 'polaris_sidebar_restored.png'),
+        path: screenshotPath('polaris_sidebar_restored.png'),
         fullPage: false
     });
     console.log('Saved polaris_sidebar_restored.png');

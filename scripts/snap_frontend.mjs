@@ -1,4 +1,5 @@
 import { chromium } from './node_modules/playwright/index.mjs';
+import { screenshotPath } from './config.mjs';
 
 async function snap() {
   const browser = await chromium.launch({ channel: 'chrome', headless: true });
@@ -7,12 +8,12 @@ async function snap() {
   // 1. Landing
   await page.goto('http://localhost:3000', { waitUntil: 'domcontentloaded', timeout: 30000 });
   await page.waitForTimeout(1000);
-  await page.screenshot({ path: 'frontend_bokodoro_landing_3000.png' });
+  await page.screenshot({ path: screenshotPath('frontend_bokodoro_landing_3000.png') });
 
   // 2. Room
   await page.goto('http://localhost:3000/room?guest=Enes', { waitUntil: 'domcontentloaded', timeout: 30000 });
   await page.waitForTimeout(1000);
-  await page.screenshot({ path: 'frontend_bokodoro_room_3000.png' });
+  await page.screenshot({ path: screenshotPath('frontend_bokodoro_room_3000.png') });
 
   await browser.close();
   console.log('BOTH_SCREENSHOTS_SUCCESS');
