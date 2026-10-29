@@ -12,10 +12,12 @@ public record GetUserFocusStatsQuery(Guid UserId) : IRequest<UserStatsDto>;
 public class GetUserFocusStatsQueryHandler : IRequestHandler<GetUserFocusStatsQuery, UserStatsDto>
 {
     private readonly IApplicationDbContext _context;
+    private readonly TimeProvider _clock;
 
-    public GetUserFocusStatsQueryHandler(IApplicationDbContext context)
+    public GetUserFocusStatsQueryHandler(IApplicationDbContext context, TimeProvider clock)
     {
         _context = context;
+        _clock = clock;
     }
 
     public async Task<UserStatsDto> Handle(GetUserFocusStatsQuery request, CancellationToken cancellationToken)
@@ -45,54 +47,62 @@ public class GetUserFocusStatsQueryHandler : IRequestHandler<GetUserFocusStatsQu
             .AsNoTracking()
             .CountAsync(i => i.UserId == request.UserId, cancellationToken);
 
-        // Odaklanma seanslari
-        var completedSessions = await _context.FocusSessions
+        var now = _clock.GetUtcNow().UtcDateTime;
+        var todayStart = DateTime.SpecifyKind(now.Date, DateTimeKind.Utc);
+        var startOfWeek = now.DayOfWeek == DayOfWeek.Sunday
+            ? todayStart.AddDays(-6)
+            : todayStart.AddDays(-(int)now.DayOfWeek + (int)DayOfWeek.Monday);
+        var startOfMonth = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+        var last7Start = todayStart.AddDays(-6);
+
+        var completedFocus = _context.FocusSessions
             .AsNoTracking()
-            .Where(s => s.UserId == request.UserId && s.Status == SessionStatus.Completed && s.Kind == SessionKind.Focus)
+            .Where(s => s.UserId == request.UserId && s.Status == SessionStatus.Completed && s.Kind == SessionKind.Focus);
+
+        // Toplamlar veritabaninda hesaplanir; seanslarin tamami bellege cekilmez
+        var totals = await completedFocus
+            .GroupBy(_ => 1)
+            .Select(g => new
+            {
+                TotalMinutes = g.Sum(s => s.NetDurationSeconds / 60),
+                TotalCount = g.Count(),
+                TodayMinutes = g.Where(s => s.EndedAt >= todayStart).Sum(s => s.NetDurationSeconds / 60),
+                TodayCount = g.Count(s => s.EndedAt >= todayStart),
+                WeekMinutes = g.Where(s => s.EndedAt >= startOfWeek).Sum(s => s.NetDurationSeconds / 60),
+                MonthMinutes = g.Where(s => s.EndedAt >= startOfMonth).Sum(s => s.NetDurationSeconds / 60)
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        // Son 7 gunluk dagilim icin yalnizca ilgili araliktaki satirlar alinir
+        var recentSessions = await completedFocus
+            .Where(s => s.EndedAt >= last7Start)
             .Select(s => new { s.NetDurationSeconds, s.EndedAt })
             .ToListAsync(cancellationToken);
 
-        var totalMinutes = completedSessions.Sum(s => s.NetDurationSeconds / 60);
-        var totalCount = completedSessions.Count;
-
-        var now = DateTime.UtcNow;
-        var todayStart = DateTime.SpecifyKind(now.Date, DateTimeKind.Utc);
-        var todaySessions = completedSessions.Where(s => s.EndedAt.HasValue && s.EndedAt.Value >= todayStart).ToList();
-        var todayMinutes = todaySessions.Sum(s => s.NetDurationSeconds / 60);
-        var todayCount = todaySessions.Count;
-
-        var startOfWeek = todayStart.AddDays(-(int)now.DayOfWeek + (int)DayOfWeek.Monday);
-        if (now.DayOfWeek == DayOfWeek.Sunday)
-        {
-            startOfWeek = todayStart.AddDays(-6);
-        }
-        var thisWeekMinutes = completedSessions
-            .Where(s => s.EndedAt.HasValue && s.EndedAt.Value >= startOfWeek)
-            .Sum(s => s.NetDurationSeconds / 60);
-
-        var startOfMonth = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
-        var thisMonthMinutes = completedSessions
-            .Where(s => s.EndedAt.HasValue && s.EndedAt.Value >= startOfMonth)
-            .Sum(s => s.NetDurationSeconds / 60);
-
-        // Son 7 gunluk dagilim
         var last7Days = new List<DailyFocusStatDto>();
+        var culture = new System.Globalization.CultureInfo("tr-TR");
         for (var i = 6; i >= 0; i--)
         {
             var targetDay = todayStart.AddDays(-i);
             var nextDay = targetDay.AddDays(1);
 
-            var daySessions = completedSessions
-                .Where(s => s.EndedAt.HasValue && s.EndedAt.Value >= targetDay && s.EndedAt.Value < nextDay)
+            var daySessions = recentSessions
+                .Where(s => s.EndedAt >= targetDay && s.EndedAt < nextDay)
                 .ToList();
 
-            var dayName = targetDay.ToString("ddd", new System.Globalization.CultureInfo("tr-TR"));
             last7Days.Add(new DailyFocusStatDto(
                 targetDay,
-                dayName,
+                targetDay.ToString("ddd", culture),
                 daySessions.Sum(s => s.NetDurationSeconds / 60),
                 daySessions.Count));
         }
+
+        var totalMinutes = totals?.TotalMinutes ?? 0;
+        var totalCount = totals?.TotalCount ?? 0;
+        var todayMinutes = totals?.TodayMinutes ?? 0;
+        var todayCount = totals?.TodayCount ?? 0;
+        var thisWeekMinutes = totals?.WeekMinutes ?? 0;
+        var thisMonthMinutes = totals?.MonthMinutes ?? 0;
 
         return new UserStatsDto(
             totalMinutes,

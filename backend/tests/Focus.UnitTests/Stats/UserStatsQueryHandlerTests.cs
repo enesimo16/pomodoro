@@ -33,7 +33,7 @@ public class UserStatsQueryHandlerTests
         context.FocusSessions.AddRange(s1, s2);
         await context.SaveChangesAsync();
 
-        var handler = new GetUserFocusStatsQueryHandler(context);
+        var handler = new GetUserFocusStatsQueryHandler(context, TimeProvider.System);
         var stats = await handler.Handle(new GetUserFocusStatsQuery(user.Id), CancellationToken.None);
 
         Assert.Equal(50, stats.TotalFocusMinutes);
@@ -58,7 +58,7 @@ public class UserStatsQueryHandlerTests
         context.Users.Add(user);
         await context.SaveChangesAsync();
 
-        var handler = new GetUserFocusStatsQueryHandler(context);
+        var handler = new GetUserFocusStatsQueryHandler(context, TimeProvider.System);
         var stats = await handler.Handle(new GetUserFocusStatsQuery(user.Id), CancellationToken.None);
 
         Assert.Equal(1, stats.CurrentLevel);
@@ -66,5 +66,65 @@ public class UserStatsQueryHandlerTests
         Assert.Equal(0, stats.XpRequiredForCurrentLevel);
         Assert.Equal(455, stats.XpRequiredForNextLevel);
         Assert.Equal(20.0, stats.LevelProgressPercentage);
+    }
+
+    [Fact]
+    public async Task GetUserFocusStats_AggregatesPeriodsAndIgnoresBreaksAndAbandonedSessions()
+    {
+        using var context = TestDbContextFactory.Create();
+        var user = User.CreateGuest("PeriodUser");
+        context.Users.Add(user);
+
+        // Carsamba 14 Ekim 2026 12:00 UTC
+        var now = new DateTime(2026, 10, 14, 12, 0, 0, DateTimeKind.Utc);
+        context.FocusSessions.AddRange(
+            CompletedFocus(user, SessionKind.Focus, new DateTime(2026, 10, 14, 9, 0, 0, DateTimeKind.Utc), 30),
+            CompletedFocus(user, SessionKind.Focus, new DateTime(2026, 10, 12, 20, 0, 0, DateTimeKind.Utc), 20),
+            CompletedFocus(user, SessionKind.Focus, new DateTime(2026, 10, 5, 10, 0, 0, DateTimeKind.Utc), 40),
+            CompletedFocus(user, SessionKind.Focus, new DateTime(2026, 9, 28, 10, 0, 0, DateTimeKind.Utc), 50),
+            CompletedFocus(user, SessionKind.Break, new DateTime(2026, 10, 14, 10, 0, 0, DateTimeKind.Utc), 15));
+
+        var abandoned = FocusSession.Start(user.Id, null, SessionKind.Focus, 25, 5, now: now.AddHours(-3));
+        abandoned.Abandon(25 * 60, endedAt: now.AddHours(-2));
+        context.FocusSessions.Add(abandoned);
+        await context.SaveChangesAsync();
+
+        var handler = new GetUserFocusStatsQueryHandler(context, new TestClock(now));
+        var stats = await handler.Handle(new GetUserFocusStatsQuery(user.Id), CancellationToken.None);
+
+        Assert.Equal(140, stats.TotalFocusMinutes);
+        Assert.Equal(4, stats.TotalCompletedSessions);
+        Assert.Equal(30, stats.TodayFocusMinutes);
+        Assert.Equal(1, stats.TodaySessionCount);
+        Assert.Equal(50, stats.ThisWeekFocusMinutes);
+        Assert.Equal(90, stats.ThisMonthFocusMinutes);
+        Assert.Equal(7, stats.Last7Days.Count);
+        Assert.Equal(30, stats.Last7Days.Single(d => d.Date.Date == now.Date).Minutes);
+        Assert.Equal(20, stats.Last7Days.Single(d => d.Date.Date == new DateTime(2026, 10, 12)).Minutes);
+        Assert.Equal(50, stats.Last7Days.Sum(d => d.Minutes));
+    }
+
+    [Fact]
+    public async Task GetUserFocusStats_WithoutSessions_ReturnsZeros()
+    {
+        using var context = TestDbContextFactory.Create();
+        var user = User.CreateGuest("EmptyStats");
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        var handler = new GetUserFocusStatsQueryHandler(context, new TestClock());
+        var stats = await handler.Handle(new GetUserFocusStatsQuery(user.Id), CancellationToken.None);
+
+        Assert.Equal(0, stats.TotalFocusMinutes);
+        Assert.Equal(0, stats.TotalCompletedSessions);
+        Assert.Equal(0, stats.ThisMonthFocusMinutes);
+        Assert.All(stats.Last7Days, d => Assert.Equal(0, d.Minutes));
+    }
+
+    private static FocusSession CompletedFocus(User user, SessionKind kind, DateTime endedAt, int minutes)
+    {
+        var session = FocusSession.Start(user.Id, null, kind, minutes, minutes, now: endedAt.AddMinutes(-minutes));
+        session.Complete(minutes * 60, minutes * 10, minutes, endedAt);
+        return session;
     }
 }
