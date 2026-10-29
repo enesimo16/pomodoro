@@ -48,7 +48,7 @@
                 <span>Aktif İşçi Sunucu</span>
                 <span class="polaris-badge">Worker</span>
             </div>
-            <div class="polaris-metric-value">@Math.Max(1, Model.ActiveServersCount)</div>
+            <div class="polaris-metric-value">@Model.ActiveServersCount</div>
             <div class="polaris-metric-subtext">Kuyrukları dinleyen arka plan sunucusu</div>
         </div>
     </div>
@@ -66,10 +66,10 @@
         <div class="polaris-metric-card">
             <div class="polaris-metric-label">
                 <span>Zamanlayıcı Durumu</span>
-                <span class="polaris-badge polaris-badge-dark">Aktif</span>
+                <span class="polaris-badge @(Model.SchedulerRunning ? "polaris-badge-dark" : "")">@(Model.SchedulerRunning ? "Aktif" : "Pasif")</span>
             </div>
-            <div class="polaris-metric-value" style="font-size: 20px;">Çalışıyor</div>
-            <div class="polaris-metric-subtext">UTC saat dilimi ile senkronize</div>
+            <div class="polaris-metric-value" style="font-size: 20px;">@(Model.SchedulerRunning ? "Çalışıyor" : "Çalışmıyor")</div>
+            <div class="polaris-metric-subtext">@(Model.SchedulerRunning ? "UTC saat dilimi ile senkronize" : "Kuyrukları dinleyen işçi sunucu bulunamadı")</div>
         </div>
     </div>
 </div>

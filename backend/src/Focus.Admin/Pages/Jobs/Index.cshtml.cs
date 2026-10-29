@@ -20,6 +20,8 @@ public class IndexModel : PageModel
     public List<JobItemViewModel> Jobs { get; set; } = new();
     public int TotalRecurringJobs { get; set; }
     public int ActiveServersCount { get; set; }
+    public bool StorageAvailable { get; set; }
+    public bool SchedulerRunning => ActiveServersCount > 0;
     public string StorageInfo { get; set; } = "PostgreSQL";
 
     [TempData]
@@ -76,6 +78,7 @@ public class IndexModel : PageModel
         {
             var monitoringApi = JobStorage.Current.GetMonitoringApi();
             ActiveServersCount = monitoringApi.Servers().Count;
+            StorageAvailable = true;
 
             using var connection = JobStorage.Current.GetConnection();
             var recurringList = connection.GetRecurringJobs();
@@ -117,5 +120,6 @@ public class IndexModel : PageModel
 
         Jobs = list;
         TotalRecurringJobs = list.Count;
+        StorageInfo = StorageAvailable ? "PostgreSQL" : "Erişilemiyor";
     }
 }

@@ -1,3 +1,4 @@
+using Focus.Admin.Common;
 using Focus.Application.Common.Interfaces;
 using Focus.Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
@@ -9,6 +10,8 @@ namespace Focus.Admin.Pages.AiCoach;
 public class GlobalModel : PageModel
 {
     private readonly IApplicationDbContext _context;
+
+    public const int SessionSampleSize = 1000;
 
     public GlobalModel(IApplicationDbContext context)
     {
@@ -25,7 +28,8 @@ public class GlobalModel : PageModel
     public int TotalGlobalMemories { get; set; }
     public int TotalPlatformSessions { get; set; }
     public double GlobalCompletionRate { get; set; }
-    public int TotalPiiSanitizedEntries { get; set; }
+    public int TotalPersonalMemories { get; set; }
+    public int SampleSessionCount { get; set; }
 
     // Kolektif Sentez İstatistikleri
     public List<DurationStatItem> DurationStats { get; set; } = new();
@@ -37,7 +41,7 @@ public class GlobalModel : PageModel
 
     public record DurationStatItem(string Label, int SessionCount, double CompletionRate, double AbandonRate);
 
-    public record CircadianStatItem(string TimeSlot, int SessionCount, double Percentage, string PeakActivity);
+    public record CircadianStatItem(string TimeSlot, int SessionCount, double Percentage, double CompletionRate);
 
     public record CollectiveInsightItem(string Title, string Finding, string Category, string Reliability);
 
@@ -52,15 +56,15 @@ public class GlobalModel : PageModel
     public async Task OnGetAsync()
     {
         TotalGlobalMemories = await _context.AgentMemories.CountAsync(m => m.UserId == null);
-        TotalPlatformSessions = await _context.FocusSessions.CountAsync();
+        TotalPersonalMemories = await _context.AgentMemories.CountAsync(m => m.UserId != null);
 
-        var completedSessions = await _context.FocusSessions.CountAsync(s => s.Status == SessionStatus.Completed);
+        var focusSessions = _context.FocusSessions.Where(s => s.Kind == SessionKind.Focus);
+        TotalPlatformSessions = await focusSessions.CountAsync();
+
+        var completedSessions = await focusSessions.CountAsync(s => s.Status == SessionStatus.Completed);
         GlobalCompletionRate = TotalPlatformSessions > 0
             ? (completedSessions * 100.0 / TotalPlatformSessions)
             : 0;
-
-        // PII Temizlenmiş girdi sayısı = Tüm global hafıza girdileri
-        TotalPiiSanitizedEntries = TotalGlobalMemories;
 
         // 1. Global Vektör Bellek Sorgusu
         var memQuery = _context.AgentMemories
@@ -91,85 +95,124 @@ public class GlobalModel : PageModel
                 m.CreatedAt))
             .ToListAsync();
 
-        // 2. Seans Süresi Verimlilik Matrisi
-        var allSessions = await _context.FocusSessions
-            .Select(s => new { s.FocusMinutes, s.Status, s.StartedAt })
-            .Take(1000)
+        // 2. Son odak seanslarından örneklem
+        var sample = await focusSessions
+            .OrderByDescending(s => s.StartedAt)
+            .Select(s => new SessionSample(s.FocusMinutes, s.Status, s.StartedAt))
+            .Take(SessionSampleSize)
             .ToListAsync();
 
-        if (allSessions.Count > 0)
-        {
-            // Pomodoro (15-25 dk)
-            var shortSessions = allSessions.Where(s => s.FocusMinutes <= 25).ToList();
-            if (shortSessions.Count > 0)
-            {
-                var comp = shortSessions.Count(s => s.Status == SessionStatus.Completed) * 100.0 / shortSessions.Count;
-                var aban = shortSessions.Count(s => s.Status == SessionStatus.Abandoned) * 100.0 / shortSessions.Count;
-                DurationStats.Add(new DurationStatItem("Standart Pomodoro (15-25 dk)", shortSessions.Count, comp, aban));
-            }
-
-            // Orta Süreli (26-45 dk)
-            var midSessions = allSessions.Where(s => s.FocusMinutes > 25 && s.FocusMinutes <= 45).ToList();
-            if (midSessions.Count > 0)
-            {
-                var comp = midSessions.Count(s => s.Status == SessionStatus.Completed) * 100.0 / midSessions.Count;
-                var aban = midSessions.Count(s => s.Status == SessionStatus.Abandoned) * 100.0 / midSessions.Count;
-                DurationStats.Add(new DurationStatItem("Derin Seans (30-45 dk)", midSessions.Count, comp, aban));
-            }
-
-            // Uzun Süreli (46+ dk)
-            var longSessions = allSessions.Where(s => s.FocusMinutes > 45).ToList();
-            if (longSessions.Count > 0)
-            {
-                var comp = longSessions.Count(s => s.Status == SessionStatus.Completed) * 100.0 / longSessions.Count;
-                var aban = longSessions.Count(s => s.Status == SessionStatus.Abandoned) * 100.0 / longSessions.Count;
-                DurationStats.Add(new DurationStatItem("Ultra Odak (50-90 dk)", longSessions.Count, comp, aban));
-            }
-
-            // 3. Sirkadiyen Ritim Zaman Dilimleri
-            var morningCount = allSessions.Count(s => s.StartedAt.Hour >= 6 && s.StartedAt.Hour < 12);
-            var afternoonCount = allSessions.Count(s => s.StartedAt.Hour >= 12 && s.StartedAt.Hour < 18);
-            var eveningCount = allSessions.Count(s => s.StartedAt.Hour >= 18 && s.StartedAt.Hour < 24);
-            var nightCount = allSessions.Count(s => s.StartedAt.Hour >= 0 && s.StartedAt.Hour < 6);
-            var totalCount = (double)allSessions.Count;
-
-            CircadianStats.Add(new CircadianStatItem("Sabah (06:00 - 12:00)", morningCount, (morningCount * 100.0 / totalCount), "Zihinsel Tazelik"));
-            CircadianStats.Add(new CircadianStatItem("Öğleden Sonra (12:00 - 18:00)", afternoonCount, (afternoonCount * 100.0 / totalCount), "Görev Tamamlama"));
-            CircadianStats.Add(new CircadianStatItem("Akşam (18:00 - 24:00)", eveningCount, (eveningCount * 100.0 / totalCount), "Kişisel Projeler"));
-            CircadianStats.Add(new CircadianStatItem("Gece (00:00 - 06:00)", nightCount, (nightCount * 100.0 / totalCount), "Sessiz Kodlama"));
-        }
-
-        // 4. Kolektif Bilgelik Sentezi Çıkarımları
-        CollectiveInsights = GenerateCollectiveInsights(allSessions, Memories);
+        SampleSessionCount = sample.Count;
+        DurationStats = BuildDurationStats(sample);
+        CircadianStats = BuildCircadianStats(sample);
+        CollectiveInsights = BuildCollectiveInsights(sample.Count, DurationStats, CircadianStats, Memories);
     }
 
-    private static List<CollectiveInsightItem> GenerateCollectiveInsights(
-        IEnumerable<dynamic> sessions,
-        List<GlobalMemoryItem> memories)
+    public record SessionSample(int FocusMinutes, SessionStatus Status, DateTime StartedAt);
+
+    public static List<DurationStatItem> BuildDurationStats(IReadOnlyCollection<SessionSample> sessions)
     {
-        var list = new List<CollectiveInsightItem>
+        var buckets = new (string Label, Func<SessionSample, bool> Match)[]
         {
-            new(
-                Title: "25 Dakikalık Mikro Blokların Üstünlüğü",
-                Finding: "Platform genelinde 25 dakikalık seanslar %82+ tamamlama oranıyla en yüksek bilişsel sürdürülebilirliği sağlamaktadır.",
-                Category: "Seans Mimari",
-                Reliability: "Yüksek"),
-            new(
-                Title: "Kişisel Veri (PII) İzolasyonu Kalkanı",
-                Finding: "Tüm sistem hafızası ad, e-posta, telefon ve IP gibi kimlik tanımlayıcılardan arındırılarak kolektif modeller için anonimleştirilmektedir.",
-                Category: "Gizlilik & Güvenlik",
-                Reliability: "%100 Kesin"),
-            new(
-                Title: "Mola Atlama ve Yorgunluk İntikali",
-                Finding: "Art arda 2'den fazla mola atlayan kullanıcılarda 3. seansın terk edilme riski %45 oranında artmaktadır.",
-                Category: "Bilişsel Yorgunluk",
-                Reliability: "Kritik Bulgusal"),
-            new(
-                Title: "Lo-Fi ve Yağmur Ambiyansı Etkisi",
-                Finding: "Arka plan ses mikserinde Brown Noise ve yağmur katmanı açık olan seanslarda dikkat dağılma bildirimleri %20 daha düşüktür.",
-                Category: "Akustik Ortam",
-                Reliability: "Yüksek")
+            ("Standart Pomodoro (15-25 dk)", s => s.FocusMinutes <= 25),
+            ("Derin Seans (26-45 dk)", s => s.FocusMinutes > 25 && s.FocusMinutes <= 45),
+            ("Ultra Odak (46+ dk)", s => s.FocusMinutes > 45)
         };
+
+        var result = new List<DurationStatItem>();
+        foreach (var (label, match) in buckets)
+        {
+            var group = sessions.Where(match).ToList();
+            if (group.Count == 0) continue;
+
+            result.Add(new DurationStatItem(
+                label,
+                group.Count,
+                group.Count(s => s.Status == SessionStatus.Completed) * 100.0 / group.Count,
+                group.Count(s => s.Status == SessionStatus.Abandoned) * 100.0 / group.Count));
+        }
+
+        return result;
+    }
+
+    public static List<CircadianStatItem> BuildCircadianStats(IReadOnlyCollection<SessionSample> sessions)
+    {
+        if (sessions.Count == 0) return new List<CircadianStatItem>();
+
+        var slots = new (string Label, int From, int To)[]
+        {
+            ("Sabah (06:00 - 12:00)", 6, 12),
+            ("Öğleden Sonra (12:00 - 18:00)", 12, 18),
+            ("Akşam (18:00 - 24:00)", 18, 24),
+            ("Gece (00:00 - 06:00)", 0, 6)
+        };
+
+        var local = sessions.Select(s => (Hour: LocalTime.FromUtc(s.StartedAt).Hour, s.Status)).ToList();
+        var result = new List<CircadianStatItem>();
+        foreach (var (label, from, to) in slots)
+        {
+            var group = local.Where(x => x.Hour >= from && x.Hour < to).ToList();
+            var completion = group.Count > 0
+                ? group.Count(x => x.Status == SessionStatus.Completed) * 100.0 / group.Count
+                : 0;
+            result.Add(new CircadianStatItem(label, group.Count, group.Count * 100.0 / local.Count, completion));
+        }
+
+        return result;
+    }
+
+    public static List<CollectiveInsightItem> BuildCollectiveInsights(
+        int sampleSize,
+        IReadOnlyList<DurationStatItem> durations,
+        IReadOnlyList<CircadianStatItem> circadian,
+        IReadOnlyList<GlobalMemoryItem> memories)
+    {
+        var list = new List<CollectiveInsightItem>();
+        if (sampleSize == 0) return list;
+
+        var reliability = sampleSize switch
+        {
+            < 30 => "Düşük (az veri)",
+            < 200 => "Orta",
+            _ => "Yüksek"
+        };
+
+        var bestDuration = durations.OrderByDescending(d => d.CompletionRate).ThenByDescending(d => d.SessionCount).FirstOrDefault();
+        if (bestDuration is not null)
+        {
+            list.Add(new CollectiveInsightItem(
+                "En Yüksek Tamamlanan Seans Süresi",
+                $"{bestDuration.Label} diliminde {bestDuration.SessionCount} seansın %{bestDuration.CompletionRate:F1} kadarı tamamlandı.",
+                "Seans Mimari",
+                reliability));
+        }
+
+        var busiestSlot = circadian.OrderByDescending(c => c.SessionCount).FirstOrDefault();
+        if (busiestSlot is not null && busiestSlot.SessionCount > 0)
+        {
+            list.Add(new CollectiveInsightItem(
+                "En Yoğun Odak Zamanı",
+                $"Seansların %{busiestSlot.Percentage:F1} kadarı {busiestSlot.TimeSlot} diliminde başladı (İstanbul saati).",
+                "Sirkadiyen Ritim",
+                reliability));
+        }
+
+        var abandonedCount = durations.Sum(d => d.AbandonRate * d.SessionCount / 100.0);
+        list.Add(new CollectiveInsightItem(
+            "Genel Terk Oranı",
+            $"Son {sampleSize} odak seansının %{abandonedCount * 100.0 / sampleSize:F1} kadarı yarıda bırakıldı.",
+            "Bilişsel Yorgunluk",
+            reliability));
+
+        var topCategory = memories.GroupBy(m => m.Category).OrderByDescending(g => g.Count()).FirstOrDefault();
+        if (topCategory is not null)
+        {
+            list.Add(new CollectiveInsightItem(
+                "Baskın Hafıza Kategorisi",
+                $"Listelenen global hafıza kayıtlarının {topCategory.Count()} tanesi {topCategory.Key} kategorisinde.",
+                "Kolektif Hafıza",
+                reliability));
+        }
 
         return list;
     }

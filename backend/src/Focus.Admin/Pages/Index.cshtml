@@ -78,7 +78,7 @@
 <div class="polaris-card mb-4">
     <div class="polaris-card-header">
         <h6>Platform Sağlığı ve Dağıtık Telemetri</h6>
-        <span class="polaris-badge">Sistemler Normal</span>
+        <span class="polaris-badge @(Model.IsHealthy ? "" : "polaris-badge-dark")">@(Model.IsHealthy ? "Sistemler Normal" : "Veritabanı Sorunlu")</span>
     </div>
     <div class="polaris-card-body">
         <div class="row g-3">

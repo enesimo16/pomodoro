@@ -19,6 +19,7 @@ public class IndexModel : PageModel
 
     public PlatformOverviewDto Overview { get; set; } = null!;
     public SystemHealthDto Health { get; set; } = null!;
+    public bool IsHealthy => Health.DatabaseStatus == "Healthy";
     public List<RecentUserItem> RecentUsers { get; set; } = new();
     public List<RecentSessionItem> RecentSessions { get; set; } = new();
 
