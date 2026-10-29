@@ -8,7 +8,7 @@ Son doğrulama (HEAD):
 - Backend: 467 birim ve 112 entegrasyon testi geçti, 0 uyarı ve 0 hata ile derlendi.
 - Frontend: `eslint` temiz, `next build` başarılı.
 
-Not: .NET 9 SDK yavaş ağ nedeniyle kurulamadı. Backend doğrulaması, hedefi geçici olarak net10.0'a çevrilmiş bir karalama kopyasında .NET 10 SDK ile yapıldı. Repodaki hedef hâlâ `net9.0`.
+Backend doğrulaması .NET 9 SDK (9.0.320) ile, repodaki `net9.0` hedefi değiştirilmeden yapıldı. Frontend'in ana sayfası, misafir girişindeki hata durumu ve oda zamanlayıcısı tarayıcıda (API kapalıyken) kontrol edildi.
 
 ## En kritik bulgular ve durumu
 
@@ -69,12 +69,11 @@ Açılışta `MigrateAsync` ile otomatik uygulanırlar:
 4. **Frontend ekibine sözleşme değişikliğini iletin:**
    - `/auth/claim` artık yalnızca `{ idToken }` alıyor ve misafirin kendi token'ını istiyor.
    - `GET /study-rooms/{code}` ve ziyaretçi defteri okuma uçları kimlik doğrulama gerektiriyor.
-5. **.NET 9 SDK ile `dotnet build` ve `dotnet test` komutlarını bir kez çalıştırın.**
-6. **Henüz canlı ortamda doğrulanmayanlar:**
-   - Gerçek Postgres üzerinde migration'lar
+5. **Henüz canlı ortamda doğrulanmayanlar** (bu makinede Docker ve Postgres yok):
+   - Gerçek Postgres/pgvector üzerinde migration'lar
    - Docker imajları
-   - Admin panelinin ve frontend'in tarayıcıda gezilmesi
-7. **Bilinen sınırlar:**
+   - Admin panelinin ve frontend'in çalışan bir API'ye bağlı olarak tarayıcıda gezilmesi
+6. **Bilinen sınırlar:**
    - Streak, istatistik ve günlük limit günleri UTC'ye göre hesaplanıyor (kullanıcı saat dilimi yalnızca AI tarafında kullanılıyor).
    - Atılan veya bayatlamış üyenin SignalR bağlantısı, kopana kadar grupta kalıyor.
    - Admin coin verme gerekçesi yalnızca uygulama loguna yazılıyor.
