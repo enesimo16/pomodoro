@@ -1,185 +1,282 @@
 "use client";
 
-import { useState, useEffect, useRef, Suspense } from "react";
+import { useCallback, useEffect, useRef, useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import {
+  api,
+  ApiError,
+  clearLegacyAuthStorage,
+  describeError,
+  type CurrentUserDto,
+  type FocusSessionDto,
+  type JoinRoomResultDto,
+  type RoomInvitationDto,
+  type SessionCompletionDto,
+  type StudyRoomDto,
+  type WeatherReportDto,
+} from "@/lib/api";
+import { Soundscape, type SoundChannel } from "@/lib/soundscape";
+import { MODES, TARGET_ROUNDS, useFocusTimer, type TimerMode } from "@/lib/useFocusTimer";
+
+type AuthState = "loading" | "authenticated" | "anonymous";
+
+const ROOM_CODE_STORAGE_KEY = "bokodoro_room_code";
+const ROOM_REFRESH_MS = 30000;
+const MODE_ORDER: TimerMode[] = ["pomodoro", "shortBreak", "longBreak"];
+
+const CHANNELS: { id: SoundChannel; label: string }[] = [
+  { id: "rain", label: "Yağmur Damlası" },
+  { id: "noise", label: "Kahverengi Gürültü" },
+  { id: "vinyl", label: "Vinil Çıtırtısı" },
+  { id: "lofi", label: "Lo-Fi Plak Çalar" },
+];
+
+function formatTime(totalSeconds: number) {
+  const mins = Math.floor(totalSeconds / 60);
+  const secs = totalSeconds % 60;
+  return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+}
+
+function readStoredRoomCode() {
+  try {
+    return localStorage.getItem(ROOM_CODE_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function storeRoomCode(code: string | null) {
+  try {
+    if (code) localStorage.setItem(ROOM_CODE_STORAGE_KEY, code);
+    else localStorage.removeItem(ROOM_CODE_STORAGE_KEY);
+  } catch {
+    // depolama erisimi engellenmis olabilir
+  }
+}
 
 function RoomContent() {
   const searchParams = useSearchParams();
-  const [userName, setUserName] = useState<string>("Misafir Sakin");
-  const [userLevel, setUserLevel] = useState<number>(1);
-  const [inviteCode, setInviteCode] = useState<string>("BOKO-99");
-  const [copiedInvite, setCopiedInvite] = useState(false);
+  const roomParam = searchParams.get("room");
+  const inviteParam = searchParams.get("invite");
 
-  // Sayaç Durumu
-  const [secondsLeft, setSecondsLeft] = useState(25 * 60);
-  const [isRunning, setIsRunning] = useState(false);
-  const [activeMode, setActiveMode] = useState<"pomodoro" | "shortBreak" | "longBreak">("pomodoro");
-  const [roundCount, setRoundCount] = useState(1);
+  const [authState, setAuthState] = useState<AuthState>("loading");
+  const [apiReachable, setApiReachable] = useState<boolean | null>(null);
+  const [profile, setProfile] = useState<CurrentUserDto | null>(null);
+  const [userLevel, setUserLevel] = useState(1);
+  const [studyRoom, setStudyRoom] = useState<StudyRoomDto | null>(null);
+  const [roomNotice, setRoomNotice] = useState<string | null>(null);
+  const [inviteStatus, setInviteStatus] = useState<"idle" | "busy" | "copied">("idle");
+  const [syncError, setSyncError] = useState<string | null>(null);
+  const [reward, setReward] = useState<SessionCompletionDto | null>(null);
+  const [weather, setWeather] = useState<WeatherReportDto | null>(null);
+  const [weatherDenied, setWeatherDenied] = useState(false);
 
-  // 4 Kanallı Ses Mikseri
-  const [soundRain, setSoundRain] = useState(40);
-  const [soundNoise, setSoundNoise] = useState(25);
-  const [soundVinyl, setSoundVinyl] = useState(15);
-  const [soundLofi, setSoundLofi] = useState(60);
-  const [audioStarted, setAudioStarted] = useState(false);
+  const [levels, setLevels] = useState<Record<SoundChannel, number>>({
+    rain: 40,
+    noise: 25,
+    vinyl: 15,
+    lofi: 60,
+  });
+  const soundscapeRef = useRef<Soundscape | null>(null);
 
-  // Web Audio Context Referansı
-  const audioCtxRef = useRef<AudioContext | null>(null);
-  const rainGainRef = useRef<GainNode | null>(null);
-  const noiseGainRef = useRef<GainNode | null>(null);
-  const vinylGainRef = useRef<GainNode | null>(null);
+  const timer = useFocusTimer({
+    canSync: authState === "authenticated",
+    onReward: (result) => {
+      setReward(result);
+      setUserLevel(result.newLevel);
+    },
+    onSyncError: (message) =>
+      setSyncError(`Sunucu ile senkronize edilemedi (${message}). Sayaç yerel olarak çalışmaya devam ediyor.`),
+  });
+  const { phase, restore } = timer;
+  const isRunning = phase === "running";
 
-  // Kullanıcı ve Oda Bilgilerini Yükleme
+  // Oturum, aktif seans ve davet baglantisi
   useEffect(() => {
-    const qGuest = searchParams.get("guest");
-    if (qGuest) {
-      setUserName(decodeURIComponent(qGuest));
-    }
+    clearLegacyAuthStorage();
+    let cancelled = false;
 
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("bokodoro_auth");
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          if (parsed.user?.displayName) setUserName(parsed.user.displayName);
-          if (parsed.user?.level) setUserLevel(parsed.user.level);
-          if (parsed.room?.inviteCode) setInviteCode(parsed.room.inviteCode);
-        } catch {}
+    const load = async () => {
+      let me: CurrentUserDto;
+      try {
+        me = await api.get<CurrentUserDto>("/auth/me");
+      } catch (err) {
+        if (cancelled) return;
+        setApiReachable(err instanceof ApiError);
+        setAuthState("anonymous");
+        return;
       }
-    }
-  }, [searchParams]);
+      if (cancelled) return;
 
-  // Sayaç Zamanlayıcısı
-  useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
-    if (isRunning && secondsLeft > 0) {
-      interval = setInterval(() => {
-        setSecondsLeft((prev) => prev - 1);
-      }, 1000);
-    } else if (secondsLeft === 0) {
-      setIsRunning(false);
-      if (activeMode === "pomodoro") {
-        setRoundCount((prev) => (prev < 4 ? prev + 1 : 1));
+      setApiReachable(true);
+      setProfile(me);
+      setUserLevel(me.user.level);
+      setAuthState("authenticated");
+
+      try {
+        const active = await api.get<FocusSessionDto | undefined>("/sessions/active");
+        if (!cancelled && active) restore(active);
+      } catch {
+        // aktif seans okunamazsa sayac sifirdan baslar
       }
-    }
-    return () => {
-      if (interval) clearInterval(interval);
+
+      const codeToJoin = roomParam ?? readStoredRoomCode();
+      if (!codeToJoin) return;
+
+      try {
+        if (roomParam) {
+          const joined = await api.post<JoinRoomResultDto>("/study-rooms/join", {
+            roomCode: roomParam,
+            inviteCode: inviteParam ?? undefined,
+          });
+          if (cancelled) return;
+          if (joined.success && joined.room) {
+            setStudyRoom(joined.room);
+            storeRoomCode(joined.room.code);
+          } else {
+            setRoomNotice(joined.message);
+          }
+        } else {
+          const room = await api.get<StudyRoomDto>(`/study-rooms/${encodeURIComponent(codeToJoin)}`);
+          if (!cancelled) setStudyRoom(room);
+        }
+      } catch (err) {
+        if (cancelled) return;
+        if (!roomParam) storeRoomCode(null);
+        setRoomNotice(describeError(err));
+      }
     };
-  }, [isRunning, secondsLeft, activeMode]);
 
-  // Web Audio Sentezleyici Motoru (Tarayıcı İçi Telifsiz Ses Üretimi)
-  const initAudioEngine = () => {
-    if (audioCtxRef.current) return;
-    try {
-      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      const ctx = new AudioCtx();
-      audioCtxRef.current = ctx;
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [roomParam, inviteParam, restore]);
 
-      // 1. Kahverengi Gürültü (Brown Noise) Üretimi
-      const bufferSize = ctx.sampleRate * 2;
-      const brownBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-      const data = brownBuffer.getChannelData(0);
-      let lastOut = 0.0;
-      for (let i = 0; i < bufferSize; i++) {
-        const white = Math.random() * 2 - 1;
-        data[i] = (lastOut + 0.02 * white) / 1.02;
-        lastOut = data[i];
-        data[i] *= 3.5;
-      }
-      const noiseSource = ctx.createBufferSource();
-      noiseSource.buffer = brownBuffer;
-      noiseSource.loop = true;
-
-      const nGain = ctx.createGain();
-      nGain.gain.value = soundNoise / 100 * 0.15;
-      noiseGainRef.current = nGain;
-
-      noiseSource.connect(nGain);
-      nGain.connect(ctx.destination);
-      noiseSource.start();
-
-      // 2. Yağmur Sesi Filtresi
-      const rainBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-      const rData = rainBuffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) {
-        rData[i] = (Math.random() * 2 - 1) * 0.1;
-      }
-      const rainSource = ctx.createBufferSource();
-      rainSource.buffer = rainBuffer;
-      rainSource.loop = true;
-
-      const rFilter = ctx.createBiquadFilter();
-      rFilter.type = "lowpass";
-      rFilter.frequency.value = 800;
-
-      const rGain = ctx.createGain();
-      rGain.gain.value = soundRain / 100 * 0.2;
-      rainGainRef.current = rGain;
-
-      rainSource.connect(rFilter);
-      rFilter.connect(rGain);
-      rGain.connect(ctx.destination);
-      rainSource.start();
-
-      setAudioStarted(true);
-    } catch {}
-  };
-
-  // Ses Seviyelerini Güncelleme
+  // Ortak oda varligi duzenli olarak yenilenir
+  const studyRoomCode = studyRoom?.code ?? null;
   useEffect(() => {
-    if (noiseGainRef.current && audioCtxRef.current) {
-      noiseGainRef.current.gain.setValueAtTime(
-        isRunning ? (soundNoise / 100) * 0.15 : 0,
-        audioCtxRef.current.currentTime
-      );
+    if (!studyRoomCode) return;
+    const interval = setInterval(() => {
+      api
+        .get<StudyRoomDto>(`/study-rooms/${encodeURIComponent(studyRoomCode)}`)
+        .then(setStudyRoom)
+        .catch(() => {
+          // gecici hata sonraki turda tekrar denenir
+        });
+    }, ROOM_REFRESH_MS);
+    return () => clearInterval(interval);
+  }, [studyRoomCode]);
+
+  // Hava durumu: konum izni daha once verildiyse otomatik, aksi halde kullanici istegiyle
+  const loadWeather = useCallback(() => {
+    if (!("geolocation" in navigator)) {
+      setWeatherDenied(true);
+      return;
     }
-  }, [soundNoise, isRunning]);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const latitude = position.coords.latitude.toFixed(2);
+        const longitude = position.coords.longitude.toFixed(2);
+        api
+          .get<WeatherReportDto>(`/media/weather?latitude=${latitude}&longitude=${longitude}`)
+          .then(setWeather)
+          .catch(() => setWeatherDenied(true));
+      },
+      () => setWeatherDenied(true),
+      { maximumAge: 600000, timeout: 10000 },
+    );
+  }, []);
 
   useEffect(() => {
-    if (rainGainRef.current && audioCtxRef.current) {
-      rainGainRef.current.gain.setValueAtTime(
-        isRunning ? (soundRain / 100) * 0.2 : 0,
-        audioCtxRef.current.currentTime
-      );
-    }
-  }, [soundRain, isRunning]);
+    if (!navigator.permissions) return;
+    navigator.permissions
+      .query({ name: "geolocation" })
+      .then((status) => {
+        if (status.state === "granted") loadWeather();
+      })
+      .catch(() => {
+        // izin durumu okunamazsa dugme ile istenir
+      });
+  }, [loadWeather]);
+
+  // Ses motoru: sayfa kapaninca kaynaklar durdurulur ve baglam kapatilir
+  useEffect(() => {
+    return () => {
+      soundscapeRef.current?.dispose();
+      soundscapeRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    const engine = soundscapeRef.current;
+    if (!engine) return;
+    (Object.keys(levels) as SoundChannel[]).forEach((channel) => engine.setLevel(channel, levels[channel]));
+  }, [levels]);
+
+  useEffect(() => {
+    soundscapeRef.current?.setPlaying(isRunning);
+  }, [isRunning]);
 
   const handleTogglePlay = () => {
-    if (!audioStarted) {
-      initAudioEngine();
-    } else if (audioCtxRef.current && audioCtxRef.current.state === "suspended") {
-      audioCtxRef.current.resume();
+    if (isRunning) {
+      timer.pause();
+      return;
     }
-    setIsRunning(!isRunning);
+
+    if (!soundscapeRef.current) {
+      try {
+        const engine = new Soundscape();
+        (Object.keys(levels) as SoundChannel[]).forEach((channel) => engine.setLevel(channel, levels[channel]));
+        soundscapeRef.current = engine;
+      } catch {
+        // ses desteklenmiyorsa sayac sessiz calisir
+      }
+    }
+    setReward(null);
+    timer.start();
   };
 
-  const formatTime = (totalSeconds: number) => {
-    const mins = Math.floor(totalSeconds / 60);
-    const secs = totalSeconds % 60;
-    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-  };
+  const copyInvite = async () => {
+    setInviteStatus("busy");
+    setRoomNotice(null);
+    try {
+      const invitation = await api.post<RoomInvitationDto>("/study-rooms/create-invite");
+      const link = `${window.location.origin}/room?room=${encodeURIComponent(invitation.roomCode)}&invite=${encodeURIComponent(invitation.inviteCode)}`;
+      await navigator.clipboard.writeText(link);
+      setInviteStatus("copied");
+      setTimeout(() => setInviteStatus("idle"), 2000);
 
-  const handleModeSwitch = (mode: "pomodoro" | "shortBreak" | "longBreak") => {
-    setIsRunning(false);
-    setActiveMode(mode);
-    if (mode === "pomodoro") setSecondsLeft(25 * 60);
-    if (mode === "shortBreak") setSecondsLeft(5 * 60);
-    if (mode === "longBreak") setSecondsLeft(15 * 60);
-  };
-
-  const copyInvite = () => {
-    if (typeof navigator !== "undefined") {
-      navigator.clipboard.writeText(
-        `${window.location.origin}/room?invite=${inviteCode}`
+      storeRoomCode(invitation.roomCode);
+      api
+        .get<StudyRoomDto>(`/study-rooms/${encodeURIComponent(invitation.roomCode)}`)
+        .then(setStudyRoom)
+        .catch(() => setRoomNotice("Oda bilgisi yenilenemedi."));
+    } catch (err) {
+      setInviteStatus("idle");
+      setRoomNotice(
+        err instanceof ApiError || err instanceof TypeError
+          ? `Davet bağlantısı hazırlanamadı: ${describeError(err)}`
+          : "Davet bağlantısı panoya kopyalanamadı.",
       );
-      setCopiedInvite(true);
-      setTimeout(() => setCopiedInvite(false), 2000);
     }
   };
+
+  const userName = profile?.user.displayName ?? "Misafir";
+  const roomLabel = studyRoom?.code ?? profile?.room?.inviteCode ?? null;
+  const focusingCount = studyRoom ? studyRoom.members.filter((m) => m.isFocusing).length : 0;
+  const preserved = new URLSearchParams();
+  if (roomParam) preserved.set("room", roomParam);
+  if (inviteParam) preserved.set("invite", inviteParam);
+  const loginHref = preserved.toString() ? `/?${preserved.toString()}` : "/";
 
   return (
     <div className="flex-1 flex flex-col justify-between max-w-6xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+      <p role="status" aria-live="polite" className="sr-only">
+        {timer.announcement}
+      </p>
+
       {/* 1. ÜST BAR (NAVBAR) */}
       <header className="flex flex-wrap items-center justify-between border-b-2 border-[#262c36] pb-4 mb-6 gap-4">
         <div className="flex items-center gap-3">
@@ -188,130 +285,166 @@ function RoomContent() {
             className="pixel-btn pixel-btn-secondary text-xs px-2.5 py-1.5 text-[#8b949e] hover:text-[#38ef7d] flex items-center gap-1.5"
             title="Ana Sayfaya Dön"
           >
-            <span>&lt;</span>
+            <span aria-hidden="true">&lt;</span>
             <span className="hidden sm:inline">ANA SAYFA</span>
+            <span className="sr-only sm:hidden">Ana sayfa</span>
           </Link>
 
-          <div className="w-7 h-7 bg-[#38ef7d] flex items-center justify-center font-bold text-black border-2 border-[#23c761] shadow-[2px_2px_0px_#040608]">
+          <div
+            aria-hidden="true"
+            className="w-7 h-7 bg-[#38ef7d] flex items-center justify-center font-bold text-black border-2 border-[#23c761] shadow-[2px_2px_0px_#040608]"
+          >
             ■
           </div>
           <span className="text-xl sm:text-2xl font-bold tracking-widest text-[#38ef7d] glow-green">
             BOKODORO
           </span>
-          <span className="text-[10px] uppercase tracking-widest px-2 py-0.5 border border-[#30363d] text-[#38ef7d] bg-[#10141a]">
-            ODA #{inviteCode}
-          </span>
+          {roomLabel && (
+            <span className="text-[10px] uppercase tracking-widest px-2 py-0.5 border border-[#30363d] text-[#38ef7d] bg-[#10141a]">
+              ODA #{roomLabel}
+            </span>
+          )}
         </div>
 
         <nav className="flex items-center gap-2 sm:gap-4 text-xs">
-          {/* Kullanıcı Profili Rozeti */}
           <div className="px-3 py-1.5 bg-[#10141a] border border-[#30363d] flex items-center gap-2 text-[#e6edf3]">
-            <span className="w-2 h-2 bg-[#38ef7d]"></span>
+            <span aria-hidden="true" className="w-2 h-2 bg-[#38ef7d]"></span>
             <span className="font-bold">{userName}</span>
-            <span className="text-[10px] px-1.5 py-0.2 bg-[#161b22] text-[#e5a93c] border border-[#30363d]">
-              LVL.{userLevel}
-            </span>
+            {authState === "authenticated" && (
+              <span className="text-[10px] px-1.5 py-0.2 bg-[#161b22] text-[#e5a93c] border border-[#30363d]">
+                LVL.{userLevel}
+              </span>
+            )}
           </div>
 
-          {/* Davet Linki Kopyala Butonu */}
           <button
+            type="button"
             onClick={copyInvite}
-            className="pixel-btn pixel-btn-secondary text-xs px-3 py-1.5 text-[#bacbb9] hover:text-white"
+            disabled={authState !== "authenticated" || inviteStatus === "busy"}
+            title={authState !== "authenticated" ? "Davet için önce misafir olarak giriş yap" : undefined}
+            className="pixel-btn pixel-btn-secondary text-xs px-3 py-1.5 text-[#bacbb9] hover:text-white disabled:opacity-50"
           >
-            {copiedInvite ? "[ KOPYALANDI! ]" : "[ + ARKADAŞINI ÇAĞIR ]"}
+            {inviteStatus === "copied" ? "[ KOPYALANDI! ]" : "[ + ARKADAŞINI ÇAĞIR ]"}
           </button>
-
-          <a
-            href="http://localhost:5001/?admin_key=focus_master_key_9971x"
-            target="_blank"
-            rel="noreferrer"
-            className="pixel-btn pixel-btn-secondary text-xs px-3 py-1.5 text-[#8b949e] hover:text-[#38ef7d] hidden md:inline-block"
-          >
-            Admin
-          </a>
         </nav>
       </header>
+
+      {/* Bildirimler */}
+      <div className="flex flex-col gap-3 mb-6 empty:hidden">
+        {authState === "anonymous" && (
+          <div role="status" className="p-3 border border-[#e5a93c] bg-[#1a150a] text-xs text-[#e5a93c]">
+            {apiReachable === false
+              ? "Sunucuya ulaşılamıyor. Sayaç yerel çalışıyor, seanslar kaydedilmiyor."
+              : "Oturum açık değil. Sayaç yerel çalışıyor, seanslar kaydedilmiyor."}{" "}
+            <Link href={loginHref} className="underline hover:text-white">
+              Misafir olarak giriş yap
+            </Link>
+          </div>
+        )}
+        {syncError && (
+          <div role="status" className="p-3 border border-[#e5a93c] bg-[#1a150a] text-xs text-[#e5a93c] flex items-start justify-between gap-3">
+            <span>{syncError}</span>
+            <button type="button" onClick={() => setSyncError(null)} aria-label="Uyarıyı kapat" className="text-[#8b949e] hover:text-white">
+              [X]
+            </button>
+          </div>
+        )}
+        {roomNotice && (
+          <div role="status" className="p-3 border border-[#30363d] bg-[#10141a] text-xs text-[#bacbb9] flex items-start justify-between gap-3">
+            <span>{roomNotice}</span>
+            <button type="button" onClick={() => setRoomNotice(null)} aria-label="Bildirimi kapat" className="text-[#8b949e] hover:text-white">
+              [X]
+            </button>
+          </div>
+        )}
+        {reward && (reward.xpEarned > 0 || reward.coinsEarned > 0) && (
+          <div role="status" className="p-3 border border-[#23c761] bg-[#0d1a12] text-xs text-[#38ef7d]">
+            Seans tamamlandı: +{reward.xpEarned} XP / +{reward.coinsEarned} Coin
+            {reward.levelUp ? ` - Seviye atladın! LVL.${reward.newLevel}` : ""}
+          </div>
+        )}
+      </div>
 
       {/* 2. MERKEZ ODA & SAYAÇ IZGARASI */}
       <main className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start my-auto">
         {/* SOL: SAYAÇ & ODAK KONTROL PANELİ (7 Sütun) */}
         <section className="lg:col-span-7 flex flex-col gap-6">
-          {/* Seans Mod Seçici */}
-          <div className="flex gap-2">
-            <button
-              onClick={() => handleModeSwitch("pomodoro")}
-              className={`pixel-btn text-xs px-4 py-2 flex-1 ${
-                activeMode === "pomodoro" ? "pixel-btn-primary" : "pixel-btn-secondary"
-              }`}
-            >
-              Odaklanma (25d)
-            </button>
-            <button
-              onClick={() => handleModeSwitch("shortBreak")}
-              className={`pixel-btn text-xs px-4 py-2 flex-1 ${
-                activeMode === "shortBreak" ? "pixel-btn-amber" : "pixel-btn-secondary"
-              }`}
-            >
-              Kısa Mola (5d)
-            </button>
-            <button
-              onClick={() => handleModeSwitch("longBreak")}
-              className={`pixel-btn text-xs px-4 py-2 flex-1 ${
-                activeMode === "longBreak" ? "pixel-btn-amber" : "pixel-btn-secondary"
-              }`}
-            >
-              Uzun Mola (15d)
-            </button>
+          <div role="tablist" aria-label="Seans türü" className="flex gap-2">
+            {MODE_ORDER.map((id) => (
+              <button
+                key={id}
+                type="button"
+                role="tab"
+                id={`tab-${id}`}
+                aria-selected={timer.mode === id}
+                aria-controls="timer-panel"
+                onClick={() => timer.switchMode(id)}
+                className={`pixel-btn text-xs px-4 py-2 flex-1 ${
+                  timer.mode === id
+                    ? id === "pomodoro"
+                      ? "pixel-btn-primary"
+                      : "pixel-btn-amber"
+                    : "pixel-btn-secondary"
+                }`}
+              >
+                {MODES[id].label} ({MODES[id].minutes}d)
+              </button>
+            ))}
           </div>
 
           {/* Retro LED Zaman Sayacı Kartı */}
-          <div className="pixel-box p-6 sm:p-10 flex flex-col items-center justify-center text-center relative overflow-hidden">
-            {/* Terminal Pencere Başlığı */}
+          <div
+            id="timer-panel"
+            role="tabpanel"
+            aria-labelledby={`tab-${timer.mode}`}
+            className="pixel-box p-6 sm:p-10 flex flex-col items-center justify-center text-center relative overflow-hidden"
+          >
             <div className="w-full flex items-center justify-between border-b border-[#262c36] pb-3 mb-6 text-xs text-[#8b949e]">
-              <span>// SEANS_DURUMU: {isRunning ? "ODAK_DEVAM_EDIYOR" : "BEKLEMEDE"}</span>
+              <span>
+                {"// SEANS_DURUMU: "}
+                {isRunning ? "ODAK_DEVAM_EDIYOR" : phase === "paused" ? "DURAKLATILDI" : "BEKLEMEDE"}
+              </span>
               <span className="flex items-center gap-1.5">
                 <span
-                  className={`w-2 h-2 ${
-                    isRunning ? "bg-[#38ef7d] animate-pulse" : "bg-[#e5a93c]"
-                  }`}
+                  aria-hidden="true"
+                  className={`w-2 h-2 ${isRunning ? "bg-[#38ef7d] animate-pulse" : "bg-[#e5a93c]"}`}
                 ></span>
-                {activeMode.toUpperCase()}
+                {MODES[timer.mode].label.toUpperCase()}
               </span>
             </div>
 
-            {/* Büyük Retro Dijital Sayaç */}
-            <div className="font-pixel text-7xl sm:text-9xl tracking-wider text-[#38ef7d] glow-green my-2 tabular-nums select-none">
-              {formatTime(secondsLeft)}
+            <div
+              role="timer"
+              aria-live="off"
+              aria-label={`Kalan süre ${formatTime(timer.secondsLeft)}`}
+              className="font-pixel text-7xl sm:text-9xl tracking-wider text-[#38ef7d] glow-green my-2 tabular-nums select-none"
+            >
+              {formatTime(timer.secondsLeft)}
             </div>
 
-            {/* Seans Döngü Kartuşları (4 Seans İndikatörü) */}
-            <div className="flex gap-2 my-4">
-              {[1, 2, 3, 4].map((round) => (
+            <div className="flex gap-2 my-4" role="img" aria-label={`Döngü ${timer.round} / ${TARGET_ROUNDS}`}>
+              {Array.from({ length: TARGET_ROUNDS }, (_, index) => index + 1).map((round) => (
                 <div
                   key={round}
-                  className={`w-6 h-2 border border-[#30363d] ${
-                    round <= roundCount ? "bg-[#38ef7d]" : "bg-[#161b22]"
-                  }`}
-                  title={`Döngü ${round} / 4`}
+                  className={`w-6 h-2 border border-[#30363d] ${round <= timer.round ? "bg-[#38ef7d]" : "bg-[#161b22]"}`}
+                  title={`Döngü ${round} / ${TARGET_ROUNDS}`}
                 />
               ))}
             </div>
 
-            {/* Buton Kontrolleri */}
             <div className="flex gap-4 mt-6 w-full max-w-sm">
               <button
+                type="button"
                 onClick={handleTogglePlay}
                 className={`pixel-btn text-sm py-3 px-6 flex-1 font-bold ${
                   isRunning ? "pixel-btn-amber" : "pixel-btn-primary"
                 }`}
               >
-                {isRunning ? "[ DURAKLAT ]" : "[ BAŞLAT ]"}
+                {isRunning ? "[ DURAKLAT ]" : phase === "paused" ? "[ DEVAM ET ]" : "[ BAŞLAT ]"}
               </button>
               <button
-                onClick={() => {
-                  setIsRunning(false);
-                  handleModeSwitch(activeMode);
-                }}
+                type="button"
+                onClick={timer.reset}
                 className="pixel-btn pixel-btn-secondary text-sm py-3 px-5 text-[#8b949e] hover:text-white"
               >
                 [ SIFIRLA ]
@@ -319,91 +452,94 @@ function RoomContent() {
             </div>
           </div>
 
-          {/* 3. HABBO TARZI SESSİZ ORTAK ÇALIŞMA MASALARI */}
+          {/* 3. SESSİZ ORTAK ÇALIŞMA MASALARI */}
           <div className="pixel-box p-4 bg-[#10141a]">
             <div className="flex items-center justify-between border-b border-[#262c36] pb-2 mb-3 text-xs text-[#8b949e]">
-              <span>// SESSİZ_MASALAR: ODA #{inviteCode}</span>
-              <span className="text-[#38ef7d]">3 KİŞİ ÇALIŞIYOR</span>
+              <span>{"// SESSİZ_MASALAR"}{studyRoom ? `: ODA #${studyRoom.code}` : ""}</span>
+              {studyRoom && <span className="text-[#38ef7d]">{focusingCount} KİŞİ ÇALIŞIYOR</span>}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {/* Masa 1: Sen */}
-              <div className="p-3 border border-[#38ef7d] bg-[#06080b] flex flex-col gap-1.5">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-[#38ef7d] font-bold">Masa #01 (Sen)</span>
-                  <span className="text-[10px] px-1.5 py-0.5 bg-[#161b22] text-[#38ef7d] border border-[#23c761]">
-                    {isRunning ? "Odakta" : "Hazır"}
-                  </span>
-                </div>
-                <div className="text-[11px] text-[#8b949e]">{userName}</div>
-                <div className="text-[10px] text-[#38ef7d] font-mono">
-                  Kalan: {formatTime(secondsLeft)}
-                </div>
+            {studyRoom ? (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {studyRoom.members.map((member) => {
+                  const isSelf = member.userId === profile?.user.id;
+                  const focusing = isSelf ? isRunning && timer.mode === "pomodoro" : member.isFocusing;
+                  return (
+                    <div
+                      key={member.userId}
+                      className={`p-3 border bg-[#06080b] flex flex-col gap-1.5 ${
+                        isSelf ? "border-[#38ef7d]" : "border-[#30363d]"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between text-xs">
+                        <span className={`font-bold ${isSelf ? "text-[#38ef7d]" : "text-[#e6edf3]"}`}>
+                          {member.seatIndex !== null
+                            ? `Masa #${String(member.seatIndex).padStart(2, "0")}`
+                            : "Masasız"}
+                          {isSelf ? " (Sen)" : ""}
+                        </span>
+                        <span className="text-[10px] px-1.5 py-0.5 bg-[#161b22] text-[#38ef7d] border border-[#23c761]">
+                          {focusing ? "Odakta" : "Hazır"}
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-[#8b949e]">{member.displayName}</div>
+                      {isSelf && (
+                        <div className="text-[10px] text-[#38ef7d] font-mono">
+                          Kalan: {formatTime(timer.secondsLeft)}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
-
-              {/* Masa 2: Ahmet */}
-              <div className="p-3 border border-[#30363d] bg-[#06080b] flex flex-col gap-1.5">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-[#e6edf3] font-bold">Masa #02</span>
-                  <span className="text-[10px] px-1.5 py-0.5 bg-[#161b22] text-[#e5a93c] border border-[#30363d]">
-                    Odakta
-                  </span>
-                </div>
-                <div className="text-[11px] text-[#8b949e]">Ahmet_Dev</div>
-                <div className="text-[10px] text-[#e5a93c] font-mono">Kalan: 16:42</div>
-              </div>
-
-              {/* Masa 3: Selin */}
-              <div className="p-3 border border-[#30363d] bg-[#06080b] flex flex-col gap-1.5">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-[#e6edf3] font-bold">Masa #03</span>
-                  <span className="text-[10px] px-1.5 py-0.5 bg-[#161b22] text-[#e5a93c] border border-[#30363d]">
-                    Odakta
-                  </span>
-                </div>
-                <div className="text-[11px] text-[#8b949e]">Selin_UX</div>
-                <div className="text-[10px] text-[#e5a93c] font-mono">Kalan: 08:15</div>
-              </div>
-            </div>
+            ) : (
+              <p className="text-xs text-[#8b949e]">
+                Henüz ortak bir odada değilsin. &quot;Arkadaşını çağır&quot; ile davet bağlantısı oluşturup
+                birlikte sessizce çalışabilirsin.
+              </p>
+            )}
           </div>
         </section>
 
         {/* SAĞ: İZOMETRİK PİKSEL ODA & SES MİKSERİ (5 Sütun) */}
         <section className="lg:col-span-5 flex flex-col gap-6">
-          {/* İzometrik Piksel Oda Temsili (Canlı Sahne) */}
           <div className="pixel-box p-4 flex flex-col">
             <div className="flex items-center justify-between border-b border-[#262c36] pb-2 mb-3 text-xs text-[#8b949e]">
               <span>[PİKSEL ÇALIŞMA ODAN]</span>
-              <span className="text-[#38ef7d]">Hava: Yağmurlu 12°C</span>
+              {weather ? (
+                <span className="text-[#38ef7d]">
+                  Hava: {weather.description} {Math.round(weather.temperature)}°C
+                </span>
+              ) : weatherDenied ? (
+                <span className="text-[#484f58]">Hava bilgisi alınamadı</span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={loadWeather}
+                  className="text-[#38ef7d] underline hover:text-white"
+                >
+                  Hava için konum paylaş
+                </button>
+              )}
             </div>
 
-            {/* Piksel Oda Sahnesi */}
             <div className="h-56 bg-[#06080b] border border-[#21262d] relative flex items-center justify-center overflow-hidden">
-              {/* Arka Pencere (Yağmur Akışı) */}
               <div className="absolute top-3 left-6 right-6 h-24 border border-[#30363d] bg-[#0a1017] flex items-center justify-center overflow-hidden">
                 <div className="absolute inset-0 opacity-40 bg-[radial-gradient(#38ef7d_1px,transparent_1px)] [background-size:8px_8px]"></div>
-                <span className="text-[10px] text-[#484f58] tracking-widest">
-                  // PENCERE_CAMI_YAGMUR_AKISI
-                </span>
+                <span className="text-[10px] text-[#484f58] tracking-widest">{"// PENCERE"}</span>
               </div>
 
-              {/* Oda İçi Masa, Karakter ve Lambalar */}
               <div className="absolute bottom-3 flex flex-col items-center">
-                {/* Masa Lambası ve Lo-Fi Piksel Plak Çalar */}
                 <div className="w-56 flex justify-between items-end px-2 mb-[-8px] z-10">
-                  {/* Sol: Retro Masa Lambası */}
                   <div className="flex flex-col items-center">
                     <div
                       className={`w-5 h-3 border border-[#23c761] transition-colors ${
-                        isRunning
-                          ? "bg-[#38ef7d] shadow-[0_0_12px_#38ef7d]"
-                          : "bg-[#161b22]"
+                        isRunning ? "bg-[#38ef7d] shadow-[0_0_12px_#38ef7d]" : "bg-[#161b22]"
                       }`}
                     ></div>
                     <div className="w-1 h-5 bg-[#30363d]"></div>
                   </div>
 
-                  {/* Sağ: Piksel Lo-Fi Plak Çalar (Dönen Disk) */}
                   <div className="w-8 h-6 bg-[#161b22] border border-[#30363d] flex items-center justify-center p-0.5">
                     <div
                       className={`w-5 h-5 rounded-full border border-[#484f58] bg-[#0a0d12] flex items-center justify-center ${
@@ -415,35 +551,30 @@ function RoomContent() {
                   </div>
                 </div>
 
-                {/* Piksel Karakter (8-Bit Retro Sprite) */}
                 <div className="relative flex flex-col items-center z-20">
-                  {/* Saç / Şapka */}
                   <div className="w-6 h-2 bg-[#2d1b0d] border-t border-x border-[#5c3a1e]"></div>
-                  {/* Yüz ve Gözler */}
                   <div className="w-6 h-4 bg-[#f8d0b0] border-x border-[#c99f7d] flex items-center justify-center gap-1.5">
                     <div className="w-1 h-1 bg-[#0a0d12]"></div>
                     <div className="w-1 h-1 bg-[#0a0d12]"></div>
                   </div>
-                  {/* Retro Kazak */}
                   <div className="w-8 h-4 bg-[#1f3a2c] border-x border-[#38ef7d]/40 flex items-center justify-center">
                     <div className="w-2 h-2 bg-[#e5a93c]/80"></div>
                   </div>
                 </div>
 
-                {/* Ahşap Çalışma Masası */}
                 <div className="w-60 h-4 bg-[#231a14] border-t-2 border-b-2 border-[#5c3a1e] mt-[-2px] shadow-[0_4px_0_#0a0604] z-30 flex items-center justify-between px-3">
                   <div className="w-1 h-1 bg-[#c99f7d]"></div>
-                  <div className="text-[8px] text-[#8b6848] font-mono tracking-widest">
-                    // BOKO-DESK #01
-                  </div>
+                  <div className="text-[8px] text-[#8b6848] font-mono tracking-widest">{"// BOKO-DESK #01"}</div>
                   <div className="w-1 h-1 bg-[#c99f7d]"></div>
                 </div>
               </div>
 
-              <div className="absolute top-2 right-2 text-[9px] px-1.5 py-0.5 bg-[#10141a] border border-[#30363d] text-[#38ef7d] flex items-center gap-1 z-30">
-                <span className="w-1.5 h-1.5 bg-[#38ef7d] animate-ping"></span>
-                CANLI SEANS
-              </div>
+              {isRunning && (
+                <div className="absolute top-2 right-2 text-[9px] px-1.5 py-0.5 bg-[#10141a] border border-[#30363d] text-[#38ef7d] flex items-center gap-1 z-30">
+                  <span aria-hidden="true" className="w-1.5 h-1.5 bg-[#38ef7d] animate-ping"></span>
+                  SEANS AKTİF
+                </div>
+              )}
             </div>
           </div>
 
@@ -456,69 +587,29 @@ function RoomContent() {
               </span>
             </div>
 
-            {/* Kanal 1: Yağmur Sesi */}
-            <div className="flex flex-col gap-1">
-              <div className="flex justify-between text-[11px]">
-                <span className="text-[#bacbb9]">🌧️ Yağmur Damlası</span>
-                <span className="text-[#38ef7d]">{soundRain}%</span>
+            {CHANNELS.map((channel) => (
+              <div key={channel.id} className="flex flex-col gap-1">
+                <div className="flex justify-between text-[11px]">
+                  <label htmlFor={`slider-${channel.id}`} className="text-[#bacbb9]">
+                    {channel.label}
+                  </label>
+                  <span aria-hidden="true" className="text-[#38ef7d]">
+                    {levels[channel.id]}%
+                  </span>
+                </div>
+                <input
+                  id={`slider-${channel.id}`}
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={levels[channel.id]}
+                  aria-label={`${channel.label} ses seviyesi`}
+                  aria-valuetext={`yüzde ${levels[channel.id]}`}
+                  onChange={(e) => setLevels((prev) => ({ ...prev, [channel.id]: Number(e.target.value) }))}
+                  className="accent-[#38ef7d] h-2 bg-[#161b22] cursor-pointer"
+                />
               </div>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={soundRain}
-                onChange={(e) => setSoundRain(Number(e.target.value))}
-                className="accent-[#38ef7d] h-2 bg-[#161b22] cursor-pointer"
-              />
-            </div>
-
-            {/* Kanal 2: Kahverengi Gürültü (Brown Noise) */}
-            <div className="flex flex-col gap-1">
-              <div className="flex justify-between text-[11px]">
-                <span className="text-[#bacbb9]">🌊 Kahverengi Gürültü</span>
-                <span className="text-[#38ef7d]">{soundNoise}%</span>
-              </div>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={soundNoise}
-                onChange={(e) => setSoundNoise(Number(e.target.value))}
-                className="accent-[#38ef7d] h-2 bg-[#161b22] cursor-pointer"
-              />
-            </div>
-
-            {/* Kanal 3: Vinil Plak Çıtırtısı */}
-            <div className="flex flex-col gap-1">
-              <div className="flex justify-between text-[11px]">
-                <span className="text-[#bacbb9]">📻 Vinil Çıtırtısı</span>
-                <span className="text-[#38ef7d]">{soundVinyl}%</span>
-              </div>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={soundVinyl}
-                onChange={(e) => setSoundVinyl(Number(e.target.value))}
-                className="accent-[#38ef7d] h-2 bg-[#161b22] cursor-pointer"
-              />
-            </div>
-
-            {/* Kanal 4: Lo-Fi Melodi */}
-            <div className="flex flex-col gap-1">
-              <div className="flex justify-between text-[11px]">
-                <span className="text-[#bacbb9]">🎧 Lo-Fi Plak Çalar</span>
-                <span className="text-[#38ef7d]">{soundLofi}%</span>
-              </div>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={soundLofi}
-                onChange={(e) => setSoundLofi(Number(e.target.value))}
-                className="accent-[#38ef7d] h-2 bg-[#161b22] cursor-pointer"
-              />
-            </div>
+            ))}
           </div>
         </section>
       </main>
@@ -526,14 +617,15 @@ function RoomContent() {
       {/* 4. ALT BAR (FOOTER) */}
       <footer className="border-t-2 border-[#262c36] pt-4 mt-8 flex flex-col sm:flex-row items-center justify-between text-[11px] text-[#8b949e] gap-2">
         <div>© 2026 BOKODORO. Minimalist Retro Odaklanma Odası.</div>
-        <div className="flex items-center gap-3">
+        {apiReachable !== null && (
           <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 bg-[#38ef7d]"></span> API: Çevrimiçi (5000)
+            <span
+              aria-hidden="true"
+              className={`w-2 h-2 ${apiReachable ? "bg-[#38ef7d]" : "bg-[#f85149]"}`}
+            ></span>
+            {apiReachable ? "Sunucu: bağlı" : "Sunucu: bağlantı yok"}
           </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 bg-[#38ef7d]"></span> DB: PostgreSQL+Vector (5433)
-          </span>
-        </div>
+        )}
       </footer>
     </div>
   );
