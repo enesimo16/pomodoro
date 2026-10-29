@@ -5,10 +5,13 @@ using Focus.Domain.Enums;
 
 public class AgentMemory : BaseEntity<Guid>, IAggregateRoot
 {
+    public const int MaxContentLength = 1500;
+
     public Guid? UserId { get; private set; }
     public MemoryCategory Category { get; private set; }
     public string Content { get; private set; } = string.Empty;
-    public float[] Embedding { get; private set; } = Array.Empty<float>();
+    public float[]? Embedding { get; private set; }
+    public Guid? SourceSessionId { get; private set; }
     public int Importance { get; private set; } = 3;
     public int UsageCount { get; private set; }
     public DateTime CreatedAt { get; private set; }
@@ -22,7 +25,7 @@ public class AgentMemory : BaseEntity<Guid>, IAggregateRoot
         Guid userId,
         MemoryCategory category,
         string content,
-        float[] embedding,
+        float[]? embedding,
         int importance = 3)
     {
         if (string.IsNullOrWhiteSpace(content))
@@ -33,7 +36,7 @@ public class AgentMemory : BaseEntity<Guid>, IAggregateRoot
             Id = Guid.NewGuid(),
             UserId = userId,
             Category = category,
-            Content = content.Trim(),
+            Content = Truncate(content),
             Embedding = embedding,
             Importance = Math.Clamp(importance, 1, 5),
             UsageCount = 0,
@@ -44,8 +47,9 @@ public class AgentMemory : BaseEntity<Guid>, IAggregateRoot
     public static AgentMemory CreateGlobal(
         MemoryCategory category,
         string content,
-        float[] embedding,
-        int importance = 3)
+        float[]? embedding,
+        int importance = 3,
+        Guid? sourceSessionId = null)
     {
         if (string.IsNullOrWhiteSpace(content))
             throw new ArgumentException("Kolektif bellek icerigi bos olamaz.", nameof(content));
@@ -54,8 +58,9 @@ public class AgentMemory : BaseEntity<Guid>, IAggregateRoot
         {
             Id = Guid.NewGuid(),
             UserId = null,
+            SourceSessionId = sourceSessionId,
             Category = category,
-            Content = content.Trim(),
+            Content = Truncate(content),
             Embedding = embedding,
             Importance = Math.Clamp(importance, 1, 5),
             UsageCount = 0,
@@ -69,7 +74,13 @@ public class AgentMemory : BaseEntity<Guid>, IAggregateRoot
         LastAccessedAt = DateTime.UtcNow;
     }
 
-    public void UpdateEmbedding(float[] newEmbedding)
+    private static string Truncate(string content)
+    {
+        var trimmed = content.Trim();
+        return trimmed.Length <= MaxContentLength ? trimmed : trimmed[..MaxContentLength];
+    }
+
+    public void UpdateEmbedding(float[]? newEmbedding)
     {
         Embedding = newEmbedding;
     }

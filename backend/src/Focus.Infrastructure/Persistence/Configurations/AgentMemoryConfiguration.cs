@@ -41,9 +41,16 @@ public class AgentMemoryConfiguration : IEntityTypeConfiguration<AgentMemory>
         builder.Property(m => m.LastAccessedAt)
             .IsRequired(false);
 
+        builder.Property(m => m.SourceSessionId)
+            .IsRequired(false);
+
         builder.Ignore(m => m.IsGlobal);
 
         builder.HasIndex(m => m.UserId);
         builder.HasIndex(m => m.Category);
+
+        builder.HasIndex(m => m.SourceSessionId)
+            .IsUnique()
+            .HasFilter("\"SourceSessionId\" IS NOT NULL");
     }
 }

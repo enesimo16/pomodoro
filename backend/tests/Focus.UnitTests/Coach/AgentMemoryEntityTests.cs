@@ -46,4 +46,23 @@ public class AgentMemoryEntityTests
         memory.UsageCount.Should().Be(1);
         memory.LastAccessedAt.Should().NotBeNull();
     }
+
+    [Fact]
+    public void Create_TruncatesContentToColumnLimitAndAllowsMissingEmbedding()
+    {
+        var memory = AgentMemory.CreatePrivate(Guid.NewGuid(), MemoryCategory.PersonalHabit, new string('x', 3000), null);
+
+        memory.Content.Length.Should().Be(AgentMemory.MaxContentLength);
+        memory.Embedding.Should().BeNull();
+    }
+
+    [Fact]
+    public void CreateGlobal_StoresSourceSessionId()
+    {
+        var sessionId = Guid.NewGuid();
+
+        var memory = AgentMemory.CreateGlobal(MemoryCategory.CollectiveWisdom, "icerik", null, 4, sessionId);
+
+        memory.SourceSessionId.Should().Be(sessionId);
+    }
 }

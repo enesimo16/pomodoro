@@ -37,7 +37,7 @@ public class VectorMemoryService : IVectorMemoryService
         Guid userId,
         MemoryCategory category,
         string content,
-        float[] embedding,
+        float[]? embedding,
         int importance = 3,
         CancellationToken cancellationToken = default)
     {
@@ -49,7 +49,7 @@ public class VectorMemoryService : IVectorMemoryService
     public async Task AddGlobalMemoryAsync(
         MemoryCategory category,
         string content,
-        float[] embedding,
+        float[]? embedding,
         int importance = 3,
         CancellationToken cancellationToken = default)
     {
@@ -60,12 +60,10 @@ public class VectorMemoryService : IVectorMemoryService
 
     public async Task<List<MemoryInsightDto>> QueryHybridMemoriesAsync(
         Guid userId,
-        float[] queryEmbedding,
+        float[]? queryEmbedding,
         int topK = 3,
         CancellationToken cancellationToken = default)
     {
-        var targetVector = new Vector(queryEmbedding);
-
         // Kullanicinin kisisel hafiza sayisini denetle (Soguk Baslangic Karari)
         var userPrivateCount = await _context.AgentMemories
             .CountAsync(m => m.UserId == userId, cancellationToken);
@@ -86,62 +84,34 @@ public class VectorMemoryService : IVectorMemoryService
             globalLimit = 1;
         }
 
-        List<AgentMemory> privateMemories;
-        List<AgentMemory> globalMemories;
+        List<(AgentMemory Memory, double Relevance)> privateMemories;
+        List<(AgentMemory Memory, double Relevance)> globalMemories;
 
-        if (_context.Database.IsNpgsql())
+        if (queryEmbedding != null && _context.Database.IsNpgsql())
         {
-            privateMemories = await _context.AgentMemories
-                .Where(m => m.UserId == userId)
-                .OrderBy(m => m.Embedding.CosineDistance(targetVector))
-                .Take(privateLimit)
-                .ToListAsync(cancellationToken);
+            var targetVector = new Vector(queryEmbedding);
 
-            globalMemories = await _context.AgentMemories
-                .Where(m => m.UserId == null)
-                .OrderBy(m => m.Embedding.CosineDistance(targetVector))
-                .Take(globalLimit)
-                .ToListAsync(cancellationToken);
+            privateMemories = await QueryByVectorAsync(m => m.UserId == userId, targetVector, privateLimit, cancellationToken);
+            globalMemories = await QueryByVectorAsync(m => m.UserId == null, targetVector, globalLimit, cancellationToken);
         }
         else
         {
-            privateMemories = await _context.AgentMemories
-                .Where(m => m.UserId == userId)
-                .OrderByDescending(m => m.Importance)
-                .Take(privateLimit)
-                .ToListAsync(cancellationToken);
-
-            globalMemories = await _context.AgentMemories
-                .Where(m => m.UserId == null)
-                .OrderByDescending(m => m.Importance)
-                .Take(globalLimit)
-                .ToListAsync(cancellationToken);
+            privateMemories = await QueryByImportanceAsync(m => m.UserId == userId, queryEmbedding, privateLimit, cancellationToken);
+            globalMemories = await QueryByImportanceAsync(m => m.UserId == null, queryEmbedding, globalLimit, cancellationToken);
         }
 
         var result = new List<MemoryInsightDto>();
 
-        foreach (var m in privateMemories)
+        foreach (var (m, relevance) in privateMemories)
         {
             m.RecordUsage();
-            result.Add(new MemoryInsightDto(
-                m.Id,
-                false,
-                m.Category,
-                m.Content,
-                m.Importance,
-                0.95));
+            result.Add(new MemoryInsightDto(m.Id, false, m.Category, m.Content, m.Importance, relevance));
         }
 
-        foreach (var m in globalMemories)
+        foreach (var (m, relevance) in globalMemories)
         {
             m.RecordUsage();
-            result.Add(new MemoryInsightDto(
-                m.Id,
-                true,
-                m.Category,
-                m.Content,
-                m.Importance,
-                0.85));
+            result.Add(new MemoryInsightDto(m.Id, true, m.Category, m.Content, m.Importance, relevance));
         }
 
         if (privateMemories.Count > 0 || globalMemories.Count > 0)
@@ -152,11 +122,11 @@ public class VectorMemoryService : IVectorMemoryService
         return result;
     }
 
-    public async Task<float[]> GenerateEmbeddingAsync(string text, CancellationToken cancellationToken = default)
+    public async Task<float[]?> GenerateEmbeddingAsync(string text, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(text))
         {
-            return GlobalMemorySeeder.GenerateDeterministicEmbedding("empty");
+            return null;
         }
 
         // Gemini API anahtari tanimliysa gercek Gemini Embedding uret
@@ -201,7 +171,60 @@ public class VectorMemoryService : IVectorMemoryService
             }
         }
 
-        return GlobalMemorySeeder.GenerateDeterministicEmbedding(text);
+        return null;
+    }
+
+    private async Task<List<(AgentMemory Memory, double Relevance)>> QueryByVectorAsync(
+        System.Linq.Expressions.Expression<Func<AgentMemory, bool>> scope,
+        Vector target,
+        int limit,
+        CancellationToken cancellationToken)
+    {
+        var rows = await _context.AgentMemories
+            .Where(scope)
+            .Where(m => m.Embedding != null)
+            .Select(m => new { Memory = m, Distance = m.Embedding!.CosineDistance(target) })
+            .OrderBy(x => x.Distance)
+            .Take(limit)
+            .ToListAsync(cancellationToken);
+
+        return rows.Select(x => (x.Memory, 1.0 - x.Distance)).ToList();
+    }
+
+    private async Task<List<(AgentMemory Memory, double Relevance)>> QueryByImportanceAsync(
+        System.Linq.Expressions.Expression<Func<AgentMemory, bool>> scope,
+        float[]? queryEmbedding,
+        int limit,
+        CancellationToken cancellationToken)
+    {
+        var rows = await _context.AgentMemories
+            .Where(scope)
+            .OrderByDescending(m => m.Importance)
+            .ThenByDescending(m => m.CreatedAt)
+            .Take(limit)
+            .ToListAsync(cancellationToken);
+
+        return rows
+            .Select(m => (m, queryEmbedding != null && m.Embedding != null ? CosineSimilarity(queryEmbedding, m.Embedding) : 0.0))
+            .ToList();
+    }
+
+    private static double CosineSimilarity(float[] a, float[] b)
+    {
+        if (a.Length != b.Length)
+        {
+            return 0.0;
+        }
+
+        double dot = 0, normA = 0, normB = 0;
+        for (var i = 0; i < a.Length; i++)
+        {
+            dot += a[i] * b[i];
+            normA += a[i] * a[i];
+            normB += b[i] * b[i];
+        }
+
+        return normA > 0 && normB > 0 ? dot / (Math.Sqrt(normA) * Math.Sqrt(normB)) : 0.0;
     }
 
     private static float[] Normalize(float[] values)

@@ -35,6 +35,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<UserDeviceSession> UserDeviceSessions => Set<UserDeviceSession>();
     public DbSet<SavedAtmosphere> SavedAtmospheres => Set<SavedAtmosphere>();
+    public DbSet<AiTokenUsage> AiTokenUsages => Set<AiTokenUsage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -54,8 +55,8 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
             {
                 b.Property(m => m.Embedding)
                     .HasColumnType("vector(768)")
-                    .HasConversion(v => new Pgvector.Vector(v), v => v.ToArray(), valueComparer)
-                    .IsRequired();
+                    .HasConversion(v => new Pgvector.Vector(v!), v => v.ToArray(), valueComparer)
+                    .IsRequired(false);
 
                 b.HasIndex(m => m.Embedding)
                     .HasMethod("hnsw")
@@ -68,10 +69,10 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
             {
                 b.Property(m => m.Embedding)
                     .HasConversion(
-                        v => string.Join(",", v),
+                        v => string.Join(",", v!),
                         s => s.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(float.Parse).ToArray(),
                         valueComparer)
-                    .IsRequired();
+                    .IsRequired(false);
             });
         }
 

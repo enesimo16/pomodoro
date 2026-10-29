@@ -44,7 +44,6 @@ namespace Focus.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<Vector>("Embedding")
-                        .IsRequired()
                         .HasColumnType("vector(768)");
 
                     b.Property<int>("Importance")
@@ -52,6 +51,9 @@ namespace Focus.Infrastructure.Persistence.Migrations
 
                     b.Property<DateTime?>("LastAccessedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("SourceSessionId")
+                        .HasColumnType("uuid");
 
                     b.Property<int>("UsageCount")
                         .HasColumnType("integer");
@@ -68,9 +70,40 @@ namespace Focus.Infrastructure.Persistence.Migrations
                     NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Embedding"), "hnsw");
                     NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("Embedding"), new[] { "vector_cosine_ops" });
 
+                    b.HasIndex("SourceSessionId")
+                        .IsUnique()
+                        .HasFilter("\"SourceSessionId\" IS NOT NULL");
+
                     b.HasIndex("UserId");
 
                     b.ToTable("AgentMemories", (string)null);
+                });
+
+            modelBuilder.Entity("Focus.Domain.Entities.AiTokenUsage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("TokensUsed")
+                        .HasColumnType("integer");
+
+                    b.Property<DateOnly>("UsageDate")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "UsageDate")
+                        .IsUnique();
+
+                    b.ToTable("AiTokenUsages", (string)null);
                 });
 
             modelBuilder.Entity("Focus.Domain.Entities.CatalogItem", b =>
@@ -1770,6 +1803,15 @@ namespace Focus.Infrastructure.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade);
+                });
+
+            modelBuilder.Entity("Focus.Domain.Entities.AiTokenUsage", b =>
+                {
+                    b.HasOne("Focus.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Focus.Domain.Entities.CoinLedgerEntry", b =>

@@ -27,6 +27,7 @@ public interface IApplicationDbContext
     DbSet<Notification> Notifications { get; }
     DbSet<UserDeviceSession> UserDeviceSessions { get; }
     DbSet<SavedAtmosphere> SavedAtmospheres { get; }
+    DbSet<AiTokenUsage> AiTokenUsages { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 

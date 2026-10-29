@@ -1,4 +1,5 @@
 using Focus.Application;
+using Focus.Application.Common.Interfaces;
 using Focus.Infrastructure;
 using Focus.Infrastructure.Common;
 using Focus.Infrastructure.Persistence;
@@ -126,7 +127,9 @@ using (var scope = app.Services.CreateScope())
             await context.Database.MigrateAsync();
         }
 
-        await GlobalMemorySeeder.SeedGlobalMemoriesAsync(context);
+        await GlobalMemorySeeder.SeedGlobalMemoriesAsync(
+            context,
+            scope.ServiceProvider.GetRequiredService<IVectorMemoryService>());
     }
     catch (Exception ex)
     {
