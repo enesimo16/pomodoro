@@ -5,6 +5,7 @@ namespace Focus.Application.Features.Atmosphere.Commands;
 public class SaveAtmosphereCommandValidator : AbstractValidator<SaveAtmosphereCommand>
 {
     public const int MaxPromptLength = 1000;
+    private const string HexColorPattern = @"\A#[0-9a-fA-F]{6}\z";
 
     public SaveAtmosphereCommandValidator()
     {
@@ -15,6 +16,13 @@ public class SaveAtmosphereCommandValidator : AbstractValidator<SaveAtmosphereCo
             RuleFor(x => x.Atmosphere.VisualTheme).NotNull().WithMessage("Gorsel tema gereklidir.");
             RuleFor(x => x.Atmosphere.SoundscapeMixer).NotNull().WithMessage("Ses mikseri gereklidir.");
             RuleFor(x => x.Atmosphere.RecommendedSession).NotNull().WithMessage("Onerilen seans bilgisi gereklidir.");
+
+            When(x => x.Atmosphere.VisualTheme != null, () =>
+            {
+                RuleFor(x => x.Atmosphere.VisualTheme.WallColor).Matches(HexColorPattern).WithMessage("Duvar rengi #RRGGBB formatinda olmalidir.");
+                RuleFor(x => x.Atmosphere.VisualTheme.FloorColor).Matches(HexColorPattern).WithMessage("Zemin rengi #RRGGBB formatinda olmalidir.");
+                RuleFor(x => x.Atmosphere.VisualTheme.AccentLightColor).Matches(HexColorPattern).WithMessage("Vurgu rengi #RRGGBB formatinda olmalidir.");
+            });
 
             When(x => x.Atmosphere.SoundscapeMixer != null, () =>
             {

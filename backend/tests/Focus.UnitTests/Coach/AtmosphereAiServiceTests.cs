@@ -604,4 +604,19 @@ public class AtmosphereAiServiceTests
 
         result.IsValid.Should().BeFalse();
     }
+
+    [Theory]
+    [InlineData("#161224", true)]
+    [InlineData("#ABCDEF", true)]
+    [InlineData("red; background:url(https://x)", false)]
+    [InlineData("#12345", false)]
+    public async Task SaveAtmosphereValidator_AcceptsOnlyHexWallColors(string wallColor, bool expectedValid)
+    {
+        var validator = new SaveAtmosphereCommandValidator();
+        var atmosphere = new GeneratedAtmosphereDto { VisualTheme = new VisualThemeDto { WallColor = wallColor } };
+
+        var result = await validator.ValidateAsync(new SaveAtmosphereCommand(Guid.NewGuid(), atmosphere));
+
+        result.IsValid.Should().Be(expectedValid);
+    }
 }
