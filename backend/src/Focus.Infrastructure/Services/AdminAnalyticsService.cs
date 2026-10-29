@@ -1,3 +1,4 @@
+using System.Data.Common;
 using System.Diagnostics;
 using Focus.Application.Common.Interfaces;
 using Focus.Application.Features.AdminAnalytics.DTOs;
@@ -8,6 +9,9 @@ namespace Focus.Infrastructure.Services;
 
 public class AdminAnalyticsService : IAdminAnalyticsService
 {
+    private const int TopListSize = 10;
+    private const string RedisNotConfigured = "NotConfigured";
+
     private readonly IApplicationDbContext _context;
 
     public AdminAnalyticsService(IApplicationDbContext context)
@@ -78,54 +82,49 @@ public class AdminAnalyticsService : IAdminAnalyticsService
     {
         var totalAvatars = await _context.UserAvatars.CountAsync(cancellationToken);
 
-        var users = await _context.Users
+        var levelDist = new Dictionary<string, int>
+        {
+            ["Sv. 1-5"] = await _context.Users.CountAsync(u => u.Level >= 1 && u.Level <= 5, cancellationToken),
+            ["Sv. 6-10"] = await _context.Users.CountAsync(u => u.Level >= 6 && u.Level <= 10, cancellationToken),
+            ["Sv. 11-20"] = await _context.Users.CountAsync(u => u.Level >= 11 && u.Level <= 20, cancellationToken),
+            ["Sv. 21+"] = await _context.Users.CountAsync(u => u.Level >= 21, cancellationToken)
+        };
+
+        var topXpRows = await _context.Users
             .AsNoTracking()
+            .OrderByDescending(u => u.CurrentXp)
+            .Take(TopListSize)
             .Select(u => new { u.Id, u.DisplayName, u.Level, u.CurrentXp })
             .ToListAsync(cancellationToken);
 
-        var levelDist = new Dictionary<string, int>
-        {
-            ["Sv. 1-5"] = users.Count(u => u.Level >= 1 && u.Level <= 5),
-            ["Sv. 6-10"] = users.Count(u => u.Level >= 6 && u.Level <= 10),
-            ["Sv. 11-20"] = users.Count(u => u.Level >= 11 && u.Level <= 20),
-            ["Sv. 21+"] = users.Count(u => u.Level >= 21)
-        };
+        var topStreakRows = await (
+                from s in _context.UserStreaks.AsNoTracking()
+                join u in _context.Users.AsNoTracking() on s.UserId equals u.Id
+                orderby s.CurrentStreak descending, u.CurrentXp descending
+                select new { u.Id, u.DisplayName, u.Level, u.CurrentXp, s.CurrentStreak })
+            .Take(TopListSize)
+            .ToListAsync(cancellationToken);
+
+        var listedIds = topXpRows.Select(u => u.Id).Concat(topStreakRows.Select(u => u.Id)).Distinct().ToList();
 
         var streaks = await _context.UserStreaks
             .AsNoTracking()
+            .Where(s => listedIds.Contains(s.UserId))
             .ToDictionaryAsync(s => s.UserId, s => s.CurrentStreak, cancellationToken);
 
         var coinSums = await _context.CoinLedgerEntries
             .AsNoTracking()
+            .Where(c => listedIds.Contains(c.UserId))
             .GroupBy(c => c.UserId)
             .Select(g => new { UserId = g.Key, Coins = g.Sum(c => c.Coins) })
             .ToDictionaryAsync(x => x.UserId, x => x.Coins, cancellationToken);
 
-        var topByXp = users
-            .OrderByDescending(u => u.CurrentXp)
-            .Take(10)
-            .Select(u => new TopUserSummaryDto(
-                u.Id,
-                u.DisplayName,
-                u.Level,
-                u.CurrentXp,
-                coinSums.GetValueOrDefault(u.Id, 0),
-                streaks.GetValueOrDefault(u.Id, 0)
-            ))
+        var topByXp = topXpRows
+            .Select(u => new TopUserSummaryDto(u.Id, u.DisplayName, u.Level, u.CurrentXp, coinSums.GetValueOrDefault(u.Id, 0), streaks.GetValueOrDefault(u.Id, 0)))
             .ToList();
 
-        var topByStreak = users
-            .OrderByDescending(u => streaks.GetValueOrDefault(u.Id, 0))
-            .ThenByDescending(u => u.CurrentXp)
-            .Take(10)
-            .Select(u => new TopUserSummaryDto(
-                u.Id,
-                u.DisplayName,
-                u.Level,
-                u.CurrentXp,
-                coinSums.GetValueOrDefault(u.Id, 0),
-                streaks.GetValueOrDefault(u.Id, 0)
-            ))
+        var topByStreak = topStreakRows
+            .Select(u => new TopUserSummaryDto(u.Id, u.DisplayName, u.Level, u.CurrentXp, coinSums.GetValueOrDefault(u.Id, 0), u.CurrentStreak))
             .ToList();
 
         return new UserAnalyticsDto(
@@ -149,36 +148,34 @@ public class AdminAnalyticsService : IAdminAnalyticsService
             .Where(e => e.Coins < 0)
             .SumAsync(e => (long)-e.Coins, cancellationToken);
 
-        var inventoryItems = await _context.UserInventoryItems
+        var purchaseCounts = await _context.UserInventoryItems
             .AsNoTracking()
-            .Select(i => new { i.CatalogItemId })
+            .GroupBy(i => i.CatalogItemId)
+            .Select(g => new { CatalogItemId = g.Key, Count = g.Count() })
             .ToListAsync(cancellationToken);
 
         var catalogDict = await _context.CatalogItems
             .AsNoTracking()
             .ToDictionaryAsync(c => c.Id, cancellationToken);
 
-        var purchasedItems = inventoryItems
-            .GroupBy(i => i.CatalogItemId)
-            .Where(g => catalogDict.ContainsKey(g.Key))
-            .Select(g =>
+        var allPurchases = purchaseCounts
+            .Where(p => catalogDict.ContainsKey(p.CatalogItemId))
+            .Select(p =>
             {
-                var item = catalogDict[g.Key];
-                return new TopItemPurchaseDto(
-                    item.Id,
-                    item.Name,
-                    item.Category.ToString(),
-                    item.CoinPrice,
-                    g.Count()
-                );
+                var item = catalogDict[p.CatalogItemId];
+                return new TopItemPurchaseDto(item.Id, item.Name, item.Category.ToString(), item.CoinPrice, p.Count);
             })
-            .OrderByDescending(x => x.TotalPurchased)
-            .Take(10)
             .ToList();
 
-        var categorySpend = purchasedItems
+        // Kategori harcamasi sinirlanmamis tum satin alimlardan hesaplanir
+        var categorySpend = allPurchases
             .GroupBy(x => x.Category)
             .ToDictionary(g => g.Key, g => g.Sum(x => (long)x.Price * x.TotalPurchased));
+
+        var purchasedItems = allPurchases
+            .OrderByDescending(x => x.TotalPurchased)
+            .Take(TopListSize)
+            .ToList();
 
         return new EconomyAnalyticsDto(
             totalCirculating,
@@ -193,35 +190,40 @@ public class AdminAnalyticsService : IAdminAnalyticsService
     {
         var sw = Stopwatch.StartNew();
         var dbStatus = "Healthy";
+        var totalMemories = 0;
+        var personalMemories = 0;
+        var totalRooms = 0;
+        var activeRooms = 0;
+
         try
         {
             await _context.Users.Take(1).AnyAsync(cancellationToken);
+            sw.Stop();
+
+            totalMemories = await _context.AgentMemories.CountAsync(cancellationToken);
+            personalMemories = await _context.AgentMemories.CountAsync(m => m.UserId != null, cancellationToken);
+
+            var activeThreshold = DateTime.UtcNow.AddMinutes(-30);
+            totalRooms = await _context.StudyRooms.CountAsync(cancellationToken);
+            activeRooms = await _context.RoomMembers
+                .Where(m => m.LastActiveAt >= activeThreshold)
+                .Select(m => m.RoomId)
+                .Distinct()
+                .CountAsync(cancellationToken);
         }
-        catch
+        catch (Exception ex) when (ex is DbException or InvalidOperationException or DbUpdateException)
         {
+            sw.Stop();
             dbStatus = "Degraded";
         }
-        sw.Stop();
-
-        var totalMemories = await _context.AgentMemories.CountAsync(cancellationToken);
-        var personalMemories = await _context.AgentMemories.CountAsync(m => m.UserId != null, cancellationToken);
-        var globalMemories = totalMemories - personalMemories;
-
-        var activeThreshold = DateTime.UtcNow.AddMinutes(-30);
-        var totalRooms = await _context.StudyRooms.CountAsync(cancellationToken);
-        var activeRooms = await _context.RoomMembers
-            .Where(m => m.LastActiveAt >= activeThreshold)
-            .Select(m => m.RoomId)
-            .Distinct()
-            .CountAsync(cancellationToken);
 
         return new SystemHealthDto(
             dbStatus,
             Math.Round(sw.Elapsed.TotalMilliseconds, 2),
-            "Healthy",
+            RedisNotConfigured,
             totalMemories,
             personalMemories,
-            globalMemories,
+            totalMemories - personalMemories,
             totalRooms,
             activeRooms,
             DateTime.UtcNow
