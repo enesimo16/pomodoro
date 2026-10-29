@@ -10,6 +10,7 @@ public static class RateLimitPolicies
     public const string Auth = "auth";
     public const string Ai = "ai";
     public const string Media = "media";
+    public const string Reaction = "reaction";
 }
 
 public static class RateLimitingExtensions
@@ -36,6 +37,7 @@ public static class RateLimitingExtensions
                 options.AddPolicy(RateLimitPolicies.Auth, context => Partition(RateLimitPolicies.Auth, ClientIp(context), settings.Value.Auth));
                 options.AddPolicy(RateLimitPolicies.Ai, context => Partition(RateLimitPolicies.Ai, UserIdOrIp(context), settings.Value.Ai));
                 options.AddPolicy(RateLimitPolicies.Media, context => Partition(RateLimitPolicies.Media, ClientIp(context), settings.Value.Media));
+                options.AddPolicy(RateLimitPolicies.Reaction, context => Partition(RateLimitPolicies.Reaction, UserIdOrIp(context), settings.Value.Reaction));
             });
 
         return services;

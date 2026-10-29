@@ -33,6 +33,12 @@ public static class RecurringJobsConfigurator
             "0 * * * *",
             "Her saat başı"),
         new(
+            "stale-room-member-cleanup",
+            "Etkin Olmayan Oda Üyelerini Temizleme",
+            "Son 30 dakikadır hiçbir etkinlik göstermeyen oda üyelerini odadan çıkarır ve masalarını boşaltır.",
+            "*/10 * * * *",
+            "Her 10 dakikada bir"),
+        new(
             "guest-audit-cleanup",
             "Eski Misafir & Erişim Logu Temizliği",
             "30 günden eski seanssız misafir hesaplarını ve 60 günden eski IP/cihaz denetim kayıtlarını temizler.",
@@ -62,6 +68,11 @@ public static class RecurringJobsConfigurator
             "abandoned-session-reconciliation",
             service => service.RunAbandonedSessionReconciliationAsync(CancellationToken.None),
             "0 * * * *");
+
+        recurringJobManager.AddOrUpdate<IBackgroundJobService>(
+            "stale-room-member-cleanup",
+            service => service.RunStaleRoomMemberCleanupAsync(CancellationToken.None),
+            "*/10 * * * *");
 
         recurringJobManager.AddOrUpdate<IBackgroundJobService>(
             "guest-audit-cleanup",

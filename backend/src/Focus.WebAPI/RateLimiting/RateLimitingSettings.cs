@@ -7,6 +7,7 @@ public class RateLimitingSettings
     public RateLimitRule Auth { get; set; } = new() { PermitLimit = 10, WindowSeconds = 60 };
     public RateLimitRule Ai { get; set; } = new() { PermitLimit = 20, WindowSeconds = 60 };
     public RateLimitRule Media { get; set; } = new() { PermitLimit = 60, WindowSeconds = 60 };
+    public RateLimitRule Reaction { get; set; } = new() { PermitLimit = 30, WindowSeconds = 60 };
 }
 
 public class RateLimitRule

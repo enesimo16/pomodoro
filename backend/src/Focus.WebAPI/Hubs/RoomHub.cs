@@ -34,6 +34,18 @@ public class RoomHub : Hub<IRoomClient>
         await Groups.AddToGroupAsync(Context.ConnectionId, GroupName(roomCode), Context.ConnectionAborted);
     }
 
+    public async Task Heartbeat(string roomCode)
+    {
+        var userId = RequireUserId();
+        if (string.IsNullOrWhiteSpace(roomCode)) return;
+
+        var isMember = await _mediator.Send(new TouchRoomMemberCommand(userId, roomCode), Context.ConnectionAborted);
+        if (!isMember)
+        {
+            throw new HubException("Bu odaya erişim yetkiniz yok.");
+        }
+    }
+
     public async Task LeaveRoomGroup(string roomCode)
     {
         if (!string.IsNullOrWhiteSpace(roomCode))

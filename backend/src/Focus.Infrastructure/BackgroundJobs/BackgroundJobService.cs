@@ -156,6 +156,50 @@ public class BackgroundJobService : IBackgroundJobService
         return reconciled;
     }
 
+    public async Task<int> RunStaleRoomMemberCleanupAsync(CancellationToken cancellationToken = default)
+    {
+        var cutoff = _clock.GetUtcNow().UtcDateTime.AddMinutes(-_options.RoomMemberStaleMinutes);
+        var rooms = await _context.StudyRooms
+            .Include(r => r.Members)
+            .Where(r => r.Members.Any(m => m.LastActiveAt != null && m.LastActiveAt < cutoff))
+            .ToListAsync(cancellationToken);
+
+        var removed = 0;
+        foreach (var room in rooms)
+        {
+            var staleUserIds = room.Members
+                .Where(m => m.LastActiveAt != null && m.LastActiveAt < cutoff)
+                .Select(m => m.UserId)
+                .ToList();
+
+            foreach (var userId in staleUserIds)
+            {
+                var member = room.RemoveMember(userId);
+                if (member == null) continue;
+
+                _context.RoomMembers.Remove(member);
+                removed++;
+            }
+        }
+
+        if (removed == 0) return 0;
+
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            // Uyeler ayni anda islem yapti veya ayrildi; bir sonraki calismada tekrar degerlendirilir
+            _context.DiscardPendingChanges();
+            _logger.LogInformation("Stale room member cleanup hit a concurrent change; will retry on the next run");
+            return 0;
+        }
+
+        _logger.LogInformation("Stale room member cleanup completed. Removed: {Count} members", removed);
+        return removed;
+    }
+
     public async Task<int> RunGuestAndAuditCleanupAsync(CancellationToken cancellationToken = default)
     {
         var auditCutoff = DateTime.UtcNow.AddDays(-60);

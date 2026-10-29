@@ -31,16 +31,17 @@ public class BackgroundJobServiceTests
     }
 
     [Fact]
-    public void RecurringJobsConfigurator_ShouldRegisterFiveCoreJobs()
+    public void RecurringJobsConfigurator_ShouldRegisterCoreJobs()
     {
         var jobs = RecurringJobsConfigurator.RegisteredJobs;
 
-        Assert.Equal(5, jobs.Count);
+        Assert.Equal(6, jobs.Count);
         Assert.Contains(jobs, j => j.Id == "daily-streak-maintenance");
         Assert.Contains(jobs, j => j.Id == "weekly-freeze-refresh");
         Assert.Contains(jobs, j => j.Id == "abandoned-session-reconciliation");
         Assert.Contains(jobs, j => j.Id == "guest-audit-cleanup");
         Assert.Contains(jobs, j => j.Id == "global-memory-aggregation");
+        Assert.Contains(jobs, j => j.Id == "stale-room-member-cleanup");
     }
 
     [Fact]

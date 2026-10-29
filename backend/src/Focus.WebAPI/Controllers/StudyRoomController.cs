@@ -4,8 +4,10 @@ using Focus.Application.Features.Social.Commands;
 using Focus.Application.Features.Social.DTOs;
 using Focus.Application.Features.Social.Queries;
 using Focus.WebAPI.Hubs;
+using Focus.WebAPI.RateLimiting;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Focus.WebAPI.Controllers;
@@ -56,6 +58,9 @@ public class StudyRoomController : BaseApiController
 
         var result = await Mediator.Send(new GetRoomByCodeQuery(code, userId), cancellationToken);
         if (result == null) return NotFound();
+
+        // Oda yenileme istegi de uyenin varlik sinyali sayilir
+        await Mediator.Send(new TouchRoomMemberCommand(userId, code), cancellationToken);
         return Ok(result);
     }
 
@@ -162,6 +167,27 @@ public class StudyRoomController : BaseApiController
     }
 
     /// <summary>
+    /// Oda sahibi, bir üyeyi odadan çıkarır.
+    /// </summary>
+    [Authorize]
+    [HttpDelete("{code}/members/{userId:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> KickMember(
+        [FromRoute] string code,
+        [FromRoute] Guid userId,
+        CancellationToken cancellationToken)
+    {
+        if (!TryGetUserId(out var ownerId)) return Unauthorized();
+
+        var left = await Mediator.Send(new KickRoomMemberCommand(ownerId, code, userId), cancellationToken);
+        if (left == null) return NotFound();
+
+        await BroadcastLeaveAsync(userId, left);
+        return NoContent();
+    }
+
+    /// <summary>
     /// Çalışma odasında belirtilen numaralı masaya oturur.
     /// </summary>
     [Authorize]
@@ -195,6 +221,7 @@ public class StudyRoomController : BaseApiController
     /// </summary>
     [Authorize]
     [HttpPost("reaction")]
+    [EnableRateLimiting(RateLimitPolicies.Reaction)]
     [ProducesResponseType(typeof(RoomReactionDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> SendReaction([FromBody] RoomReactionRequest request, CancellationToken cancellationToken)

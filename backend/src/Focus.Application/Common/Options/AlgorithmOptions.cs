@@ -19,6 +19,7 @@ public class AlgorithmOptions
     public int MaxContinuousFocusMinutes { get; set; } = 90;
     public int StaleRunningGraceMinutes { get; set; } = 10;
     public int StalePausedHours { get; set; } = 3;
+    public int RoomMemberStaleMinutes { get; set; } = 30;
 
     // Seri gun sayisi -> XP/Coin carpani
     public Dictionary<int, decimal> StreakMultipliers { get; set; } = new()
