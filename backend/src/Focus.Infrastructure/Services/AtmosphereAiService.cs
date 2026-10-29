@@ -21,7 +21,7 @@ public class AtmosphereAiService : IAtmosphereAiService
     private readonly IAnonymizationService _anonymizationService;
     private readonly IWeatherService _weatherService;
     private readonly HttpClient _httpClient;
-    private readonly ExternalApiSettings _apiSettings;
+    private readonly AiSettings _aiSettings;
     private readonly ILogger<AtmosphereAiService> _logger;
 
     public AtmosphereAiService(
@@ -31,7 +31,7 @@ public class AtmosphereAiService : IAtmosphereAiService
         IAnonymizationService anonymizationService,
         IWeatherService weatherService,
         HttpClient httpClient,
-        IOptions<ExternalApiSettings> apiSettings,
+        IOptions<AiSettings> aiSettings,
         ILogger<AtmosphereAiService> logger)
     {
         _context = context;
@@ -40,7 +40,7 @@ public class AtmosphereAiService : IAtmosphereAiService
         _anonymizationService = anonymizationService;
         _weatherService = weatherService;
         _httpClient = httpClient;
-        _apiSettings = apiSettings.Value;
+        _aiSettings = aiSettings.Value;
         _logger = logger;
     }
 
@@ -68,13 +68,17 @@ public class AtmosphereAiService : IAtmosphereAiService
         GeneratedAtmosphereDto? result = null;
 
         // 2. Gemini API ile Uretim (Anahtar varsa)
-        if (!string.IsNullOrWhiteSpace(_apiSettings.GeminiApiKey))
+        if (_aiSettings.IsGeminiConfigured)
         {
             try
             {
                 result = await GenerateWithGeminiAsync(user.DisplayName, request, memories, cancellationToken);
             }
-            catch (Exception ex)
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception ex) when (ex is HttpRequestException or JsonException or KeyNotFoundException or InvalidOperationException or FormatException or OperationCanceledException)
             {
                 _logger.LogWarning(ex, "Gemini atmosfer uretiminde hata alindi, deterministik kural motoruna geciliyor.");
             }
@@ -306,7 +310,6 @@ public class AtmosphereAiService : IAtmosphereAiService
             }
             """;
 
-        var endpoint = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={_apiSettings.GeminiApiKey}";
         var payload = new
         {
             system_instruction = new { parts = new[] { new { text = systemPrompt } } },
@@ -322,15 +325,11 @@ public class AtmosphereAiService : IAtmosphereAiService
             }
         };
 
-        var res = await _httpClient.PostAsJsonAsync(endpoint, payload, cancellationToken);
-        if (res.IsSuccessStatusCode)
+        using var res = await _httpClient.PostAsJsonAsync($"models/{_aiSettings.Gemini.ChatModelId}:generateContent", payload, cancellationToken);
+        using var root = await GeminiResponse.ReadAsync(res, _logger, "atmosphere", cancellationToken);
+        if (root != null)
         {
-            var root = await res.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: cancellationToken);
-            var text = root.GetProperty("candidates")[0]
-                .GetProperty("content")
-                .GetProperty("parts")[0]
-                .GetProperty("text")
-                .GetString();
+            var text = GeminiResponse.ExtractText(root.RootElement);
 
             if (!string.IsNullOrWhiteSpace(text))
             {

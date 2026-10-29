@@ -7,6 +7,7 @@ using Focus.Domain.Enums;
 using Focus.Infrastructure.Common;
 using Focus.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Pgvector;
 using Pgvector.EntityFrameworkCore;
@@ -17,16 +18,19 @@ public class VectorMemoryService : IVectorMemoryService
 {
     private readonly ApplicationDbContext _context;
     private readonly HttpClient _httpClient;
-    private readonly ExternalApiSettings _apiSettings;
+    private readonly AiSettings _aiSettings;
+    private readonly ILogger<VectorMemoryService> _logger;
 
     public VectorMemoryService(
         ApplicationDbContext context,
         HttpClient httpClient,
-        IOptions<ExternalApiSettings> apiSettings)
+        IOptions<AiSettings> aiSettings,
+        ILogger<VectorMemoryService> logger)
     {
         _context = context;
         _httpClient = httpClient;
-        _apiSettings = apiSettings.Value;
+        _aiSettings = aiSettings.Value;
+        _logger = logger;
     }
 
     public async Task AddPrivateMemoryAsync(
@@ -156,42 +160,69 @@ public class VectorMemoryService : IVectorMemoryService
         }
 
         // Gemini API anahtari tanimliysa gercek Gemini Embedding uret
-        if (!string.IsNullOrWhiteSpace(_apiSettings.GeminiApiKey))
+        if (_aiSettings.IsGeminiConfigured)
         {
             try
             {
-                var endpoint = $"https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key={_apiSettings.GeminiApiKey}";
+                var gemini = _aiSettings.Gemini;
                 var payload = new
                 {
-                    model = "models/text-embedding-004",
+                    model = $"models/{gemini.EmbeddingModelId}",
                     content = new
                     {
                         parts = new[] { new { text } }
-                    }
+                    },
+                    outputDimensionality = gemini.EmbeddingDimensions
                 };
 
-                var res = await _httpClient.PostAsJsonAsync(endpoint, payload, cancellationToken);
-                if (res.IsSuccessStatusCode)
+                using var res = await _httpClient.PostAsJsonAsync($"models/{gemini.EmbeddingModelId}:embedContent", payload, cancellationToken);
+                using var json = await GeminiResponse.ReadAsync(res, _logger, "embedding", cancellationToken);
+                if (json != null
+                    && json.RootElement.TryGetProperty("embedding", out var embeddingProp)
+                    && embeddingProp.TryGetProperty("values", out var valuesProp)
+                    && valuesProp.ValueKind == JsonValueKind.Array)
                 {
-                    var json = await res.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: cancellationToken);
-                    if (json.TryGetProperty("embedding", out var embeddingProp) &&
-                        embeddingProp.TryGetProperty("values", out var valuesProp) &&
-                        valuesProp.ValueKind == JsonValueKind.Array)
+                    var values = valuesProp.EnumerateArray().Select(v => (float)v.GetDouble()).ToArray();
+                    if (values.Length == gemini.EmbeddingDimensions)
                     {
-                        var values = valuesProp.EnumerateArray().Select(v => (float)v.GetDouble()).ToArray();
-                        if (values.Length == 768)
-                        {
-                            return values;
-                        }
+                        return Normalize(values);
                     }
+
+                    _logger.LogWarning("Gemini embedding boyutu beklenenden farkli: {Actual} / {Expected}", values.Length, gemini.EmbeddingDimensions);
                 }
             }
-            catch
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
-                // Fallback deterministic embedding
+                throw;
+            }
+            catch (Exception ex) when (ex is HttpRequestException or JsonException or OperationCanceledException)
+            {
+                _logger.LogWarning(ex, "Gemini embedding istegi basarisiz oldu.");
             }
         }
 
         return GlobalMemorySeeder.GenerateDeterministicEmbedding(text);
+    }
+
+    private static float[] Normalize(float[] values)
+    {
+        double sumSquares = 0;
+        foreach (var v in values)
+        {
+            sumSquares += v * v;
+        }
+
+        var norm = (float)Math.Sqrt(sumSquares);
+        if (norm <= 0)
+        {
+            return values;
+        }
+
+        for (var i = 0; i < values.Length; i++)
+        {
+            values[i] /= norm;
+        }
+
+        return values;
     }
 }

@@ -7,6 +7,7 @@ using Focus.Domain.Enums;
 using Focus.Infrastructure.Common;
 using Focus.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Focus.Infrastructure.Services;
@@ -18,7 +19,8 @@ public class CoachChatService : ICoachChatService
     private readonly IVectorMemoryService _vectorMemoryService;
     private readonly IAnonymizationService _anonymizationService;
     private readonly HttpClient _httpClient;
-    private readonly ExternalApiSettings _apiSettings;
+    private readonly AiSettings _aiSettings;
+    private readonly ILogger<CoachChatService> _logger;
 
     public CoachChatService(
         ApplicationDbContext context,
@@ -26,14 +28,16 @@ public class CoachChatService : ICoachChatService
         IVectorMemoryService vectorMemoryService,
         IAnonymizationService anonymizationService,
         HttpClient httpClient,
-        IOptions<ExternalApiSettings> apiSettings)
+        IOptions<AiSettings> aiSettings,
+        ILogger<CoachChatService> logger)
     {
         _context = context;
         _coachEngine = coachEngine;
         _vectorMemoryService = vectorMemoryService;
         _anonymizationService = anonymizationService;
         _httpClient = httpClient;
-        _apiSettings = apiSettings.Value;
+        _aiSettings = aiSettings.Value;
+        _logger = logger;
     }
 
     public async Task<CoachChatResponseDto> GenerateCoachResponseAsync(Guid userId, string userMessage, CancellationToken cancellationToken = default)
@@ -76,7 +80,7 @@ public class CoachChatService : ICoachChatService
         // 3. Yanit Uret (Gemini veya Kural Tabanli Sentez)
         string reply;
 
-        if (!string.IsNullOrWhiteSpace(_apiSettings.GeminiApiKey))
+        if (_aiSettings.IsGeminiConfigured)
         {
             reply = await GenerateGeminiResponseAsync(user.DisplayName, userMessage, anomaly, memories, cancellationToken);
         }
@@ -133,7 +137,6 @@ public class CoachChatService : ICoachChatService
                 {memoryContext}
                 """;
 
-            var endpoint = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={_apiSettings.GeminiApiKey}";
             var payload = new
             {
                 system_instruction = new { parts = new[] { new { text = systemPrompt } } },
@@ -148,22 +151,19 @@ public class CoachChatService : ICoachChatService
                 }
             };
 
-            var res = await _httpClient.PostAsJsonAsync(endpoint, payload, cancellationToken);
-            if (res.IsSuccessStatusCode)
-            {
-                var json = await res.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: cancellationToken);
-                var text = json.GetProperty("candidates")[0]
-                    .GetProperty("content")
-                    .GetProperty("parts")[0]
-                    .GetProperty("text")
-                    .GetString();
+            using var res = await _httpClient.PostAsJsonAsync($"models/{_aiSettings.Gemini.ChatModelId}:generateContent", payload, cancellationToken);
+            using var json = await GeminiResponse.ReadAsync(res, _logger, "coach-chat", cancellationToken);
+            var text = json == null ? null : GeminiResponse.ExtractText(json.RootElement);
 
-                if (!string.IsNullOrWhiteSpace(text)) return text.Trim();
-            }
+            if (!string.IsNullOrWhiteSpace(text)) return text.Trim();
         }
-        catch
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            // Fallback
+            throw;
+        }
+        catch (Exception ex) when (ex is HttpRequestException or JsonException or OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "Gemini koc yaniti alinamadi, kural tabanli yanita geciliyor.");
         }
 
         return GenerateDeterministicCoachResponse(displayName, userMessage, anomaly, memories);

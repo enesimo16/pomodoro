@@ -60,7 +60,7 @@ public class AtmosphereAiServiceTests
                 IsDay: true,
                 Time: DateTime.UtcNow));
 
-        var apiSettings = Options.Create(new ExternalApiSettings());
+        var apiSettings = Options.Create(new AiSettings());
         var httpClient = new HttpClient();
         var logger = NullLogger<AtmosphereAiService>.Instance;
 
@@ -234,7 +234,7 @@ public class AtmosphereAiServiceTests
             anonymizationService,
             mockWeather.Object,
             new HttpClient(),
-            Options.Create(new ExternalApiSettings()),
+            Options.Create(new AiSettings()),
             NullLogger<AtmosphereAiService>.Instance);
 
         var result = await sut.GenerateAutoAtmosphereAsync(user.Id);

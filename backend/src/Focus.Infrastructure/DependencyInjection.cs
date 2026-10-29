@@ -45,6 +45,7 @@ public static class DependencyInjection
         services.Configure<AlgorithmOptions>(configuration.GetSection(AlgorithmOptions.SectionName));
         services.Configure<GoogleAuthSettings>(configuration.GetSection(GoogleAuthSettings.SectionName));
         services.Configure<ExternalApiSettings>(configuration.GetSection(ExternalApiSettings.SectionName));
+        services.Configure<AiSettings>(configuration.GetSection(AiSettings.SectionName));
 
         // Servisler
         services.AddHttpContextAccessor();
@@ -53,16 +54,16 @@ public static class DependencyInjection
         services.AddScoped<ICurrentUserService, CurrentUserService>();
 
         // Harici Medya & API Servisleri (Typed HttpClients)
-        services.AddHttpClient<IThemeVideoService, PixabayVideoService>();
-        services.AddHttpClient<IMusicTrackService, JamendoMusicService>();
-        services.AddHttpClient<IWeatherService, OpenMeteoWeatherService>();
+        services.AddHttpClient<IThemeVideoService, PixabayVideoService>(ConfigureExternalClient);
+        services.AddHttpClient<IMusicTrackService, JamendoMusicService>(ConfigureExternalClient);
+        services.AddHttpClient<IWeatherService, OpenMeteoWeatherService>(ConfigureExternalClient);
 
         // Faz 5: Yapay Zeka Koc, Cift Katmanli Hafiza & Atmosfer Uretim Servisleri
         services.AddSingleton<IAnonymizationService, AnonymizationService>();
         services.AddScoped<IFocusCoachEngine, FocusCoachEngine>();
-        services.AddHttpClient<IVectorMemoryService, VectorMemoryService>();
-        services.AddHttpClient<ICoachChatService, CoachChatService>();
-        services.AddHttpClient<IAtmosphereAiService, AtmosphereAiService>();
+        services.AddHttpClient<IVectorMemoryService, VectorMemoryService>(ConfigureGeminiClient);
+        services.AddHttpClient<ICoachChatService, CoachChatService>(ConfigureGeminiClient);
+        services.AddHttpClient<IAtmosphereAiService, AtmosphereAiService>(ConfigureGeminiClient);
 
         // Faz 6: Focus Wrapped, Ziyaretci Defteri & Bildirim Servisleri
         services.AddScoped<INotificationService, NotificationService>();
@@ -139,6 +140,23 @@ public static class DependencyInjection
         services.AddAuthorization();
 
         return services;
+    }
+
+    private static void ConfigureExternalClient(IServiceProvider serviceProvider, HttpClient client)
+    {
+        var settings = serviceProvider.GetRequiredService<IOptions<ExternalApiSettings>>().Value;
+        client.Timeout = TimeSpan.FromSeconds(Math.Max(1, settings.TimeoutSeconds));
+    }
+
+    private static void ConfigureGeminiClient(IServiceProvider serviceProvider, HttpClient client)
+    {
+        var settings = serviceProvider.GetRequiredService<IOptions<AiSettings>>().Value.Gemini;
+        client.BaseAddress = new Uri(GeminiSettings.BaseUrl);
+        client.Timeout = TimeSpan.FromSeconds(Math.Max(1, settings.TimeoutSeconds));
+        if (!string.IsNullOrWhiteSpace(settings.ApiKey))
+        {
+            client.DefaultRequestHeaders.Add("x-goog-api-key", settings.ApiKey);
+        }
     }
 
     private static string GetPostgresConnectionString(IConfiguration configuration)
