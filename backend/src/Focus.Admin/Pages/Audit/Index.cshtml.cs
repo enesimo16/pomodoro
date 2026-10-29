@@ -49,7 +49,7 @@ public class IndexModel : PageModel
 
         TotalSessions = await _context.UserDeviceSessions.CountAsync();
         UniqueIps = await _context.UserDeviceSessions.Select(s => s.IpAddress).Distinct().CountAsync();
-        MobileCount = await _context.UserDeviceSessions.CountAsync(s => s.DeviceType == "Mobil");
+        MobileCount = await _context.UserDeviceSessions.CountAsync(s => s.DeviceType == "Mobil" || s.DeviceType == "Tablet");
         DesktopCount = await _context.UserDeviceSessions.CountAsync(s => s.DeviceType == "Masaüstü");
         TotalActiveMinutes = await _context.UserDeviceSessions.SumAsync(s => (long)s.ActiveMinutes);
         ActiveNowCount = await _context.UserDeviceSessions.CountAsync(s => s.LastSeenAt >= fiveMinAgo);
