@@ -23,6 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Focus.Admin\Focus.Admin.csproj" />
     <ProjectReference Include="..\..\src\Focus.Application\Focus.Application.csproj" />
     <ProjectReference Include="..\..\src\Focus.Domain\Focus.Domain.csproj" />
     <ProjectReference Include="..\..\src\Focus.Infrastructure\Focus.Infrastructure.csproj" />

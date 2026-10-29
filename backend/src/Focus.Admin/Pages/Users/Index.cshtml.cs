@@ -97,7 +97,7 @@ public class IndexModel : PageModel
     {
         if (amount != 0)
         {
-            var entry = new CoinLedgerEntry(userId, CoinTransactionReason.InitialBonus, amount);
+            var entry = new CoinLedgerEntry(userId, CoinTransactionReason.AdminAdjustment, amount);
             _context.CoinLedgerEntries.Add(entry);
             await _context.SaveChangesAsync();
         }

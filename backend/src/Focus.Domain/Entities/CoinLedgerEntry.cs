@@ -9,7 +9,8 @@ public enum CoinTransactionReason
     ItemPurchase = 3,
     StreakReward = 4,
     InitialBonus = 5,
-    StreakFreezePurchase = 6
+    StreakFreezePurchase = 6,
+    AdminAdjustment = 7
 }
 
 public class CoinLedgerEntry : BaseEntity<Guid>
