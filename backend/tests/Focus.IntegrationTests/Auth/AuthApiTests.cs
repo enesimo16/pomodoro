@@ -112,4 +112,20 @@ public class AuthApiTests : IClassFixture<CustomWebApplicationFactory>
 
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
     }
+
+    [Fact]
+    public async Task GuestLogin_WithInvalidInput_ShouldReturn400ProblemDetails()
+    {
+        var client = _factory.CreateClient();
+
+        var response = await client.PostAsJsonAsync("/api/v1/auth/guest", new
+        {
+            displayName = new string('a', 101),
+            timeZoneId = "Mars/Olympus_Mons"
+        });
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var body = await response.Content.ReadAsStringAsync();
+        body.Should().Contain("DisplayName").And.Contain("TimeZoneId");
+    }
 }

@@ -2,6 +2,7 @@ using Focus.Application;
 using Focus.Infrastructure;
 using Focus.Infrastructure.Common;
 using Focus.Infrastructure.Persistence;
+using Focus.WebAPI.ExceptionHandling;
 using Focus.WebAPI.Hubs;
 using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.EntityFrameworkCore;
@@ -61,6 +62,7 @@ builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddFocusForwardedHeaders();
 builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<ValidationExceptionHandler>();
 
 // CORS Yapilandirmasi
 builder.Services.AddCors();
@@ -82,6 +84,7 @@ builder.Services.AddOptions<CorsOptions>()
 var app = builder.Build();
 
 app.UseForwardedHeaders();
+app.UseExceptionHandler();
 
 if (app.Environment.IsDevelopment())
 {
@@ -94,7 +97,6 @@ if (app.Environment.IsDevelopment())
 }
 else
 {
-    app.UseExceptionHandler();
     app.UseHsts();
 }
 
