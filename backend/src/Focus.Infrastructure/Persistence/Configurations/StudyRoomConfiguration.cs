@@ -35,6 +35,14 @@ public class StudyRoomConfiguration : IEntityTypeConfiguration<StudyRoom>
         builder.Property(r => r.MusicTrackId)
             .HasMaxLength(128);
 
+        builder.Property(r => r.ConcurrencyStamp)
+            .IsConcurrencyToken();
+
+        // Kullanici basina yalnizca bir ozel ev odasi
+        builder.HasIndex(r => r.OwnerUserId, "IX_study_rooms_OwnerUserId_PrivateHome")
+            .IsUnique()
+            .HasFilter("\"Type\" = 1");
+
         builder.HasOne(r => r.OwnerUser)
             .WithMany()
             .HasForeignKey(r => r.OwnerUserId)

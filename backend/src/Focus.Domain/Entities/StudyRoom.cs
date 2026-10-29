@@ -6,6 +6,8 @@ namespace Focus.Domain.Entities;
 public class StudyRoom : BaseEntity<Guid>, IAggregateRoot
 {
     public const int CoWorkingBonusPercent = 15;
+    public const int FreeHomeCapacity = 2;
+    public const int ProHomeCapacity = 4;
 
     private readonly List<RoomMember> _members = new();
     private readonly List<RoomInvitation> _invitations = new();
@@ -21,6 +23,7 @@ public class StudyRoom : BaseEntity<Guid>, IAggregateRoot
     public string? ThemeId { get; private set; }
     public string? MusicTrackId { get; private set; }
     public DateTime CreatedAt { get; private set; }
+    public Guid ConcurrencyStamp { get; private set; } = Guid.NewGuid();
 
     // Navigation
     public User? OwnerUser { get; private set; }
@@ -40,7 +43,7 @@ public class StudyRoom : BaseEntity<Guid>, IAggregateRoot
             Description = $"{name} - Kişisel Piksel Çalışma Alanı",
             Type = StudyRoomType.PrivateHome,
             OwnerUserId = ownerUserId,
-            MaxCapacity = isOwnerPro ? 4 : 2,
+            MaxCapacity = HomeCapacityFor(isOwnerPro),
             IsPrivate = true,
             CreatedAt = DateTime.UtcNow
         };
@@ -59,6 +62,7 @@ public class StudyRoom : BaseEntity<Guid>, IAggregateRoot
         return new StudyRoom
         {
             Id = id ?? Guid.NewGuid(),
+            ConcurrencyStamp = id ?? Guid.NewGuid(),
             Code = code.ToUpperInvariant().Trim(),
             Name = name,
             Description = description,
@@ -82,6 +86,7 @@ public class StudyRoom : BaseEntity<Guid>, IAggregateRoot
         return new StudyRoom
         {
             Id = id ?? Guid.NewGuid(),
+            ConcurrencyStamp = id ?? Guid.NewGuid(),
             Code = code.ToUpperInvariant().Trim(),
             Name = name,
             Description = description,
@@ -95,33 +100,32 @@ public class StudyRoom : BaseEntity<Guid>, IAggregateRoot
         };
     }
 
+    public static int HomeCapacityFor(bool isOwnerPro) => isOwnerPro ? ProHomeCapacity : FreeHomeCapacity;
+
+    // Ozel odalarda kapasite her zaman oda sahibinin guncel Pro durumundan hesaplanir
+    public int EffectiveCapacity(bool isOwnerPro)
+    {
+        return Type == StudyRoomType.PrivateHome ? HomeCapacityFor(isOwnerPro) : MaxCapacity;
+    }
+
     public bool CanJoin(bool isOwnerPro, out string? errorMessage)
     {
         errorMessage = null;
 
-        if (Type == StudyRoomType.PrivateHome)
+        if (_members.Count < EffectiveCapacity(isOwnerPro))
         {
-            if (!isOwnerPro && _members.Count >= 2)
-            {
-                errorMessage = "Ücretsiz piksel odalarda en fazla 2 kişi (Oda sahibi + 1 misafir) bulunabilir. Daha fazla arkadaşınızla çalışmak için Premium hesaba geçmelisiniz.";
-                return false;
-            }
-
-            if (isOwnerPro && _members.Count >= 4)
-            {
-                errorMessage = "Özel çalışma odası maksimum 4 kişilik kapasite sınırına ulaştı.";
-                return false;
-            }
+            return true;
         }
 
-        if (_members.Count >= MaxCapacity)
-        {
-            errorMessage = "Oda kapasitesi dolu.";
-            return false;
-        }
-
-        return true;
+        errorMessage = Type == StudyRoomType.PrivateHome
+            ? isOwnerPro
+                ? "Özel çalışma odası maksimum 4 kişilik kapasite sınırına ulaştı."
+                : "Ücretsiz piksel odalarda en fazla 2 kişi (Oda sahibi + 1 misafir) bulunabilir. Daha fazla arkadaşınızla çalışmak için Premium hesaba geçmelisiniz."
+            : "Oda kapasitesi dolu.";
+        return false;
     }
+
+    public bool HasMember(Guid userId) => _members.Any(m => m.UserId == userId);
 
     public RoomMember AddMember(Guid userId, int? seatIndex = null)
     {
@@ -135,22 +139,26 @@ public class StudyRoom : BaseEntity<Guid>, IAggregateRoot
 
         var member = new RoomMember(Id, userId, seatIndex);
         _members.Add(member);
+        ConcurrencyStamp = Guid.NewGuid();
         return member;
     }
 
-    public void RemoveMember(Guid userId)
+    public RoomMember? RemoveMember(Guid userId)
     {
         var member = _members.FirstOrDefault(m => m.UserId == userId);
-        if (member != null)
-        {
-            _members.Remove(member);
-        }
+        if (member == null) return null;
+
+        _members.Remove(member);
+        ConcurrencyStamp = Guid.NewGuid();
+        return member;
     }
+
+    public bool IsValidSeat(int seatIndex) => seatIndex >= 0 && seatIndex < MaxCapacity;
 
     public bool AssignSeat(Guid userId, int seatIndex)
     {
         var member = _members.FirstOrDefault(m => m.UserId == userId);
-        if (member == null) return false;
+        if (member == null || !IsValidSeat(seatIndex)) return false;
 
         // Baska biri o koltukta oturuyor mu?
         if (_members.Any(m => m.UserId != userId && m.SeatIndex == seatIndex))
@@ -166,7 +174,7 @@ public class StudyRoom : BaseEntity<Guid>, IAggregateRoot
     {
         if (Type == StudyRoomType.PrivateHome)
         {
-            MaxCapacity = isOwnerPro ? 4 : 2;
+            MaxCapacity = HomeCapacityFor(isOwnerPro);
         }
     }
 

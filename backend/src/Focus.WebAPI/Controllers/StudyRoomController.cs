@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Focus.Application.Common.Interfaces;
 using Focus.Application.Features.Guestbook.DTOs;
 using Focus.Application.Features.Social.Commands;
@@ -12,13 +11,15 @@ using Microsoft.AspNetCore.SignalR;
 namespace Focus.WebAPI.Controllers;
 
 public record JoinRoomRequest(string RoomCode, string? InviteCode = null);
-public record InviteUsernameRequest(string TargetUsername);
+public record InviteUsernameRequest(string TargetUsername, Guid? TargetUserId = null);
 public record SitAtSeatRequest(string RoomCode, int SeatIndex);
 public record RoomReactionRequest(string RoomCode, string Reaction);
 
 [Route("api/v1/study-rooms")]
 public class StudyRoomController : BaseApiController
 {
+    private const string GuestbookFailedMessage = "Not eklenemedi.";
+
     private readonly IHubContext<RoomHub, IRoomClient> _roomHub;
     private readonly IGuestbookService _guestbookService;
 
@@ -43,13 +44,17 @@ public class StudyRoomController : BaseApiController
 
     /// <summary>
     /// Belirtilen oda koduna sahip çalışma odasının detaylarını, masalarını ve aktif üyelerini getirir.
+    /// Özel odalar yalnızca üyelerine görünür.
     /// </summary>
+    [Authorize]
     [HttpGet("{code}")]
     [ProducesResponseType(typeof(StudyRoomDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetRoomByCode([FromRoute] string code, CancellationToken cancellationToken)
     {
-        var result = await Mediator.Send(new GetRoomByCodeQuery(code), cancellationToken);
+        if (!TryGetUserId(out var userId)) return Unauthorized();
+
+        var result = await Mediator.Send(new GetRoomByCodeQuery(code, userId), cancellationToken);
         if (result == null) return NotFound();
         return Ok(result);
     }
@@ -71,7 +76,7 @@ public class StudyRoomController : BaseApiController
     }
 
     /// <summary>
-    /// Kullanıcı adıyla odaya doğrudan davet bağlantısı oluşturur.
+    /// Kullanıcı adıyla (veya kimliğiyle) odaya doğrudan davet bağlantısı oluşturur.
     /// </summary>
     [Authorize]
     [HttpPost("invite-username")]
@@ -85,7 +90,9 @@ public class StudyRoomController : BaseApiController
         try
         {
             var baseUrl = $"{Request.Scheme}://{Request.Host}";
-            var result = await Mediator.Send(new InviteUserByUsernameCommand(userId, request.TargetUsername, baseUrl), cancellationToken);
+            var result = await Mediator.Send(
+                new InviteUserByUsernameCommand(userId, request.TargetUsername, baseUrl, request.TargetUserId),
+                cancellationToken);
             return Ok(result);
         }
         catch (InvalidOperationException ex)
@@ -112,15 +119,21 @@ public class StudyRoomController : BaseApiController
             return BadRequest(result);
         }
 
-        var joinedMember = result.Room?.Members.FirstOrDefault(m => m.UserId == userId);
-        if (joinedMember != null)
+        foreach (var left in result.LeftRooms)
         {
-            var groupName = $"room_{request.RoomCode.ToUpperInvariant().Trim()}";
-            await _roomHub.Clients.Group(groupName).UserJoinedRoom(joinedMember);
-            if (result.Room != null)
+            await BroadcastLeaveAsync(userId, left);
+        }
+
+        if (result.NewlyJoined && result.Room != null)
+        {
+            var joinedMember = result.Room.Members.FirstOrDefault(m => m.UserId == userId);
+            var group = _roomHub.Clients.Group(RoomHub.GroupName(result.Room.Code));
+            if (joinedMember != null)
             {
-                await _roomHub.Clients.Group(groupName).CoWorkingBonusUpdated(result.Room.CoWorkingBonusPercent);
+                await group.UserJoinedRoom(joinedMember);
             }
+
+            await group.CoWorkingBonusUpdated(result.Room.CoWorkingBonusPercent);
         }
 
         return Ok(result);
@@ -133,18 +146,19 @@ public class StudyRoomController : BaseApiController
     [HttpPost("leave")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> LeaveRoom([FromBody] JoinRoomRequest request, CancellationToken cancellationToken)
     {
         if (!TryGetUserId(out var userId)) return Unauthorized();
 
-        var success = await Mediator.Send(new LeaveRoomCommand(userId, request.RoomCode), cancellationToken);
-        if (success)
+        var left = await Mediator.Send(new LeaveRoomCommand(userId, request.RoomCode), cancellationToken);
+        if (left == null)
         {
-            var groupName = $"room_{request.RoomCode.ToUpperInvariant().Trim()}";
-            await _roomHub.Clients.Group(groupName).UserLeftRoom(userId);
+            return NotFound(new { success = false, message = "Bu odanın üyesi değilsiniz." });
         }
 
-        return Ok(new { success });
+        await BroadcastLeaveAsync(userId, left);
+        return Ok(new { success = true });
     }
 
     /// <summary>
@@ -165,8 +179,13 @@ public class StudyRoomController : BaseApiController
             return BadRequest(result);
         }
 
-        var groupName = $"room_{request.RoomCode.ToUpperInvariant().Trim()}";
-        await _roomHub.Clients.Group(groupName).SeatOccupied(userId, request.SeatIndex);
+        var group = _roomHub.Clients.Group(RoomHub.GroupName(request.RoomCode));
+        if (result.PreviousSeatIndex.HasValue && result.PreviousSeatIndex != request.SeatIndex)
+        {
+            await group.SeatVacated(userId, result.PreviousSeatIndex.Value);
+        }
+
+        await group.SeatOccupied(userId, request.SeatIndex);
 
         return Ok(result);
     }
@@ -188,8 +207,7 @@ public class StudyRoomController : BaseApiController
             return BadRequest(new { message = "Reaksiyon gonderilemedi. Once odaya katilmalisiniz." });
         }
 
-        var groupName = $"room_{request.RoomCode.ToUpperInvariant().Trim()}";
-        await _roomHub.Clients.Group(groupName).ReactionBroadcasted(result);
+        await _roomHub.Clients.Group(RoomHub.GroupName(request.RoomCode)).ReactionBroadcasted(result);
 
         return Ok(result);
     }
@@ -220,23 +238,41 @@ public class StudyRoomController : BaseApiController
 
             return Ok(entry);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is InvalidOperationException or ArgumentException)
         {
-            return BadRequest(new { message = ex.Message });
+            return BadRequest(new { message = GuestbookFailedMessage });
         }
     }
 
     /// <summary>
     /// Çalışma odasına bırakılan ziyaretçi notlarını tarihe göre ters sıralı listeler.
     /// </summary>
+    [Authorize]
     [HttpGet("{code}/guestbook")]
     [ProducesResponseType(typeof(IReadOnlyList<GuestbookEntryDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetGuestbookEntries(
         [FromRoute] string code,
         [FromQuery] int limit = 30,
         CancellationToken cancellationToken = default)
     {
+        if (!TryGetUserId(out var userId)) return Unauthorized();
+
+        var room = await Mediator.Send(new GetRoomByCodeQuery(code, userId), cancellationToken);
+        if (room == null) return NotFound();
+
         var entries = await _guestbookService.GetEntriesByRoomCodeAsync(code, limit, cancellationToken);
         return Ok(entries);
+    }
+
+    private async Task BroadcastLeaveAsync(Guid userId, LeftRoomDto left)
+    {
+        var group = _roomHub.Clients.Group(RoomHub.GroupName(left.RoomCode));
+        if (left.VacatedSeat.HasValue)
+        {
+            await group.SeatVacated(userId, left.VacatedSeat.Value);
+        }
+
+        await group.UserLeftRoom(userId);
     }
 }

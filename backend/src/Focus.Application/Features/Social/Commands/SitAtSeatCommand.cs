@@ -1,3 +1,4 @@
+using Focus.Application.Common.Extensions;
 using Focus.Application.Common.Interfaces;
 using Focus.Application.Features.Social.DTOs;
 using MediatR;
@@ -23,15 +24,15 @@ public class SitAtSeatCommandHandler : IRequestHandler<SitAtSeatCommand, SitSeat
             .Include(r => r.Members)
             .FirstOrDefaultAsync(r => r.Code == code, cancellationToken);
 
-        if (room == null)
-        {
-            return new SitSeatResultDto(false, "Oda bulunamadı.", null);
-        }
-
-        var member = room.Members.FirstOrDefault(m => m.UserId == request.UserId);
-        if (member == null)
+        var member = room?.Members.FirstOrDefault(m => m.UserId == request.UserId);
+        if (room == null || member == null)
         {
             return new SitSeatResultDto(false, "Önce bu odaya katılmalısınız.", null);
+        }
+
+        if (!room.IsValidSeat(request.SeatIndex))
+        {
+            return new SitSeatResultDto(false, "Geçersiz masa numarası.", null);
         }
 
         var isSeatTaken = room.Members.Any(m => m.UserId != request.UserId && m.SeatIndex == request.SeatIndex);
@@ -40,9 +41,18 @@ public class SitAtSeatCommandHandler : IRequestHandler<SitAtSeatCommand, SitSeat
             return new SitSeatResultDto(false, "Bu çalışma masası/koltuğu dolu. Lütfen başka bir masa seçiniz.", null);
         }
 
+        var previousSeat = member.SeatIndex;
         member.SitAtSeat(request.SeatIndex);
-        await _context.SaveChangesAsync(cancellationToken);
 
-        return new SitSeatResultDto(true, $"Masa {request.SeatIndex}'e başarıyla oturdunuz.", request.SeatIndex);
+        // Es zamanli iki oturma denemesinde (RoomId, SeatIndex) benzersiz indeksi ikincisini reddeder
+        await _context.SaveChangesOrConflictAsync(
+            cancellationToken,
+            "Bu masa az önce başka biri tarafından alındı.",
+            treatConstraintViolationAsConflict: true);
+
+        return new SitSeatResultDto(true, $"Masa {request.SeatIndex}'e başarıyla oturdunuz.", request.SeatIndex)
+        {
+            PreviousSeatIndex = previousSeat
+        };
     }
 }

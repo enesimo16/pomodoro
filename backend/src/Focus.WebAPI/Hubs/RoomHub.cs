@@ -1,12 +1,13 @@
-using System.Security.Claims;
 using Focus.Application.Common.Interfaces;
 using Focus.Application.Features.Social.Commands;
+using Focus.Application.Features.Social.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Focus.WebAPI.Hubs;
 
+[Authorize]
 public class RoomHub : Hub<IRoomClient>
 {
     private readonly ISender _mediator;
@@ -18,33 +19,46 @@ public class RoomHub : Hub<IRoomClient>
 
     public async Task JoinRoomGroup(string roomCode)
     {
-        if (!string.IsNullOrWhiteSpace(roomCode))
+        var userId = RequireUserId();
+        if (string.IsNullOrWhiteSpace(roomCode))
         {
-            var groupName = $"room_{roomCode.ToUpperInvariant().Trim()}";
-            await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
+            throw new HubException("Oda bulunamadı.");
         }
+
+        var isMember = await _mediator.Send(new IsRoomMemberQuery(userId, roomCode), Context.ConnectionAborted);
+        if (!isMember)
+        {
+            throw new HubException("Bu odaya erişim yetkiniz yok.");
+        }
+
+        await Groups.AddToGroupAsync(Context.ConnectionId, GroupName(roomCode), Context.ConnectionAborted);
     }
 
     public async Task LeaveRoomGroup(string roomCode)
     {
         if (!string.IsNullOrWhiteSpace(roomCode))
         {
-            var groupName = $"room_{roomCode.ToUpperInvariant().Trim()}";
-            await Groups.RemoveFromGroupAsync(Context.ConnectionId, groupName);
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, GroupName(roomCode), Context.ConnectionAborted);
         }
     }
 
-    [Authorize]
     public async Task BroadcastReaction(string roomCode, string reaction)
     {
-        var subClaim = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Context.User?.FindFirst("sub")?.Value;
-        if (!Guid.TryParse(subClaim, out var userId)) return;
+        var userId = RequireUserId();
 
-        var result = await _mediator.Send(new SendRoomReactionCommand(userId, roomCode, reaction));
+        var result = await _mediator.Send(new SendRoomReactionCommand(userId, roomCode, reaction), Context.ConnectionAborted);
         if (result != null)
         {
-            var groupName = $"room_{roomCode.ToUpperInvariant().Trim()}";
-            await Clients.Group(groupName).ReactionBroadcasted(result);
+            await Clients.Group(GroupName(roomCode)).ReactionBroadcasted(result);
         }
+    }
+
+    public static string GroupName(string roomCode) => $"room_{roomCode.ToUpperInvariant().Trim()}";
+
+    private Guid RequireUserId()
+    {
+        return Guid.TryParse(Context.UserIdentifier, out var userId)
+            ? userId
+            : throw new HubException("Oturum doğrulanamadı.");
     }
 }

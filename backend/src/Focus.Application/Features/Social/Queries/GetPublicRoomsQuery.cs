@@ -20,6 +20,7 @@ public class GetPublicRoomsQueryHandler : IRequestHandler<GetPublicRoomsQuery, L
     public async Task<List<StudyRoomDto>> Handle(GetPublicRoomsQuery request, CancellationToken cancellationToken)
     {
         var rooms = await _context.StudyRooms
+            .AsNoTracking()
             .Include(r => r.Members)
                 .ThenInclude(m => m.User)
             .Where(r => r.Type == StudyRoomType.PublicLibrary || r.Type == StudyRoomType.ShopMarket)
@@ -27,30 +28,6 @@ public class GetPublicRoomsQueryHandler : IRequestHandler<GetPublicRoomsQuery, L
             .ThenBy(r => r.Name)
             .ToListAsync(cancellationToken);
 
-        return rooms.Select(room => new StudyRoomDto(
-            room.Id,
-            room.Code,
-            room.Name,
-            room.Description,
-            room.Type.ToString(),
-            room.OwnerUserId,
-            null,
-            room.Members.Count,
-            room.MaxCapacity,
-            room.IsPrivate,
-            room.ThemeId,
-            room.MusicTrackId,
-            room.CalculateCoWorkingBonusPercent(),
-            room.Members.Select(m => new RoomMemberDto(
-                m.Id,
-                m.UserId,
-                m.User?.DisplayName ?? "Kullanıcı",
-                m.User?.Level ?? 1,
-                null,
-                m.SeatIndex,
-                m.IsFocusing,
-                m.JoinedAt
-            )).ToList()
-        )).ToList();
+        return rooms.Select(room => StudyRoomDto.FromEntity(room)).ToList();
     }
 }

@@ -1,16 +1,22 @@
-using System.Net;
 using Focus.Application.Common.Interfaces;
 using Focus.Application.Features.Social.DTOs;
 using Focus.Domain.Entities;
+using Focus.Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Focus.Application.Features.Social.Commands;
 
-public record InviteUserByUsernameCommand(Guid InviterUserId, string TargetUsername, string? BaseAppUrl = null) : IRequest<RoomInvitationResultDto>;
+public record InviteUserByUsernameCommand(
+    Guid InviterUserId,
+    string TargetUsername,
+    string? BaseAppUrl = null,
+    Guid? TargetUserId = null) : IRequest<RoomInvitationResultDto>;
 
 public class InviteUserByUsernameCommandHandler : IRequestHandler<InviteUserByUsernameCommand, RoomInvitationResultDto>
 {
+    public const string InviteFailedMessage = "Davet gönderilemedi. Kullanıcı bilgisini kontrol edip tekrar deneyin.";
+
     private readonly IApplicationDbContext _context;
 
     public InviteUserByUsernameCommandHandler(IApplicationDbContext context)
@@ -20,60 +26,57 @@ public class InviteUserByUsernameCommandHandler : IRequestHandler<InviteUserByUs
 
     public async Task<RoomInvitationResultDto> Handle(InviteUserByUsernameCommand request, CancellationToken cancellationToken)
     {
-        var inviter = await _context.Users.FirstOrDefaultAsync(u => u.Id == request.InviterUserId, cancellationToken);
-        if (inviter == null)
-        {
-            throw new InvalidOperationException("Davet eden kullanıcı bulunamadı.");
-        }
+        var inviter = await _context.Users.FirstOrDefaultAsync(u => u.Id == request.InviterUserId, cancellationToken)
+            ?? throw new InvalidOperationException(InviteFailedMessage);
 
-        var trimmedName = request.TargetUsername.Trim();
-        var targetUser = await _context.Users.FirstOrDefaultAsync(u => u.DisplayName == trimmedName, cancellationToken);
-        if (targetUser == null)
-        {
-            throw new InvalidOperationException($"'{trimmedName}' kullanıcı adına sahip bir kullanıcı bulunamadı.");
-        }
+        var targetUser = await ResolveTargetAsync(request, cancellationToken);
 
         if (targetUser.Id == inviter.Id)
         {
             throw new InvalidOperationException("Kendinizi odaya davet edemezsiniz.");
         }
 
-        var room = await _context.StudyRooms
-            .Include(r => r.Members)
-            .FirstOrDefaultAsync(r => r.OwnerUserId == request.InviterUserId, cancellationToken);
-
-        if (room == null)
-        {
-            var shortCode = "FOC-" + new Random().Next(1000, 9999).ToString(System.Globalization.CultureInfo.InvariantCulture);
-            room = StudyRoom.CreatePrivateRoom(inviter.Id, $"{inviter.DisplayName}'in Odası", shortCode, inviter.IsPro);
-            _context.StudyRooms.Add(room);
-            await _context.SaveChangesAsync(cancellationToken);
-        }
+        var room = await PrivateRoomProvisioner.EnsureAsync(_context, inviter, cancellationToken);
 
         if (!room.CanJoin(inviter.IsPro, out var errorMessage))
         {
             throw new InvalidOperationException(errorMessage);
         }
 
-        var inviteCode = "INV-" + Guid.NewGuid().ToString("N")[..8].ToUpperInvariant();
-        var invitation = new RoomInvitation(room.Id, inviter.Id, inviteCode, targetUser.Id, targetUser.DisplayName, validHours: 72);
-        _context.RoomInvitations.Add(invitation);
+        var invitation = await PrivateRoomProvisioner.CreateInvitationAsync(
+            _context, room, inviter.Id, targetUser.Id, targetUser.DisplayName, cancellationToken);
+
+        _context.Notifications.Add(Notification.Create(
+            targetUser.Id,
+            NotificationType.RoomInvite,
+            "Oda Daveti",
+            $"{inviter.DisplayName} seni piksel çalışma odasına davet etti.",
+            $"/room?room={room.Code}&invite={invitation.InviteCode}"));
         await _context.SaveChangesAsync(cancellationToken);
 
-        var baseUrl = !string.IsNullOrWhiteSpace(request.BaseAppUrl) ? request.BaseAppUrl.TrimEnd('/') : "https://focus.app";
-        var directLink = $"{baseUrl}/join/{room.Code}?invite={inviteCode}";
-        var shareMessage = $"Selam {targetUser.DisplayName}! Seni piksel çalışma odama davet ediyorum. Beraber odaklanıp +%10 bonus kazanalım: {directLink}";
+        return RoomInvitationResultFactory.Create(room, invitation, request.BaseAppUrl, targetUser.DisplayName);
+    }
 
-        var whatsAppLink = $"https://api.whatsapp.com/send?text={WebUtility.UrlEncode(shareMessage)}";
-        var telegramLink = $"https://t.me/share/url?url={WebUtility.UrlEncode(directLink)}&text={WebUtility.UrlEncode("Piksel Çalışma Odası Daveti")}";
+    private async Task<User> ResolveTargetAsync(InviteUserByUsernameCommand request, CancellationToken cancellationToken)
+    {
+        if (request.TargetUserId.HasValue)
+        {
+            return await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == request.TargetUserId.Value, cancellationToken)
+                ?? throw new InvalidOperationException(InviteFailedMessage);
+        }
 
-        return new RoomInvitationResultDto(
-            room.Code,
-            room.Name,
-            inviteCode,
-            directLink,
-            whatsAppLink,
-            telegramLink,
-            shareMessage);
+        // DisplayName benzersiz degildir: tam eslesme aranir, birden fazla sonuc varsa kimlik istenir
+        var name = request.TargetUsername.Trim();
+        var matches = await _context.Users.AsNoTracking()
+            .Where(u => u.DisplayName == name)
+            .Take(2)
+            .ToListAsync(cancellationToken);
+
+        return matches.Count switch
+        {
+            1 => matches[0],
+            0 => throw new InvalidOperationException(InviteFailedMessage),
+            _ => throw new InvalidOperationException("Bu ada sahip birden fazla kullanıcı var. Lütfen kullanıcı kimliğiyle davet edin.")
+        };
     }
 }

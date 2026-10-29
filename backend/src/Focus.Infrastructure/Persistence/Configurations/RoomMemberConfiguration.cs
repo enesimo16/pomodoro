@@ -15,6 +15,11 @@ public class RoomMemberConfiguration : IEntityTypeConfiguration<RoomMember>
         builder.HasIndex(m => new { m.RoomId, m.UserId })
             .IsUnique();
 
+        // Bir masada ayni anda yalnizca bir uye oturabilir
+        builder.HasIndex(m => new { m.RoomId, m.SeatIndex }, "IX_room_members_RoomId_SeatIndex")
+            .IsUnique()
+            .HasFilter("\"SeatIndex\" IS NOT NULL");
+
         builder.HasOne(m => m.User)
             .WithMany()
             .HasForeignKey(m => m.UserId)

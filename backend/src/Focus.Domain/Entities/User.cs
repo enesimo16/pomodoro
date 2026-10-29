@@ -36,7 +36,7 @@ public class User : BaseEntity<Guid>, IAggregateRoot
 
     public static User CreateGuest(string? displayName = null, string? locale = null, string? timeZoneId = null)
     {
-        var randomSuffix = new Random().Next(1000, 9999);
+        var randomSuffix = System.Security.Cryptography.RandomNumberGenerator.GetInt32(1000, 10000);
         var user = new User
         {
             Id = Guid.NewGuid(),

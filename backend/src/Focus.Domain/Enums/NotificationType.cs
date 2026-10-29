@@ -6,5 +6,6 @@ public enum NotificationType
     FriendJoined = 2,
     GuestbookNote = 3,
     CoachAdvice = 4,
-    System = 5
+    System = 5,
+    RoomInvite = 6
 }

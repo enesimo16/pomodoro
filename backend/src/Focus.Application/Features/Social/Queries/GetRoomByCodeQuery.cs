@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Focus.Application.Features.Social.Queries;
 
-public record GetRoomByCodeQuery(string Code) : IRequest<StudyRoomDto?>;
+public record GetRoomByCodeQuery(string Code, Guid RequesterUserId) : IRequest<StudyRoomDto?>;
 
 public class GetRoomByCodeQueryHandler : IRequestHandler<GetRoomByCodeQuery, StudyRoomDto?>
 {
@@ -21,6 +21,7 @@ public class GetRoomByCodeQueryHandler : IRequestHandler<GetRoomByCodeQuery, Stu
         var code = request.Code.ToUpperInvariant().Trim();
 
         var room = await _context.StudyRooms
+            .AsNoTracking()
             .Include(r => r.OwnerUser)
             .Include(r => r.Members)
                 .ThenInclude(m => m.User)
@@ -28,30 +29,11 @@ public class GetRoomByCodeQueryHandler : IRequestHandler<GetRoomByCodeQuery, Stu
 
         if (room == null) return null;
 
-        return new StudyRoomDto(
-            room.Id,
-            room.Code,
-            room.Name,
-            room.Description,
-            room.Type.ToString(),
-            room.OwnerUserId,
-            room.OwnerUser?.DisplayName,
-            room.Members.Count,
-            room.MaxCapacity,
-            room.IsPrivate,
-            room.ThemeId,
-            room.MusicTrackId,
-            room.CalculateCoWorkingBonusPercent(),
-            room.Members.Select(m => new RoomMemberDto(
-                m.Id,
-                m.UserId,
-                m.User?.DisplayName ?? "Kullanıcı",
-                m.User?.Level ?? 1,
-                null,
-                m.SeatIndex,
-                m.IsFocusing,
-                m.JoinedAt
-            )).ToList()
-        );
+        // Ozel odalar yalnizca sahibi ve uyelerine gorunur
+        var canView = !room.IsPrivate
+            || room.OwnerUserId == request.RequesterUserId
+            || room.HasMember(request.RequesterUserId);
+
+        return canView ? StudyRoomDto.FromEntity(room) : null;
     }
 }

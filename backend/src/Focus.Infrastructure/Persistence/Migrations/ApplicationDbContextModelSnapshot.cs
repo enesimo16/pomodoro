@@ -1100,6 +1100,10 @@ namespace Focus.Infrastructure.Persistence.Migrations
                     b.HasIndex("RoomId", "UserId")
                         .IsUnique();
 
+                    b.HasIndex(new[] { "RoomId", "SeatIndex" }, "IX_room_members_RoomId_SeatIndex")
+                        .IsUnique()
+                        .HasFilter("\"SeatIndex\" IS NOT NULL");
+
                     b.ToTable("room_members", (string)null);
                 });
 
@@ -1321,6 +1325,10 @@ namespace Focus.Infrastructure.Persistence.Migrations
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
 
+                    b.Property<Guid>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -1358,7 +1366,9 @@ namespace Focus.Infrastructure.Persistence.Migrations
                     b.HasIndex("Code")
                         .IsUnique();
 
-                    b.HasIndex("OwnerUserId");
+                    b.HasIndex(new[] { "OwnerUserId" }, "IX_study_rooms_OwnerUserId_PrivateHome")
+                        .IsUnique()
+                        .HasFilter("\"Type\" = 1");
 
                     b.ToTable("study_rooms", (string)null);
 
@@ -1367,6 +1377,7 @@ namespace Focus.Infrastructure.Persistence.Migrations
                         {
                             Id = new Guid("5ec20c31-815c-47b6-893c-92e3b1f4dc2a"),
                             Code = "LIB-LOFI",
+                            ConcurrencyStamp = new Guid("5ec20c31-815c-47b6-893c-92e3b1f4dc2a"),
                             CreatedAt = new DateTime(2026, 10, 7, 0, 0, 0, 0, DateTimeKind.Utc),
                             Description = "Hafif yağmur sesi ve yumuşak lo-fi ritimleriyle sessiz kütüphane ortamı.",
                             IsPrivate = false,
@@ -1380,6 +1391,7 @@ namespace Focus.Infrastructure.Persistence.Migrations
                         {
                             Id = new Guid("eff56794-b4ab-4664-9284-94c90a20cd13"),
                             Code = "LIB-WOOD",
+                            ConcurrencyStamp = new Guid("eff56794-b4ab-4664-9284-94c90a20cd13"),
                             CreatedAt = new DateTime(2026, 10, 7, 0, 0, 0, 0, DateTimeKind.Utc),
                             Description = "Sıcak ahşap paneller, kitap kokusu ve huzurlu akustik tınılar.",
                             IsPrivate = false,
@@ -1393,6 +1405,7 @@ namespace Focus.Infrastructure.Persistence.Migrations
                         {
                             Id = new Guid("527706df-6f43-4bb8-8637-96adc5a342ec"),
                             Code = "LIB-NIGHT",
+                            ConcurrencyStamp = new Guid("527706df-6f43-4bb8-8637-96adc5a342ec"),
                             CreatedAt = new DateTime(2026, 10, 7, 0, 0, 0, 0, DateTimeKind.Utc),
                             Description = "Gece çalışanlar için neon ve karanlık tema, derin odaklanma ambiyansı.",
                             IsPrivate = false,
@@ -1406,6 +1419,7 @@ namespace Focus.Infrastructure.Persistence.Migrations
                         {
                             Id = new Guid("c4c20115-3d9e-419d-8275-19826fb544d1"),
                             Code = "SHOP-BAZAAR",
+                            ConcurrencyStamp = new Guid("c4c20115-3d9e-419d-8275-19826fb544d1"),
                             CreatedAt = new DateTime(2026, 10, 7, 0, 0, 0, 0, DateTimeKind.Utc),
                             Description = "Yeni mobilyaların, aksesuarların ve kıyafetlerin sergilendiği canlı piksel çarşı.",
                             IsPrivate = false,

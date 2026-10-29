@@ -17,20 +17,4 @@ public class TimerHub : Hub<ITimerClient>
 
         await base.OnConnectedAsync();
     }
-
-    public async Task SubscribeToUser(string targetUserId)
-    {
-        if (!string.IsNullOrWhiteSpace(targetUserId))
-        {
-            await Groups.AddToGroupAsync(Context.ConnectionId, $"user_{targetUserId}");
-        }
-    }
-
-    public async Task UnsubscribeFromUser(string targetUserId)
-    {
-        if (!string.IsNullOrWhiteSpace(targetUserId))
-        {
-            await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"user_{targetUserId}");
-        }
-    }
 }
