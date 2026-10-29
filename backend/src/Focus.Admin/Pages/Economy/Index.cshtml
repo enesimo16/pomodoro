@@ -125,5 +125,19 @@
                 </tbody>
             </table>
         </div>
+
+        <div class="d-flex justify-content-between align-items-center p-3 border-top">
+            <span class="text-muted small">Sayfa <strong>@Model.PageNumber</strong></span>
+            <div class="d-flex gap-1">
+                @if (Model.PageNumber > 1)
+                {
+                    <a asp-page="/Economy/Index" asp-route-PageNumber="@(Model.PageNumber - 1)" asp-route-Filter="@Model.Filter" asp-route-Search="@Model.Search" class="polaris-btn polaris-btn-secondary polaris-btn-sm">Önceki Sayfa</a>
+                }
+                @if (Model.HasNextPage)
+                {
+                    <a asp-page="/Economy/Index" asp-route-PageNumber="@(Model.PageNumber + 1)" asp-route-Filter="@Model.Filter" asp-route-Search="@Model.Search" class="polaris-btn polaris-btn-secondary polaris-btn-sm">Sonraki Sayfa</a>
+                }
+            </div>
+        </div>
     }
 </div>

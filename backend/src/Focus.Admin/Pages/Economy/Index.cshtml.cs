@@ -21,6 +21,13 @@ public class IndexModel : PageModel
     [BindProperty(SupportsGet = true)]
     public string? Search { get; set; }
 
+    [BindProperty(SupportsGet = true)]
+    public int PageNumber { get; set; } = 1;
+
+    public const int PageSize = 100;
+    public const int MaxPageNumber = 1000;
+
+    public bool HasNextPage { get; set; }
     public long CirculatingCoins { get; set; }
     public long TotalEarned { get; set; }
     public long TotalSpent { get; set; }
@@ -42,6 +49,8 @@ public class IndexModel : PageModel
         TotalSpent = Math.Abs(await _context.CoinLedgerEntries.Where(c => c.Coins < 0).SumAsync(c => (long)c.Coins));
         TotalTransactions = await _context.CoinLedgerEntries.CountAsync();
 
+        PageNumber = Math.Clamp(PageNumber, 1, MaxPageNumber);
+
         var query = _context.CoinLedgerEntries.AsNoTracking();
 
         if (Filter == "earned")
@@ -53,30 +62,27 @@ public class IndexModel : PageModel
             query = query.Where(c => c.Coins < 0);
         }
 
-        var list = await query
-            .OrderByDescending(c => c.CreatedAt)
-            .Take(100)
-            .ToListAsync();
-
-        var userIds = list.Select(c => c.UserId).Distinct().ToList();
-        var userNames = await _context.Users
-            .Where(u => userIds.Contains(u.Id))
-            .ToDictionaryAsync(u => u.Id, u => u.DisplayName);
-
-        var result = list.Select(c => new LedgerItem(
-            c.Id,
-            userNames.GetValueOrDefault(c.UserId, "Bilinmeyen"),
-            c.Coins,
-            c.Reason,
-            c.CreatedAt)).ToList();
-
         if (!string.IsNullOrWhiteSpace(Search))
         {
-            var term = Search.Trim();
-            result = result.Where(r => r.UserName.Contains(term, StringComparison.OrdinalIgnoreCase) ||
-                                       r.Reason.ToString().Contains(term, StringComparison.OrdinalIgnoreCase)).ToList();
+            var term = Search.Trim().ToLowerInvariant();
+            var matchingReasons = Enum.GetValues<CoinTransactionReason>()
+                .Where(r => r.ToString().Contains(term, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+            // ToLower().Contains sorguda LOWER ... LIKE olarak cevrilir, StringComparison asiri yuklemesi cevrilemez
+#pragma warning disable CA1304, CA1311, CA1862
+            query = query.Where(c => c.User.DisplayName.ToLower().Contains(term) || matchingReasons.Contains(c.Reason));
+#pragma warning restore CA1304, CA1311, CA1862
         }
 
-        Entries = result;
+        var page = await query
+            .OrderByDescending(c => c.CreatedAt)
+            .ThenByDescending(c => c.Id)
+            .Skip((PageNumber - 1) * PageSize)
+            .Take(PageSize + 1)
+            .Select(c => new LedgerItem(c.Id, c.User.DisplayName, c.Coins, c.Reason, c.CreatedAt))
+            .ToListAsync();
+
+        HasNextPage = page.Count > PageSize;
+        Entries = page.Take(PageSize).ToList();
     }
 }
