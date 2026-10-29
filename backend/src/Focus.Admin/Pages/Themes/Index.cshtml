@@ -128,7 +128,7 @@
             @foreach (var theme in Model.Themes)
             {
                 <div class="col-md-6 col-lg-4">
-                    <div class="polaris-card h-100 d-flex flex-column overflow-hidden" style="border-top: 3px solid @theme.AccentColor;">
+                    <div class="polaris-card h-100 d-flex flex-column overflow-hidden" style="border-top: 3px solid @Focus.Admin.Common.CssSafe.Color(theme.AccentColor);">
                         <!-- Video veya Küçük Resim Önizleme Ekranı -->
                         <div class="position-relative bg-dark" style="height: 180px; overflow: hidden;">
                             <video style="width: 100%; height: 100%; object-fit: cover;"
@@ -177,12 +177,12 @@
                                 <div class="d-flex align-items-center gap-2">
                                     <span class="text-muted" style="font-size: 10px;">Palet:</span>
                                     <span class="d-inline-flex align-items-center gap-1">
-                                        <span class="rounded border" style="width: 14px; height: 14px; background-color: @theme.WallColor;" title="Duvar: @theme.WallColor"></span>
-                                        <span class="rounded border" style="width: 14px; height: 14px; background-color: @theme.FloorColor;" title="Zemin: @theme.FloorColor"></span>
-                                        <span class="rounded border" style="width: 14px; height: 14px; background-color: @theme.AccentColor;" title="Işık: @theme.AccentColor"></span>
+                                        <span class="rounded border" style="width: 14px; height: 14px; background-color: @Focus.Admin.Common.CssSafe.Color(theme.WallColor);" title="Duvar: @Focus.Admin.Common.CssSafe.Color(theme.WallColor)"></span>
+                                        <span class="rounded border" style="width: 14px; height: 14px; background-color: @Focus.Admin.Common.CssSafe.Color(theme.FloorColor);" title="Zemin: @Focus.Admin.Common.CssSafe.Color(theme.FloorColor)"></span>
+                                        <span class="rounded border" style="width: 14px; height: 14px; background-color: @Focus.Admin.Common.CssSafe.Color(theme.AccentColor);" title="Işık: @Focus.Admin.Common.CssSafe.Color(theme.AccentColor)"></span>
                                     </span>
                                 </div>
-                                <span class="text-muted font-monospace" style="font-size: 10px;">@theme.AccentColor</span>
+                                <span class="text-muted font-monospace" style="font-size: 10px;">@Focus.Admin.Common.CssSafe.Color(theme.AccentColor)</span>
                             </div>
                         </div>
 
@@ -191,9 +191,9 @@
                             <button type="button" class="btn btn-sm btn-outline-dark flex-fill py-1 btn-preview-theme" 
                                     data-title="@theme.Title" 
                                     data-video="@theme.VideoUrl" 
-                                    data-wall="@theme.WallColor" 
-                                    data-floor="@theme.FloorColor" 
-                                    data-accent="@theme.AccentColor"
+                                    data-wall="@Focus.Admin.Common.CssSafe.Color(theme.WallColor)" 
+                                    data-floor="@Focus.Admin.Common.CssSafe.Color(theme.FloorColor)" 
+                                    data-accent="@Focus.Admin.Common.CssSafe.Color(theme.AccentColor)"
                                     style="font-size: 11px;">
                                 Tam Ekran Önizle
                             </button>
