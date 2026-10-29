@@ -50,7 +50,7 @@ Proje kurumsal **Clean Architecture** prensiplerine uygun olarak katmanlara ayr�
 ├── scripts/                           # Otomasyon ve test betikleri (Python, Playwright/Node; ADMIN_KEY ve SCREENSHOT_DIR ortam değişkenleri)
 ├── AGENTS.md                          # Antigravity yapay zekâ anayasası
 ├── baslamadan-once.md                 # Başlangıç ve vizyon rehberi
-├── docker-compose.yml                 # PostgreSQL, Redis, API ve Admin orkestrasyonu
+├── docker-compose.yml                 # PostgreSQL, Redis, API, Admin ve Web (focus-web, 3000) orkestrasyonu
 ├── .env / .env.example                # Ortam değişkenleri şablonu
 ├── .gitignore                         # Git hariç tutma kuralları
 └── .dockerignore                      # Docker imajı hariç tutma kuralları

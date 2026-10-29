@@ -52,6 +52,19 @@ services:
       redis:
         condition: service_healthy
 
+  focus-web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:5000/api/v1}
+    container_name: focus-web
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    depends_on:
+      - focus-api
+
   focus-admin:
     build:
       context: .

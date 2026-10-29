@@ -1,36 +1,37 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Bokodoro Web İstemcisi
 
-## Getting Started
+Next.js (App Router, TypeScript, Tailwind CSS) ile yazılmış Bokodoro arayüzü. Sayaç, ses mikseri (Web Audio ile
+tarayıcıda sentezlenir) ve ortak çalışma odaları `Focus.WebAPI` ile konuşur.
 
-First, run the development server:
+## Çalıştırma
 
 ```bash
+cp .env.example .env.local
+npm ci
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Geliştirme sunucusu http://localhost:3000 adresinde açılır. Backend'in (`docker compose up focus-api`) çalışıyor ve
+`Cors:AllowedOrigins` içinde bu adresi içeriyor olması gerekir; oturum HttpOnly çerezlerle yürütülür.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Ortam değişkeni
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Değişken | Açıklama | Varsayılan |
+| :--- | :--- | :--- |
+| `NEXT_PUBLIC_API_URL` | API taban adresi (`/api/v1` dahil). Derleme zamanında gömülür. | `http://localhost:5000/api/v1` |
 
-## Learn More
+## Komutlar
 
-To learn more about Next.js, take a look at the following resources:
+| Komut | Açıklama |
+| :--- | :--- |
+| `npm run dev` | Geliştirme sunucusu |
+| `npm run lint` | ESLint |
+| `npm run build` | Üretim derlemesi (`output: "standalone"`) |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Docker
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+docker build -t focus-web --build-arg NEXT_PUBLIC_API_URL=http://localhost:5000/api/v1 .
+```
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Kök dizindeki `docker-compose.yml` içinde `focus-web` servisi aynı imajı 3000 portunda çalıştırır.

@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=VT323&display=swap');
 @import "tailwindcss";
 
 :root {
@@ -14,7 +13,7 @@
 body {
   background-color: var(--background);
   color: var(--foreground);
-  font-family: 'Space Mono', monospace;
+  font-family: var(--font-space-mono), monospace;
   image-rendering: pixelated;
   -webkit-font-smoothing: antialiased;
 }
@@ -27,7 +26,7 @@ body {
 }
 
 .pixel-btn {
-  font-family: 'Space Mono', monospace;
+  font-family: var(--font-space-mono), monospace;
   font-weight: 700;
   text-transform: uppercase;
   border: 2px solid var(--panel-border);
@@ -84,5 +83,5 @@ body {
 }
 
 .font-pixel {
-  font-family: 'VT323', monospace;
+  font-family: var(--font-vt323), monospace;
 }
