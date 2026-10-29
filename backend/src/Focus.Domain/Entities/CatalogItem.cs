@@ -31,7 +31,8 @@ public class CatalogItem : BaseEntity<string>
         string spriteUrl,
         bool isInteractive = false,
         int gridWidth = 1,
-        int gridHeight = 1)
+        int gridHeight = 1,
+        DateTime? createdAt = null)
     {
         Id = id;
         Name = name;
@@ -44,6 +45,6 @@ public class CatalogItem : BaseEntity<string>
         IsInteractive = isInteractive;
         GridWidth = Math.Max(1, gridWidth);
         GridHeight = Math.Max(1, gridHeight);
-        CreatedAt = DateTime.UtcNow;
+        CreatedAt = createdAt ?? DateTime.UtcNow;
     }
 }

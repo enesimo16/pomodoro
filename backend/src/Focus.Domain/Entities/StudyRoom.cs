@@ -50,11 +50,13 @@ public class StudyRoom : BaseEntity<Guid>, IAggregateRoot
         string description,
         string? themeId = null,
         string? musicTrackId = null,
-        int capacity = 20)
+        int capacity = 20,
+        Guid? id = null,
+        DateTime? createdAt = null)
     {
         return new StudyRoom
         {
-            Id = Guid.NewGuid(),
+            Id = id ?? Guid.NewGuid(),
             Code = code.ToUpperInvariant().Trim(),
             Name = name,
             Description = description,
@@ -64,15 +66,20 @@ public class StudyRoom : BaseEntity<Guid>, IAggregateRoot
             IsPrivate = false,
             ThemeId = themeId,
             MusicTrackId = musicTrackId,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = createdAt ?? DateTime.UtcNow
         };
     }
 
-    public static StudyRoom CreateShopMarket(string name, string code, string description)
+    public static StudyRoom CreateShopMarket(
+        string name,
+        string code,
+        string description,
+        Guid? id = null,
+        DateTime? createdAt = null)
     {
         return new StudyRoom
         {
-            Id = Guid.NewGuid(),
+            Id = id ?? Guid.NewGuid(),
             Code = code.ToUpperInvariant().Trim(),
             Name = name,
             Description = description,
@@ -82,7 +89,7 @@ public class StudyRoom : BaseEntity<Guid>, IAggregateRoot
             IsPrivate = false,
             ThemeId = "cozy_bazaar",
             MusicTrackId = "market_chill",
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = createdAt ?? DateTime.UtcNow
         };
     }
 
