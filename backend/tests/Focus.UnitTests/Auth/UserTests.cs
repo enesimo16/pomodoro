@@ -7,6 +7,17 @@ namespace Focus.UnitTests.Auth;
 
 public class UserTests
 {
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void CreateGuest_WithBlankName_FallsBackToGeneratedName(string? name)
+    {
+        var user = User.CreateGuest(name);
+
+        user.DisplayName.Should().StartWith("Misafir#");
+    }
+
     [Fact]
     public void CreateGuest_ShouldInitializeGuestUser_WithDefaultAvatarAndStarterRoom()
     {

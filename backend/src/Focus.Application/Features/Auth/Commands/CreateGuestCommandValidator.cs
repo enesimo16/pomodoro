@@ -12,7 +12,13 @@ public class CreateGuestCommandValidator : AbstractValidator<CreateGuestCommand>
     {
         RuleFor(x => x.DisplayName)
             .MaximumLength(MaxDisplayNameLength)
-            .WithMessage($"Görünen ad en fazla {MaxDisplayNameLength} karakter olabilir.");
+            .WithMessage($"Görünen ad en fazla {MaxDisplayNameLength} karakter olabilir.")
+            .Must(name => !string.IsNullOrWhiteSpace(name))
+            .When(x => x.DisplayName is not null)
+            .WithMessage("Görünen ad boş olamaz.")
+            .Must(name => name!.IndexOfAny(['<', '>']) < 0)
+            .When(x => x.DisplayName is not null)
+            .WithMessage("Görünen ad '<' veya '>' karakterlerini içeremez.");
 
         RuleFor(x => x.Locale)
             .MaximumLength(MaxLocaleLength)

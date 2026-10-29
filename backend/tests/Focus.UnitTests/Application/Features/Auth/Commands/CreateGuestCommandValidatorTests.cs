@@ -32,6 +32,18 @@ public class CreateGuestCommandValidatorTests
         result.Errors.Should().ContainSingle(e => e.PropertyName == nameof(CreateGuestCommand.DisplayName));
     }
 
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("<script>")]
+    [InlineData("a>b")]
+    public void Validate_WithBlankOrMarkupDisplayName_IsInvalid(string displayName)
+    {
+        var result = _validator.Validate(new CreateGuestCommand(displayName));
+
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(CreateGuestCommand.DisplayName));
+    }
+
     [Fact]
     public void Validate_WithTooLongLocale_IsInvalid()
     {

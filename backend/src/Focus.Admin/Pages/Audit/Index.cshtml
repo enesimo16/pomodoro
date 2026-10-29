@@ -113,7 +113,7 @@
                         <tr>
                             <td>
                                 <div class="d-flex align-items-center gap-2">
-                                    <div class="avatar-preview-circle">@s.UserName.Substring(0, 1).ToUpper()</div>
+                                    <div class="avatar-preview-circle">@Focus.Admin.Common.TextHelpers.Initial(s.UserName)</div>
                                     <div>
                                         <div class="fw-semibold text-dark">@s.UserName</div>
                                         @if (s.IsOnlineNow)

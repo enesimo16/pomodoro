@@ -140,7 +140,7 @@
                                 <tr>
                                     <td>
                                         <div class="d-flex align-items-center gap-2">
-                                            <div class="avatar-preview-circle">@user.DisplayName.Substring(0, 1).ToUpper()</div>
+                                            <div class="avatar-preview-circle">@Focus.Admin.Common.TextHelpers.Initial(user.DisplayName)</div>
                                             <div>
                                                 <div class="fw-semibold">@user.DisplayName</div>
                                                 <div class="text-muted" style="font-size: 11px;">@(user.Email ?? "Misafir Oturumu")</div>

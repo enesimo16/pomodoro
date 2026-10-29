@@ -40,7 +40,7 @@ public class User : BaseEntity<Guid>, IAggregateRoot
         var user = new User
         {
             Id = Guid.NewGuid(),
-            DisplayName = displayName ?? $"Misafir#{randomSuffix}",
+            DisplayName = string.IsNullOrWhiteSpace(displayName) ? $"Misafir#{randomSuffix}" : displayName,
             Email = null,
             IsGuest = true,
             Level = 1,
