@@ -99,3 +99,17 @@ dotnet run --project backend/src/Focus.WebAPI
 # Testleri çalıştırın
 dotnet test backend/Focus.sln
 ```
+
+Gizli değerler `appsettings.json` içinde tutulmaz; yerelde ortam değişkenleri veya `dotnet user-secrets` ile verilir
+(JWT `SigningKey` en az 32 bayt olmalıdır, aksi halde uygulama başlamaz):
+```bash
+# Web API
+dotnet user-secrets --project backend/src/Focus.WebAPI set "ConnectionStrings:Postgres" "Host=localhost;Port=5432;Database=focus_db;Username=focus_user;Password=<PAROLA>"
+dotnet user-secrets --project backend/src/Focus.WebAPI set "Auth:Jwt:SigningKey" "<EN_AZ_32_BAYTLIK_GIZLI_ANAHTAR>"
+
+# Admin paneli (JWT anahtarı ve bağlantı dizesi Web API ile aynı olmalıdır)
+dotnet user-secrets --project backend/src/Focus.Admin set "ConnectionStrings:Postgres" "Host=localhost;Port=5432;Database=focus_db;Username=focus_user;Password=<PAROLA>"
+dotnet user-secrets --project backend/src/Focus.Admin set "Auth:Jwt:SigningKey" "<EN_AZ_32_BAYTLIK_GIZLI_ANAHTAR>"
+dotnet user-secrets --project backend/src/Focus.Admin set "AdminSecurity:Keys:0" "<ADMIN_KEY>"
+```
+Web API, Postgres kullanırken açılışta bekleyen EF migrasyonlarını otomatik uygular; migrasyon başarısız olursa uygulama başlamaz.

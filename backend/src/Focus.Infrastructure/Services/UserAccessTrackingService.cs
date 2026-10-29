@@ -6,6 +6,10 @@ namespace Focus.Infrastructure.Services;
 
 public class UserAccessTrackingService : IUserAccessTrackingService
 {
+    public const int MaxIpLength = 64;
+    public const int MaxUserAgentLength = 1000;
+    public const int MaxPathLength = 256;
+
     private readonly IApplicationDbContext _context;
 
     public UserAccessTrackingService(IApplicationDbContext context)
@@ -20,8 +24,9 @@ public class UserAccessTrackingService : IUserAccessTrackingService
         string? path,
         CancellationToken cancellationToken = default)
     {
-        var cleanIp = NormalizeIp(ipAddress);
-        var ua = string.IsNullOrWhiteSpace(userAgent) ? "Bilinmeyen Tarayıcı" : userAgent.Trim();
+        var cleanIp = Truncate(NormalizeIp(ipAddress), MaxIpLength);
+        var ua = Truncate(string.IsNullOrWhiteSpace(userAgent) ? "Bilinmeyen Tarayıcı" : userAgent.Trim(), MaxUserAgentLength);
+        var cleanPath = path == null ? null : Truncate(path, MaxPathLength);
 
         var (deviceType, os, browser) = ParseUserAgent(ua);
         var now = DateTime.UtcNow;
@@ -44,7 +49,7 @@ public class UserAccessTrackingService : IUserAccessTrackingService
 
         if (existingSession != null)
         {
-            existingSession.RecordActivity(now, path);
+            existingSession.RecordActivity(now, cleanPath);
             if (userId.HasValue && !existingSession.UserId.HasValue)
             {
                 existingSession.AssociateUser(userId.Value);
@@ -59,12 +64,17 @@ public class UserAccessTrackingService : IUserAccessTrackingService
                 deviceType,
                 os,
                 browser,
-                path);
+                cleanPath);
 
             _context.UserDeviceSessions.Add(newSession);
         }
 
         await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    private static string Truncate(string value, int maxLength)
+    {
+        return value.Length <= maxLength ? value : value[..maxLength];
     }
 
     private static string NormalizeIp(string ip)

@@ -149,10 +149,12 @@ public class AuthController : BaseApiController
 
     private void SetAuthCookies(string accessToken, string refreshToken, DateTime accessTokenExpiresAt)
     {
+        var isDevelopment = HttpContext.RequestServices.GetRequiredService<IWebHostEnvironment>().IsDevelopment();
+
         var accessCookieOptions = new CookieOptions
         {
             HttpOnly = true,
-            Secure = Request.IsHttps,
+            Secure = !isDevelopment,
             SameSite = SameSiteMode.Lax,
             Expires = accessTokenExpiresAt
         };
@@ -162,7 +164,7 @@ public class AuthController : BaseApiController
         var refreshCookieOptions = new CookieOptions
         {
             HttpOnly = true,
-            Secure = Request.IsHttps,
+            Secure = !isDevelopment,
             SameSite = SameSiteMode.Lax,
             Expires = DateTime.UtcNow.AddDays(30)
         };

@@ -18,17 +18,9 @@ public abstract class BaseApiController : ControllerBase
         return Guid.TryParse(subClaim, out userId);
     }
 
+    // UseForwardedHeaders sonrasi guvenilir proxy bilgisi RemoteIpAddress icine islenir
     protected string? GetClientIpAddress()
     {
-        if (Request.Headers.TryGetValue("X-Forwarded-For", out var forwardedHeader))
-        {
-            var ip = forwardedHeader.FirstOrDefault()?.Split(',').FirstOrDefault()?.Trim();
-            if (!string.IsNullOrEmpty(ip))
-            {
-                return ip;
-            }
-        }
-
         return HttpContext.Connection.RemoteIpAddress?.ToString();
     }
 }

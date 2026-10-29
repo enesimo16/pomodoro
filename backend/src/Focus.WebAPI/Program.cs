@@ -1,6 +1,10 @@
 using Focus.Application;
 using Focus.Infrastructure;
+using Focus.Infrastructure.Common;
+using Focus.Infrastructure.Persistence;
 using Focus.WebAPI.Hubs;
+using Microsoft.AspNetCore.Cors.Infrastructure;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -55,40 +59,43 @@ builder.Services.AddSwaggerGen(options =>
 // Katman Bagimliliklari
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddFocusForwardedHeaders();
+builder.Services.AddProblemDetails();
 
 // CORS Yapilandirmasi
-var allowedOrigins = builder.Configuration["Cors:AllowedOrigins"]?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-    ?? new[] { "http://localhost:3000", "http://localhost:5001", "http://127.0.0.1:3000", "http://127.0.0.1:5001" };
-
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("FocusClientCors", policy =>
+builder.Services.AddCors();
+builder.Services.AddOptions<CorsOptions>()
+    .Configure<IConfiguration, IWebHostEnvironment>((options, configuration, environment) =>
     {
-        policy.SetIsOriginAllowed(origin =>
-            {
-                if (string.IsNullOrWhiteSpace(origin)) return false;
-                if (Uri.TryCreate(origin, UriKind.Absolute, out var uri))
-                {
-                    return uri.Host == "localhost" || uri.Host == "127.0.0.1" || allowedOrigins.Contains(origin);
-                }
-                return false;
-            })
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials();
+        var allowedOrigins = CorsOriginPolicy.ParseAllowedOrigins(configuration["Cors:AllowedOrigins"]);
+        var isDevelopment = environment.IsDevelopment();
+
+        options.AddPolicy("FocusClientCors", policy =>
+        {
+            policy.SetIsOriginAllowed(origin => CorsOriginPolicy.IsOriginAllowed(origin, allowedOrigins, isDevelopment))
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials();
+        });
     });
-});
 
 var app = builder.Build();
 
-// Gelistirme ortami Swagger
+app.UseForwardedHeaders();
+
 if (app.Environment.IsDevelopment())
 {
+    // Gelistirme ortami Swagger
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "Focus API v1");
     });
+}
+else
+{
+    app.UseExceptionHandler();
+    app.UseHsts();
 }
 
 app.UseCors("FocusClientCors");
@@ -104,14 +111,21 @@ app.MapHub<RoomHub>("/hubs/room");
 
 using (var scope = app.Services.CreateScope())
 {
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
     try
     {
-        var context = scope.ServiceProvider.GetRequiredService<Focus.Infrastructure.Persistence.ApplicationDbContext>();
-        await Focus.Infrastructure.Persistence.GlobalMemorySeeder.SeedGlobalMemoriesAsync(context);
+        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        if (context.Database.IsNpgsql())
+        {
+            await context.Database.MigrateAsync();
+        }
+
+        await GlobalMemorySeeder.SeedGlobalMemoriesAsync(context);
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"[Seeder Error]: {ex.Message} -> {ex.InnerException?.Message}");
+        logger.LogCritical(ex, "Veritabani migrasyonu veya baslangic verisi yuklenemedi.");
+        throw;
     }
 }
 

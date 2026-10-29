@@ -105,7 +105,7 @@ NEXT_PUBLIC_SIGNALR_TIMER_URL=@Model.WebApiBaseUrl/hubs/timer
 NEXT_PUBLIC_SIGNALR_ROOM_URL=@Model.WebApiBaseUrl/hubs/room
 
 # Admin Paneli Stealth Passkey (Yerel Geliştirici Erişimi)
-FOCUS_ADMIN_PASSKEY=focus_master_key_9971x</code></pre>
+FOCUS_ADMIN_PASSKEY=&lt;ADMIN_KEY&gt;</code></pre>
             </div>
 
             <!-- TAB 2: Güvenlik & Admin Key'leri -->
@@ -122,26 +122,23 @@ FOCUS_ADMIN_PASSKEY=focus_master_key_9971x</code></pre>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var key in Model.AdminKeys)
-                            {
-                                <tr>
-                                    <td><code class="fw-bold text-dark">@key</code></td>
-                                    <td><span class="badge bg-dark text-white">Yönetici / Geliştirici</span></td>
-                                    <td><code>?admin_key=@key</code></td>
-                                    <td class="text-end">
-                                        <button type="button" class="btn btn-outline-dark btn-sm py-0 px-2" style="font-size: 11px;" onclick="copyText('@key', this)">
-                                            Kopyala
-                                        </button>
-                                    </td>
-                                </tr>
-                            }
+                            <tr>
+                                <td><code class="fw-bold text-dark">&lt;ADMIN_KEY&gt;</code></td>
+                                <td><span class="badge bg-dark text-white">Yönetici / Geliştirici (@Model.AdminKeyCount anahtar tanımlı)</span></td>
+                                <td><code>?admin_key=&lt;ADMIN_KEY&gt;</code></td>
+                                <td class="text-end">
+                                    <button type="button" class="btn btn-outline-dark btn-sm py-0 px-2" style="font-size: 11px;" onclick="copyText('?admin_key=&lt;ADMIN_KEY&gt;', this)">
+                                        Kopyala
+                                    </button>
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
                 <div class="alert alert-secondary py-2 px-3 small m-0" style="font-size: 11.5px;">
                     <strong>Nasıl Kullanılır?</strong><br/>
-                    • <strong>Tarayıcı:</strong> <code>http://localhost:5001/?admin_key=focus_master_key_9971x</code> (Otomatik HttpOnly çerez atanır ve temiz URL'e yönlenir).<br/>
-                    • <strong>HTTP Header:</strong> İstek başlığına <code>X-Admin-Key: focus_master_key_9971x</code> eklenebilir.<br/>
+                    • <strong>Tarayıcı:</strong> <code>http://localhost:5001/?admin_key=&lt;ADMIN_KEY&gt;</code> (Otomatik HttpOnly çerez atanır ve temiz URL'e yönlenir).<br/>
+                    • <strong>HTTP Header:</strong> İstek başlığına <code>X-Admin-Key: &lt;ADMIN_KEY&gt;</code> eklenebilir.<br/>
                     • <strong>Oturumu Kilitle:</strong> <code>http://localhost:5001/?admin_logout=true</code> tıklandığında çerez silinir ve panel tekrar <strong>404 Not Found</strong> görünümüne kilitlenir.
                 </div>
             </div>
@@ -476,7 +473,7 @@ export function createTimerHubConnection(accessToken: string) {
         // 2. .env.local kod bloğunu güncelle
         const envEl = document.getElementById('envSnippet');
         if (envEl) {
-            envEl.textContent = `# Focus WebAPI Taban Adresi\nNEXT_PUBLIC_API_URL=${baseUrl}/api/v1\n\n# SignalR Gerçek Zamanlı Hub Adresleri\nNEXT_PUBLIC_SIGNALR_TIMER_URL=${baseUrl}/hubs/timer\nNEXT_PUBLIC_SIGNALR_ROOM_URL=${baseUrl}/hubs/room\n\n# Admin Paneli Stealth Passkey (Yerel Geliştirici Erişimi)\nFOCUS_ADMIN_PASSKEY=focus_master_key_9971x`;
+            envEl.textContent = `# Focus WebAPI Taban Adresi\nNEXT_PUBLIC_API_URL=${baseUrl}/api/v1\n\n# SignalR Gerçek Zamanlı Hub Adresleri\nNEXT_PUBLIC_SIGNALR_TIMER_URL=${baseUrl}/hubs/timer\nNEXT_PUBLIC_SIGNALR_ROOM_URL=${baseUrl}/hubs/room\n\n# Admin Paneli Stealth Passkey (Yerel Geliştirici Erişimi)\nFOCUS_ADMIN_PASSKEY=<ADMIN_KEY>`;
         }
 
         // 3. Token Refresh kod bloğunu güncelle

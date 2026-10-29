@@ -1,8 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using System.Security.Cryptography;
-using System.Text;
 
 namespace Focus.Infrastructure.Middleware;
 
@@ -13,18 +12,22 @@ namespace Focus.Infrastructure.Middleware;
 /// </summary>
 public class AdminStealthModeMiddleware
 {
-    private const string Salt = "_focus_admin_stealth_salt_2026_x#99!";
+    private static readonly string[] StaticRoots = { "/lib/", "/css/", "/js/" };
+
     private readonly RequestDelegate _next;
     private readonly IConfiguration _configuration;
+    private readonly IHostEnvironment _environment;
     private readonly ILogger<AdminStealthModeMiddleware> _logger;
 
     public AdminStealthModeMiddleware(
         RequestDelegate next,
         IConfiguration configuration,
+        IHostEnvironment environment,
         ILogger<AdminStealthModeMiddleware> logger)
     {
         _next = next;
         _configuration = configuration;
+        _environment = environment;
         _logger = logger;
     }
 
@@ -39,17 +42,15 @@ public class AdminStealthModeMiddleware
 
         var path = context.Request.Path.Value ?? string.Empty;
 
-        // Statik dosyaları (css, js, font) geçir
+        // Statik dosyaları (css, js, lib, favicon) geçir
         if (IsStaticAsset(path))
         {
             await _next(context);
             return;
         }
 
-        var allowedKeys = _configuration.GetSection("AdminSecurity:Keys")
-            .Get<string[]>() ?? Array.Empty<string>();
-
-        var cookieName = _configuration.GetValue("AdminSecurity:CookieName", "focus_admin_passkey")!;
+        var allowedKeys = AdminKeyValidator.GetAllowedKeys(_configuration);
+        var cookieName = AdminKeyValidator.GetCookieName(_configuration);
         var cookieDays = _configuration.GetValue("AdminSecurity:CookieDays", 14);
 
         // 1. Çıkış / Kilitleme İsteği (?admin_logout=true)
@@ -64,13 +65,13 @@ public class AdminStealthModeMiddleware
         if (context.Request.Query.TryGetValue("admin_key", out var queryKeyVal))
         {
             var providedKey = queryKeyVal.ToString().Trim();
-            if (IsValidKey(providedKey, allowedKeys))
+            if (AdminKeyValidator.IsValidKey(providedKey, allowedKeys))
             {
-                var hash = ComputeHash(providedKey);
+                var hash = AdminKeyValidator.ComputeHash(providedKey);
                 context.Response.Cookies.Append(cookieName, hash, new CookieOptions
                 {
                     HttpOnly = true,
-                    Secure = context.Request.IsHttps,
+                    Secure = !_environment.IsDevelopment(),
                     SameSite = SameSiteMode.Lax,
                     Expires = DateTimeOffset.UtcNow.AddDays(cookieDays),
                     Path = "/"
@@ -83,15 +84,15 @@ public class AdminStealthModeMiddleware
             }
 
             // Hatalı anahtar girilirse direkt 404 dön (admin paneli olduğunu ele vermez)
+            _logger.LogWarning("Gecersiz admin anahtari denemesi: {RemoteIp}", context.Connection.RemoteIpAddress);
             await ReturnStealthNotFoundAsync(context);
             return;
         }
 
         // 3. HTTP Header Üzerinden Anahtar Kontrolü (X-Admin-Key)
-        if (context.Request.Headers.TryGetValue("X-Admin-Key", out var headerKeyVal))
+        if (context.Request.Headers.TryGetValue(AdminKeyValidator.HeaderName, out var headerKeyVal))
         {
-            var providedKey = headerKeyVal.ToString().Trim();
-            if (IsValidKey(providedKey, allowedKeys))
+            if (AdminKeyValidator.IsValidKey(headerKeyVal.ToString(), allowedKeys))
             {
                 await _next(context);
                 return;
@@ -104,7 +105,7 @@ public class AdminStealthModeMiddleware
         // 4. HttpOnly Çerez Doğrulama
         if (context.Request.Cookies.TryGetValue(cookieName, out var cookieVal) && !string.IsNullOrWhiteSpace(cookieVal))
         {
-            if (IsValidCookieHash(cookieVal, allowedKeys))
+            if (AdminKeyValidator.IsValidCookieHash(cookieVal, allowedKeys))
             {
                 await _next(context);
                 return;
@@ -116,36 +117,6 @@ public class AdminStealthModeMiddleware
 
         // Yetkisiz erişim: 401 veya 403 değil, kasıtlı olarak 404 Not Found dönülür (Stealth Mode)
         await ReturnStealthNotFoundAsync(context);
-    }
-
-    private static bool IsValidKey(string key, string[] allowedKeys)
-    {
-        if (string.IsNullOrWhiteSpace(key)) return false;
-        return allowedKeys.Any(k => string.Equals(k.Trim(), key, StringComparison.Ordinal));
-    }
-
-    private static bool IsValidCookieHash(string hash, string[] allowedKeys)
-    {
-        if (string.IsNullOrWhiteSpace(hash)) return false;
-        foreach (var key in allowedKeys)
-        {
-            if (string.IsNullOrWhiteSpace(key)) continue;
-            var expectedHash = ComputeHash(key.Trim());
-            if (CryptographicOperations.FixedTimeEquals(
-                    Encoding.UTF8.GetBytes(hash),
-                    Encoding.UTF8.GetBytes(expectedHash)))
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static string ComputeHash(string input)
-    {
-        var bytes = Encoding.UTF8.GetBytes(input + Salt);
-        var hashBytes = SHA256.HashData(bytes);
-        return Convert.ToHexString(hashBytes).ToLowerInvariant();
     }
 
     private static string BuildCleanUrl(HttpContext context)
@@ -160,7 +131,7 @@ public class AdminStealthModeMiddleware
             return path;
         }
 
-        var queryString = QueryString.Create(queryCollection.Select(q => 
+        var queryString = QueryString.Create(queryCollection.Select(q =>
             new KeyValuePair<string, string?>(q.Key, q.Value.ToString())));
 
         return $"{path}{queryString.ToUriComponent()}";
@@ -169,18 +140,10 @@ public class AdminStealthModeMiddleware
     private static bool IsStaticAsset(string path)
     {
         if (string.IsNullOrEmpty(path)) return false;
-        var lower = path.ToLowerInvariant();
-        return lower.EndsWith(".css", StringComparison.OrdinalIgnoreCase) ||
-               lower.EndsWith(".js", StringComparison.OrdinalIgnoreCase) ||
-               lower.EndsWith(".ico", StringComparison.OrdinalIgnoreCase) ||
-               lower.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ||
-               lower.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
-               lower.EndsWith(".svg", StringComparison.OrdinalIgnoreCase) ||
-               lower.EndsWith(".woff", StringComparison.OrdinalIgnoreCase) ||
-               lower.EndsWith(".woff2", StringComparison.OrdinalIgnoreCase) ||
-               lower.StartsWith("/lib/", StringComparison.OrdinalIgnoreCase) ||
-               lower.StartsWith("/css/", StringComparison.OrdinalIgnoreCase) ||
-               lower.StartsWith("/js/", StringComparison.OrdinalIgnoreCase);
+
+        if (string.Equals(path, "/favicon.ico", StringComparison.OrdinalIgnoreCase)) return true;
+
+        return StaticRoots.Any(root => path.StartsWith(root, StringComparison.OrdinalIgnoreCase));
     }
 
     private static async Task ReturnStealthNotFoundAsync(HttpContext context)

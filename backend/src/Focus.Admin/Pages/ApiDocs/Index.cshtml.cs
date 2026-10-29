@@ -8,7 +8,7 @@ public class IndexModel : PageModel
     private readonly IConfiguration _configuration;
 
     public string WebApiBaseUrl { get; set; } = "http://localhost:5000";
-    public List<string> AdminKeys { get; set; } = new();
+    public int AdminKeyCount { get; set; }
     public List<ApiCategoryDoc> Categories { get; set; } = new();
     public List<SignalRHubDoc> Hubs { get; set; } = new();
 
@@ -20,12 +20,7 @@ public class IndexModel : PageModel
     public void OnGet()
     {
         WebApiBaseUrl = _configuration.GetValue<string>("WebApiBaseUrl") ?? "http://localhost:5000";
-        AdminKeys = _configuration.GetSection("AdminSecurity:Keys").Get<List<string>>() ?? new List<string>
-        {
-            "focus_master_key_9971x",
-            "focus_admin_sec_2026",
-            "adm_key_enes_dev_44"
-        };
+        AdminKeyCount = _configuration.GetSection("AdminSecurity:Keys").Get<string[]>()?.Count(k => !string.IsNullOrWhiteSpace(k)) ?? 0;
         Categories = BuildCategories();
         Hubs = BuildHubs();
     }

@@ -1,6 +1,7 @@
 using Focus.Infrastructure.Middleware;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Moq;
 using System.Security.Cryptography;
@@ -12,8 +13,9 @@ namespace Focus.UnitTests.Infrastructure;
 public class AdminStealthModeMiddlewareTests
 {
     private readonly Mock<ILogger<AdminStealthModeMiddleware>> _loggerMock = new();
-    private const string MasterKey = "focus_master_key_9971x";
-    private const string SecondaryKey = "focus_admin_sec_2026";
+    private readonly Mock<IHostEnvironment> _environmentMock = new();
+    private const string MasterKey = "test-master-key-aaaaaaaa";
+    private const string SecondaryKey = "test-secondary-key-bbbbbbbb";
     private const string Salt = "_focus_admin_stealth_salt_2026_x#99!";
 
     private IConfiguration CreateConfiguration(bool enabled = true, string[]? keys = null)
@@ -41,6 +43,7 @@ public class AdminStealthModeMiddlewareTests
         var middleware = new AdminStealthModeMiddleware(
             _ => { nextCalled = true; return Task.CompletedTask; },
             config,
+            _environmentMock.Object,
             _loggerMock.Object);
 
         var context = new DefaultHttpContext();
@@ -57,6 +60,7 @@ public class AdminStealthModeMiddlewareTests
         var middleware = new AdminStealthModeMiddleware(
             _ => { nextCalled = true; return Task.CompletedTask; },
             config,
+            _environmentMock.Object,
             _loggerMock.Object);
 
         var context = new DefaultHttpContext();
@@ -75,6 +79,7 @@ public class AdminStealthModeMiddlewareTests
         var middleware = new AdminStealthModeMiddleware(
             _ => { nextCalled = true; return Task.CompletedTask; },
             config,
+            _environmentMock.Object,
             _loggerMock.Object);
 
         var context = new DefaultHttpContext();
@@ -95,6 +100,7 @@ public class AdminStealthModeMiddlewareTests
         var middleware = new AdminStealthModeMiddleware(
             _ => { nextCalled = true; return Task.CompletedTask; },
             config,
+            _environmentMock.Object,
             _loggerMock.Object);
 
         var context = new DefaultHttpContext();
@@ -120,6 +126,7 @@ public class AdminStealthModeMiddlewareTests
         var middleware = new AdminStealthModeMiddleware(
             _ => { nextCalled = true; return Task.CompletedTask; },
             config,
+            _environmentMock.Object,
             _loggerMock.Object);
 
         var context = new DefaultHttpContext();
@@ -141,6 +148,7 @@ public class AdminStealthModeMiddlewareTests
         var middleware = new AdminStealthModeMiddleware(
             _ => { nextCalled = true; return Task.CompletedTask; },
             config,
+            _environmentMock.Object,
             _loggerMock.Object);
 
         var context = new DefaultHttpContext();
@@ -164,6 +172,7 @@ public class AdminStealthModeMiddlewareTests
         var middleware = new AdminStealthModeMiddleware(
             _ => { nextCalled = true; return Task.CompletedTask; },
             config,
+            _environmentMock.Object,
             _loggerMock.Object);
 
         var context = new DefaultHttpContext();
@@ -183,6 +192,7 @@ public class AdminStealthModeMiddlewareTests
         var middleware = new AdminStealthModeMiddleware(
             _ => { nextCalled = true; return Task.CompletedTask; },
             config,
+            _environmentMock.Object,
             _loggerMock.Object);
 
         var context = new DefaultHttpContext();
@@ -194,5 +204,100 @@ public class AdminStealthModeMiddlewareTests
 
         Assert.False(nextCalled);
         Assert.Equal(StatusCodes.Status404NotFound, context.Response.StatusCode);
+    }
+
+    private AdminStealthModeMiddleware CreateMiddleware(IConfiguration config, RequestDelegate next, string environmentName)
+    {
+        _environmentMock.SetupGet(e => e.EnvironmentName).Returns(environmentName);
+        return new AdminStealthModeMiddleware(next, config, _environmentMock.Object, _loggerMock.Object);
+    }
+
+    [Theory]
+    [InlineData("/js/site.js")]
+    [InlineData("/css/site.css")]
+    [InlineData("/lib/bootstrap/dist/js/bootstrap.min.js")]
+    [InlineData("/favicon.ico")]
+    public async Task InvokeAsync_WhenPathIsUnderStaticRoot_ShouldPassToNext(string path)
+    {
+        var nextCalled = false;
+        var middleware = CreateMiddleware(CreateConfiguration(), _ => { nextCalled = true; return Task.CompletedTask; }, "Production");
+
+        var context = new DefaultHttpContext();
+        context.Request.Path = path;
+
+        await middleware.InvokeAsync(context);
+
+        Assert.True(nextCalled);
+    }
+
+    [Theory]
+    [InlineData("/Jobs/export.js")]
+    [InlineData("/ApiLab/secret.css")]
+    [InlineData("/hangfire/logo.png")]
+    [InlineData("/anything.ico")]
+    public async Task InvokeAsync_WhenPathOnlyLooksLikeStaticFile_ShouldReturn404(string path)
+    {
+        var nextCalled = false;
+        var middleware = CreateMiddleware(CreateConfiguration(), _ => { nextCalled = true; return Task.CompletedTask; }, "Production");
+
+        var context = new DefaultHttpContext();
+        context.Request.Path = path;
+        context.Response.Body = new MemoryStream();
+
+        await middleware.InvokeAsync(context);
+
+        Assert.False(nextCalled);
+        Assert.Equal(StatusCodes.Status404NotFound, context.Response.StatusCode);
+    }
+
+    [Fact]
+    public async Task InvokeAsync_WithKeyDifferingOnlyInLastCharacter_ShouldReturn404()
+    {
+        var nextCalled = false;
+        var middleware = CreateMiddleware(CreateConfiguration(), _ => { nextCalled = true; return Task.CompletedTask; }, "Production");
+
+        var context = new DefaultHttpContext();
+        context.Request.Path = "/ApiLab";
+        context.Request.Headers.Append("X-Admin-Key", MasterKey[..^1] + "x");
+        context.Response.Body = new MemoryStream();
+
+        await middleware.InvokeAsync(context);
+
+        Assert.False(nextCalled);
+        Assert.Equal(StatusCodes.Status404NotFound, context.Response.StatusCode);
+    }
+
+    [Fact]
+    public async Task InvokeAsync_WithNoConfiguredKeys_ShouldRejectEvenEmptyKey()
+    {
+        var nextCalled = false;
+        var middleware = CreateMiddleware(CreateConfiguration(keys: Array.Empty<string>()), _ => { nextCalled = true; return Task.CompletedTask; }, "Production");
+
+        var context = new DefaultHttpContext();
+        context.Request.Path = "/ApiLab";
+        context.Request.Headers.Append("X-Admin-Key", "");
+        context.Response.Body = new MemoryStream();
+
+        await middleware.InvokeAsync(context);
+
+        Assert.False(nextCalled);
+        Assert.Equal(StatusCodes.Status404NotFound, context.Response.StatusCode);
+    }
+
+    [Theory]
+    [InlineData("Production", true)]
+    [InlineData("Development", false)]
+    public async Task InvokeAsync_WithValidKey_ShouldSetSecureCookieOnlyOutsideDevelopment(string environmentName, bool expectSecure)
+    {
+        var middleware = CreateMiddleware(CreateConfiguration(), _ => Task.CompletedTask, environmentName);
+
+        var context = new DefaultHttpContext();
+        context.Request.Path = "/Jobs";
+        context.Request.QueryString = new QueryString($"?admin_key={MasterKey}");
+
+        await middleware.InvokeAsync(context);
+
+        var setCookieHeader = context.Response.Headers.SetCookie.ToString().ToLowerInvariant();
+        Assert.Equal(expectSecure, setCookieHeader.Contains("secure", StringComparison.Ordinal));
     }
 }

@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Focus.Infrastructure;
@@ -20,28 +21,28 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         // PostgreSQL DbContext
-        var connectionString = configuration.GetConnectionString("Postgres")
-            ?? "Host=localhost;Port=5432;Database=focus_db;Username=focus_user;Password=focus_dev_pg_7Kq2mX9vLp";
-
-        services.AddDbContext<ApplicationDbContext>(options =>
+        services.AddDbContext<ApplicationDbContext>((serviceProvider, options) =>
         {
+            var connectionString = GetPostgresConnectionString(serviceProvider.GetRequiredService<IConfiguration>());
+
             options.UseNpgsql(connectionString, npgsqlOptions =>
             {
                 npgsqlOptions.UseVector();
                 npgsqlOptions.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName);
             });
-            options.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
         });
 
         services.AddScoped<IApplicationDbContext>(sp => sp.GetRequiredService<ApplicationDbContext>());
 
         // Ayarlar
-        services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));
+        services.AddOptions<JwtSettings>()
+            .Bind(configuration.GetSection(JwtSettings.SectionName))
+            .Validate(
+                JwtSettings.HasValidSigningKey,
+                $"Auth:Jwt:SigningKey tanimli degil veya {JwtSettings.MinSigningKeyBytes} bayttan kisa. Auth__Jwt__SigningKey ortam degiskeni ile en az {JwtSettings.MinSigningKeyBytes} baytlik gizli bir anahtar verin.")
+            .ValidateOnStart();
         services.Configure<GoogleAuthSettings>(configuration.GetSection(GoogleAuthSettings.SectionName));
         services.Configure<ExternalApiSettings>(configuration.GetSection(ExternalApiSettings.SectionName));
-
-        var jwtSettings = new JwtSettings();
-        configuration.GetSection(JwtSettings.SectionName).Bind(jwtSettings);
 
         // Servisler
         services.AddHttpContextAccessor();
@@ -71,15 +72,17 @@ public static class DependencyInjection
         services.AddScoped<IUserAccessTrackingService, UserAccessTrackingService>();
 
         // Hangfire Arka Plan Gorevleri ve Zamanlayici
-        services.AddHangfire(config => config
+        services.AddHangfire((serviceProvider, config) => config
             .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
             .UseSimpleAssemblyNameTypeSerializer()
             .UseRecommendedSerializerSettings()
-            .UsePostgreSqlStorage(c => c.UseNpgsqlConnection(connectionString), new PostgreSqlStorageOptions
-            {
-                QueuePollInterval = TimeSpan.FromSeconds(15),
-                InvisibilityTimeout = TimeSpan.FromMinutes(30)
-            }));
+            .UsePostgreSqlStorage(
+                c => c.UseNpgsqlConnection(GetPostgresConnectionString(serviceProvider.GetRequiredService<IConfiguration>())),
+                new PostgreSqlStorageOptions
+                {
+                    QueuePollInterval = TimeSpan.FromSeconds(15),
+                    InvisibilityTimeout = TimeSpan.FromMinutes(30)
+                }));
 
         services.AddHangfireServer(options =>
         {
@@ -90,61 +93,61 @@ public static class DependencyInjection
         services.AddScoped<IBackgroundJobService, BackgroundJobService>();
 
         // JWT Kimlik Dogrulama
-        var key = Encoding.UTF8.GetBytes(jwtSettings.SigningKey);
-
         services.AddAuthentication(options =>
         {
             options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
             options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
         })
-        .AddJwtBearer(options =>
-        {
-            options.RequireHttpsMetadata = false;
-            options.SaveToken = true;
-            options.TokenValidationParameters = new TokenValidationParameters
-            {
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(key),
-                ValidateIssuer = true,
-                ValidIssuer = jwtSettings.Issuer,
-                ValidateAudience = true,
-                ValidAudience = jwtSettings.Audience,
-                ValidateLifetime = true,
-                ClockSkew = TimeSpan.Zero
-            };
+        .AddJwtBearer();
 
-            options.Events = new JwtBearerEvents
+        services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
+            .Configure<IOptions<JwtSettings>>((options, jwtOptions) =>
             {
-                OnMessageReceived = context =>
+                var jwtSettings = jwtOptions.Value;
+
+                options.RequireHttpsMetadata = false;
+                options.SaveToken = true;
+                options.TokenValidationParameters = new TokenValidationParameters
                 {
-                    // 1. Authorization header yoksa HttpOnly cookie oku (focus_at)
-                    if (string.IsNullOrEmpty(context.Token))
-                    {
-                        var cookieToken = context.Request.Cookies["focus_at"];
-                        if (!string.IsNullOrEmpty(cookieToken))
-                        {
-                            context.Token = cookieToken;
-                        }
-                    }
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SigningKey)),
+                    ValidateIssuer = true,
+                    ValidIssuer = jwtSettings.Issuer,
+                    ValidateAudience = true,
+                    ValidAudience = jwtSettings.Audience,
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.Zero
+                };
 
-                    // 2. SignalR Baglantisi icin query string oku
-                    var path = context.HttpContext.Request.Path;
-                    if (path.StartsWithSegments("/hubs", StringComparison.OrdinalIgnoreCase))
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
                     {
-                        var accessToken = context.Request.Query["access_token"];
-                        if (!string.IsNullOrEmpty(accessToken))
+                        var token = JwtRequestTokenResolver.Resolve(context.Request);
+                        if (token != null)
                         {
-                            context.Token = accessToken;
+                            context.Token = token;
                         }
-                    }
 
-                    return Task.CompletedTask;
-                }
-            };
-        });
+                        return Task.CompletedTask;
+                    }
+                };
+            });
 
         services.AddAuthorization();
 
         return services;
+    }
+
+    private static string GetPostgresConnectionString(IConfiguration configuration)
+    {
+        var connectionString = configuration.GetConnectionString("Postgres");
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            throw new InvalidOperationException(
+                "ConnectionStrings:Postgres tanimli degil. ConnectionStrings__Postgres ortam degiskenini veya dotnet user-secrets degerini ayarlayin.");
+        }
+
+        return connectionString;
     }
 }
