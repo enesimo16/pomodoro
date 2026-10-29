@@ -430,25 +430,33 @@ export function createTimerHubConnection(accessToken: string) {
 
 @section Scripts {
 <script>
+    function safeStorage(kind) {
+        return {
+            get(key) { try { return window[kind].getItem(key); } catch (e) { return null; } },
+            set(key, value) { try { window[kind].setItem(key, value); } catch (e) { } },
+            remove(key) { try { window[kind].removeItem(key); } catch (e) { } }
+        };
+    }
+    const lsStore = safeStorage('localStorage');
     let activeFilter = 'all';
     const defaultApiBaseUrl = '@Model.WebApiBaseUrl';
 
     function getActiveBaseUrl() {
-        return (localStorage.getItem('focus_custom_api_base_url') || defaultApiBaseUrl).trim().replace(/\/+$/, '');
+        return (lsStore.get('focus_custom_api_base_url') || defaultApiBaseUrl).trim().replace(/\/+$/, '');
     }
 
     function onApiBaseUrlChanged(newVal) {
         const cleaned = (newVal || defaultApiBaseUrl).trim().replace(/\/+$/, '');
         if (newVal && newVal.trim() !== '') {
-            localStorage.setItem('focus_custom_api_base_url', cleaned);
+            lsStore.set('focus_custom_api_base_url', cleaned);
         } else {
-            localStorage.removeItem('focus_custom_api_base_url');
+            lsStore.remove('focus_custom_api_base_url');
         }
         updateDynamicUrls(cleaned);
     }
 
     function resetApiBaseUrl() {
-        localStorage.removeItem('focus_custom_api_base_url');
+        lsStore.remove('focus_custom_api_base_url');
         const input = document.getElementById('txtApiBaseUrl');
         if (input) input.value = defaultApiBaseUrl;
         updateDynamicUrls(defaultApiBaseUrl);
@@ -499,7 +507,7 @@ export function createTimerHubConnection(accessToken: string) {
 
     // Sayfa açıldığında önceden kaydedilmiş özel URL varsa yükle
     document.addEventListener('DOMContentLoaded', () => {
-        const saved = localStorage.getItem('focus_custom_api_base_url');
+        const saved = lsStore.get('focus_custom_api_base_url');
         if (saved) {
             const input = document.getElementById('txtApiBaseUrl');
             if (input) input.value = saved;

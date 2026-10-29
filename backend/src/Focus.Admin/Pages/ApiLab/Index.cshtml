@@ -1467,7 +1467,16 @@
 @section Scripts {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
 <script>
-    const savedApiBase = localStorage.getItem('focus_custom_api_base_url');
+    function safeStorage(kind) {
+        return {
+            get(key) { try { return window[kind].getItem(key); } catch (e) { return null; } },
+            set(key, value) { try { window[kind].setItem(key, value); } catch (e) { } },
+            remove(key) { try { window[kind].removeItem(key); } catch (e) { } }
+        };
+    }
+    const lsStore = safeStorage('localStorage');
+    const ssStore = safeStorage('sessionStorage');
+    const savedApiBase = lsStore.get('focus_custom_api_base_url');
     const apiBase = (savedApiBase || '@Model.WebApiBaseUrl').replace(/\/+$/, '');
     const targetLabel = document.getElementById('lblTargetApi');
     if (targetLabel && savedApiBase) {
@@ -1475,8 +1484,8 @@
     }
 
     let currentTokens = {
-        accessToken: sessionStorage.getItem('focus_test_at') || null,
-        refreshToken: sessionStorage.getItem('focus_test_rt') || null
+        accessToken: ssStore.get('focus_test_at') || null,
+        refreshToken: ssStore.get('focus_test_rt') || null
     };
 
     let currentUserId = null;
@@ -1621,10 +1630,10 @@
     function saveTokens(accessToken, refreshToken) {
         currentTokens.accessToken = accessToken;
         currentTokens.refreshToken = refreshToken;
-        if (accessToken) sessionStorage.setItem('focus_test_at', accessToken);
-        else sessionStorage.removeItem('focus_test_at');
-        if (refreshToken) sessionStorage.setItem('focus_test_rt', refreshToken);
-        else sessionStorage.removeItem('focus_test_rt');
+        if (accessToken) ssStore.set('focus_test_at', accessToken);
+        else ssStore.remove('focus_test_at');
+        if (refreshToken) ssStore.set('focus_test_rt', refreshToken);
+        else ssStore.remove('focus_test_rt');
     }
 
     function getAuthHeaders(includeContentType = true) {

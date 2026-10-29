@@ -100,8 +100,10 @@ a:hover {
   transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-body.sidebar-collapsed .admin-sidebar {
-  transform: translateX(-100%);
+@media (min-width: 992px) {
+  body.sidebar-collapsed .admin-sidebar {
+    transform: translateX(-100%);
+  }
 }
 
 .sidebar-brand {
@@ -325,8 +327,10 @@ body.sidebar-collapsed .admin-sidebar {
   transition: left 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-body.sidebar-collapsed .admin-header {
-  left: 0 !important;
+@media (min-width: 992px) {
+  body.sidebar-collapsed .admin-header {
+    left: 0 !important;
+  }
 }
 
 .header-search-container {
@@ -391,8 +395,10 @@ body.sidebar-collapsed .admin-header {
   transition: margin-left 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-body.sidebar-collapsed .admin-main {
-  margin-left: 0 !important;
+@media (min-width: 992px) {
+  body.sidebar-collapsed .admin-main {
+    margin-left: 0 !important;
+  }
 }
 
 .admin-page-header {
@@ -790,17 +796,19 @@ body.sidebar-collapsed .admin-main {
 .sidebar-icon-btn:hover .bar-2 { width: 14px; }
 
 /* Masaüstünde panel daraltıldığında (sidebar-collapsed): Header butonu genişletme oku veya şık artı/çapraza döner */
-body.sidebar-collapsed .header-icon-btn .bar-1 {
-  transform: translateY(5px) rotate(45deg);
-  width: 16px;
-}
-body.sidebar-collapsed .header-icon-btn .bar-2 {
-  opacity: 0;
-  transform: scaleX(0);
-}
-body.sidebar-collapsed .header-icon-btn .bar-3 {
-  transform: translateY(-5px) rotate(-45deg);
-  width: 16px;
+@media (min-width: 992px) {
+  body.sidebar-collapsed .header-icon-btn .bar-1 {
+    transform: translateY(5px) rotate(45deg);
+    width: 16px;
+  }
+  body.sidebar-collapsed .header-icon-btn .bar-2 {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+  body.sidebar-collapsed .header-icon-btn .bar-3 {
+    transform: translateY(-5px) rotate(-45deg);
+    width: 16px;
+  }
 }
 
 /* Kartlar ve Tablolar İçin Taşma Koruması */

@@ -1,3 +1,4 @@
+@inject IConfiguration Configuration
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -86,7 +87,7 @@
                         <a asp-page="/ApiDocs/Index" class="sidebar-nav-item">API Dokümanı</a>
                         <a asp-page="/ApiLab/Index" class="sidebar-nav-item">API Test (Lab)</a>
                         <a asp-page="/Jobs/Index" class="sidebar-nav-item">Zamanlanmış İşler</a>
-                        <a href="http://localhost:5000/swagger" target="_blank" class="sidebar-nav-item" id="sidebarSwaggerLink">Swagger UI</a>
+                        <a href="@((Configuration["WebApiBaseUrl"] ?? "http://localhost:5000").TrimEnd('/'))/swagger" target="_blank" rel="noopener" class="sidebar-nav-item" id="sidebarSwaggerLink">Swagger UI</a>
                         <a href="/hangfire" target="_blank" class="sidebar-nav-item">Hangfire</a>
                         <a asp-page="/Audit/Index" class="sidebar-nav-item">Sistem Logları</a>
                     </div>
@@ -117,7 +118,7 @@
 
                 <!-- Sol: Arama Kutusu (Tablet & Masaüstü) -->
                 <div class="header-search-container d-none d-md-flex">
-                    <input type="text" class="header-search-input" style="padding-left: 12px;" placeholder="Kullanıcı, IP, seans veya uç nokta ara..." id="globalSearchInput" />
+                    <input type="text" class="header-search-input" style="padding-left: 12px;" placeholder="Menüde ara..." id="globalSearchInput" autocomplete="off" />
                     <span class="header-search-shortcut">⌘K</span>
                 </div>
             </div>
@@ -197,7 +198,10 @@
             });
 
             // Özel API Adresi senkronu
-            const customApi = localStorage.getItem('focus_custom_api_base_url');
+            let customApi = null;
+            try {
+                customApi = localStorage.getItem('focus_custom_api_base_url');
+            } catch (e) {}
             if (customApi) {
                 const swLink = document.getElementById('sidebarSwaggerLink');
                 if (swLink) swLink.href = `${customApi.replace(/\/+$/, '')}/swagger`;
@@ -237,6 +241,7 @@
             }
 
             function openMobileSidebar() {
+                document.body.classList.remove('sidebar-collapsed');
                 sidebar?.classList.add('show');
                 backdrop?.classList.add('show');
                 document.body.classList.add('sidebar-open');
@@ -267,6 +272,26 @@
 
             backdrop?.addEventListener('click', closeMobileSidebar);
 
+            window.addEventListener('resize', () => {
+                if (window.innerWidth >= 992) {
+                    closeMobileSidebar();
+                }
+            });
+
+            // Menü arama: kenar çubuğu bağlantılarını süzer
+            const searchInput = document.getElementById('globalSearchInput');
+            searchInput?.addEventListener('input', () => {
+                const term = searchInput.value.trim().toLowerCase();
+                document.querySelectorAll('.sidebar-nav-item').forEach(link => {
+                    link.style.display = !term || link.textContent.toLowerCase().includes(term) ? '' : 'none';
+                });
+                document.querySelectorAll('.sidebar-folder').forEach(folder => {
+                    const hasVisible = Array.from(folder.querySelectorAll('.sidebar-nav-item')).some(l => l.style.display !== 'none');
+                    folder.style.display = hasVisible ? '' : 'none';
+                    if (term && hasVisible) folder.classList.remove('collapsed');
+                });
+            });
+
             document.querySelectorAll('.sidebar-nav-item').forEach(link => {
                 link.addEventListener('click', () => {
                     if (window.innerWidth < 992) {
@@ -276,11 +301,12 @@
             });
 
             document.addEventListener('keydown', (e) => {
-                if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+                const key = (e.key || '').toLowerCase();
+                if ((e.ctrlKey || e.metaKey) && key === 'k') {
                     e.preventDefault();
                     document.getElementById('globalSearchInput')?.focus();
                 }
-                if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+                if ((e.ctrlKey || e.metaKey) && key === 'b') {
                     e.preventDefault();
                     toggleSidebar();
                 }
