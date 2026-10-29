@@ -1,4 +1,6 @@
 using Focus.Application.Common.Interfaces;
+using Focus.Application.Common.Options;
+using Focus.Application.Features.Session.Services;
 using Focus.Domain.Entities;
 using Focus.Infrastructure.BackgroundJobs;
 using Microsoft.Extensions.Logging;
@@ -19,7 +21,13 @@ public class BackgroundJobServiceTests
         _context = new Mock<IApplicationDbContext>();
         _vectorService = new Mock<IVectorMemoryService>();
         _logger = new Mock<ILogger<BackgroundJobService>>();
-        _service = new BackgroundJobService(_context.Object, _vectorService.Object, _logger.Object);
+        _service = new BackgroundJobService(
+            _context.Object,
+            _vectorService.Object,
+            new SessionSettlementService(_context.Object, Microsoft.Extensions.Options.Options.Create(new AlgorithmOptions())),
+            Microsoft.Extensions.Options.Options.Create(new AlgorithmOptions()),
+            TimeProvider.System,
+            _logger.Object);
     }
 
     [Fact]

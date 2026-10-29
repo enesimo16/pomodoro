@@ -1,8 +1,13 @@
+using Focus.Application.Common.Exceptions;
+using Focus.Application.Common.Extensions;
 using Focus.Application.Common.Interfaces;
+using Focus.Application.Common.Options;
+using Focus.Application.Features.Session.Services;
 using Focus.Domain.Entities;
 using Focus.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Focus.Infrastructure.BackgroundJobs;
 
@@ -11,20 +16,29 @@ public class BackgroundJobService : IBackgroundJobService
     private readonly IApplicationDbContext _context;
     private readonly IVectorMemoryService _vectorMemoryService;
     private readonly ILogger<BackgroundJobService> _logger;
+    private readonly SessionSettlementService _settlement;
+    private readonly AlgorithmOptions _options;
+    private readonly TimeProvider _clock;
 
     public BackgroundJobService(
         IApplicationDbContext context,
         IVectorMemoryService vectorMemoryService,
+        SessionSettlementService settlement,
+        IOptions<AlgorithmOptions> options,
+        TimeProvider clock,
         ILogger<BackgroundJobService> logger)
     {
         _context = context;
         _vectorMemoryService = vectorMemoryService;
+        _settlement = settlement;
+        _options = options.Value;
+        _clock = clock;
         _logger = logger;
     }
 
     public async Task<int> RunDailyStreakMaintenanceAsync(CancellationToken cancellationToken = default)
     {
-        var now = DateTime.UtcNow;
+        var now = _clock.GetUtcNow().UtcDateTime;
         var streaks = await _context.UserStreaks
             .Include(s => s.User)
             .Where(s => s.CurrentStreak > 0)
@@ -97,26 +111,49 @@ public class BackgroundJobService : IBackgroundJobService
         return refreshedCount;
     }
 
+    // Suresi planlanandan (tolerans) uzun gecmis calisan seanslar planlanan sureyle tamamlanir, uzun suredir duraklatilmislar net sureyle terk edilir
     public async Task<int> RunAbandonedSessionReconciliationAsync(CancellationToken cancellationToken = default)
     {
-        var cutoff = DateTime.UtcNow.AddHours(-3);
-        var staleSessions = await _context.FocusSessions
-            .Where(s => (s.Status == SessionStatus.Running || s.Status == SessionStatus.Paused) && s.StartedAt < cutoff)
+        var now = _clock.GetUtcNow().UtcDateTime;
+        var runningCutoff = now.AddMinutes(-_options.StaleRunningGraceMinutes);
+        var pausedCutoff = now.AddHours(-_options.StalePausedHours);
+
+        var staleSessionIds = await _context.FocusSessions
+            .AsNoTracking()
+            .Where(s => (s.Status == SessionStatus.Running && s.PlannedEndAt < runningCutoff)
+                || (s.Status == SessionStatus.Paused && s.PausedAt != null && s.PausedAt < pausedCutoff))
+            .Select(s => s.Id)
             .ToListAsync(cancellationToken);
 
-        if (staleSessions.Count == 0)
+        var reconciled = 0;
+        foreach (var sessionId in staleSessionIds)
         {
-            return 0;
+            var session = await _context.FocusSessions.FirstOrDefaultAsync(s => s.Id == sessionId, cancellationToken);
+            if (session == null || !session.IsActive) continue;
+
+            try
+            {
+                if (session.Status == SessionStatus.Running)
+                {
+                    await _settlement.CompleteAsync(session, session.PlannedEndAt, cancellationToken);
+                }
+                else
+                {
+                    await _settlement.AbandonAsync(session, session.PausedAt!.Value, cancellationToken);
+                }
+
+                await _context.SaveChangesOrConflictAsync(cancellationToken, treatConstraintViolationAsConflict: true);
+                reconciled++;
+            }
+            catch (ConflictException)
+            {
+                // Kullanici seansi ayni anda kapatti; bir sonraki calismada tekrar degerlendirilir
+                _logger.LogInformation("Stale session {SessionId} was changed concurrently; skipping", sessionId);
+            }
         }
 
-        foreach (var session in staleSessions)
-        {
-            session.Abandon(session.NetDurationSeconds);
-        }
-
-        await _context.SaveChangesAsync(cancellationToken);
-        _logger.LogInformation("Abandoned session reconciliation completed. Reconciled: {Count} sessions", staleSessions.Count);
-        return staleSessions.Count;
+        _logger.LogInformation("Stale session reconciliation completed. Reconciled: {Count} of {Total} sessions", reconciled, staleSessionIds.Count);
+        return reconciled;
     }
 
     public async Task<int> RunGuestAndAuditCleanupAsync(CancellationToken cancellationToken = default)
