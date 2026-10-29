@@ -69,7 +69,7 @@ Açılışta `MigrateAsync` ile otomatik uygulanırlar:
 4. **Frontend ekibine sözleşme değişikliğini iletin:**
    - `/auth/claim` artık yalnızca `{ idToken }` alıyor ve misafirin kendi token'ını istiyor.
    - `GET /study-rooms/{code}` ve ziyaretçi defteri okuma uçları kimlik doğrulama gerektiriyor.
-5. **Henüz canlı ortamda doğrulanmayanlar** (bu makinede Docker ve Postgres yok):
+5. **Henüz canlı ortamda doğrulanmayanlar** (bu makinede Docker, WSL ve Postgres yok). Yeni 5 migration'ın Postgres SQL'i `dotnet ef migrations script` ile üretilip incelendi; ham SQL filtreleri, enum'ların saklanma biçimiyle (`Status` metin, `StudyRoomType` tamsayı) uyumlu. Yine de şu adımlar yapılmadı:
    - Gerçek Postgres/pgvector üzerinde migration'lar
    - Docker imajları
    - Admin panelinin ve frontend'in çalışan bir API'ye bağlı olarak tarayıcıda gezilmesi
