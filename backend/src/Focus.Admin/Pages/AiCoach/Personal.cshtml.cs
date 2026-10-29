@@ -1,3 +1,4 @@
+using Focus.Admin.Common;
 using Focus.Application.Common.Interfaces;
 using Focus.Application.Features.Coach.DTOs;
 using Focus.Domain.Entities;
@@ -70,12 +71,24 @@ public class PersonalModel : PageModel
     {
         // 1. Kullanıcı Listesini ve Kişisel Hafıza Sayılarını Getir
         var users = await _context.Users
+            .AsNoTracking()
             .OrderByDescending(u => u.CreatedAt)
             .Take(50)
             .ToListAsync();
 
+        // Seçilen kullanıcı son 50 kayıt dışında kalsa bile id ile ayrıca yüklenir
+        if (SelectedUserId.HasValue && users.All(u => u.Id != SelectedUserId.Value))
+        {
+            var selected = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == SelectedUserId.Value);
+            if (selected != null)
+            {
+                users.Insert(0, selected);
+            }
+        }
+
+        var listedIds = users.Select(u => u.Id).ToList();
         var memoryCounts = await _context.AgentMemories
-            .Where(m => m.UserId != null)
+            .Where(m => m.UserId != null && listedIds.Contains(m.UserId.Value))
             .GroupBy(m => m.UserId!.Value)
             .Select(g => new { UserId = g.Key, Count = g.Count() })
             .ToDictionaryAsync(g => g.UserId, g => g.Count);
@@ -149,11 +162,11 @@ public class PersonalModel : PageModel
         var streak = await _context.UserStreaks
             .FirstOrDefaultAsync(s => s.UserId == uid);
 
-        TotalReflections = reflections.Count;
-        TotalCheckIns = recentCheckIns.Count;
-        AverageFocusQuality = reflections.Count > 0
-            ? reflections.Average(r => r.FocusQuality)
-            : 0;
+        TotalReflections = await _context.SessionReflections.CountAsync(r => r.UserId == uid);
+        TotalCheckIns = await _context.SessionCheckIns.CountAsync(c => c.UserId == uid);
+        AverageFocusQuality = await _context.SessionReflections
+            .Where(r => r.UserId == uid)
+            .AverageAsync(r => (double?)r.FocusQuality) ?? 0;
 
         RecentReflections = reflections.Take(10).Select(r => new ReflectionItem(
             r.SessionId,
@@ -169,7 +182,7 @@ public class PersonalModel : PageModel
         SynthesizedInsights = GeneratePersonalInsights(CurrentUser, recentSessions, recentCheckIns, reflections, streak, Memories);
     }
 
-    private static List<PersonalInsightItem> GeneratePersonalInsights(
+    public static List<PersonalInsightItem> GeneratePersonalInsights(
         User user,
         List<FocusSession> sessions,
         List<SessionCheckIn> checkIns,
@@ -186,7 +199,7 @@ public class PersonalModel : PageModel
             if (completed.Count > 0)
             {
                 var hourGroups = completed
-                    .GroupBy(s => s.StartedAt.Hour)
+                    .GroupBy(s => LocalTime.FromUtc(s.StartedAt).Hour)
                     .OrderByDescending(g => g.Count())
                     .FirstOrDefault();
 
@@ -195,7 +208,7 @@ public class PersonalModel : PageModel
                     var hour = hourGroups.Key;
                     insights.Add(new PersonalInsightItem(
                         Title: "Zirve Odaklanma Penceresi",
-                        Description: $"Kullanıcı en yüksek seans tamamlama başarısını saat {hour:00}:00 - {(hour + 2):00}:00 aralığında göstermektedir.",
+                        Description: $"Kullanıcı en yüksek seans tamamlama başarısını saat {hour:00}:00 - {(hour + 2) % 24:00}:00 aralığında (İstanbul saati) göstermektedir.",
                         Tag: "Sirkadiyen Ritim",
                         Importance: "Yüksek"));
                 }
