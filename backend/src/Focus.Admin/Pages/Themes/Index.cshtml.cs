@@ -8,12 +8,19 @@ namespace Focus.Admin.Pages.Themes;
 public class IndexModel : PageModel
 {
     private readonly IThemeVideoService _videoService;
-    private readonly IApplicationDbContext _context;
+    public const int MaxPageNumber = 500;
+    private const string PixabaySource = "Pixabay API";
+    private const string AiSource = "Yapay Zeka";
+    private const string SavedSource = "Kayıtlı Kütüphane";
 
-    public IndexModel(IThemeVideoService videoService, IApplicationDbContext context)
+    private readonly IApplicationDbContext _context;
+    private readonly ILogger<IndexModel> _logger;
+
+    public IndexModel(IThemeVideoService videoService, IApplicationDbContext context, ILogger<IndexModel> logger)
     {
         _videoService = videoService;
         _context = context;
+        _logger = logger;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -29,7 +36,8 @@ public class IndexModel : PageModel
     public int PageNumber { get; set; } = 1;
 
     public int PageSize { get; set; } = 12;
-    public int TotalPages { get; set; } = 10;
+    public bool HasNextPage { get; set; }
+    public int TotalPages => HasNextPage ? PageNumber + 1 : PageNumber;
 
     public int TotalCount => Themes.Count;
     public int PixabayCount => Themes.Count(t => t.Source == "Pixabay API");
@@ -55,11 +63,47 @@ public class IndexModel : PageModel
 
     public async Task OnGetAsync(CancellationToken cancellationToken)
     {
-        if (PageNumber < 1) PageNumber = 1;
+        PageNumber = Math.Clamp(PageNumber, 1, MaxPageNumber);
         var list = new List<ThemeItemViewModel>();
 
-        // Kategoriye göre video arama sorgusu
-        var categoryQuery = Category?.ToLowerInvariant() switch
+        // Yapay zeka şablonları sabit bir kümedir, yalnızca ilk sayfada gösterilir
+        if (PageNumber == 1 && IncludesSource(AiSource))
+        {
+            list.AddRange(BuildAiThemes());
+        }
+
+        if (IncludesSource(PixabaySource))
+        {
+            list.AddRange(await LoadPixabayAsync(cancellationToken));
+        }
+
+        if (IncludesSource(SavedSource))
+        {
+            list.AddRange(await LoadSavedAsync(cancellationToken));
+        }
+
+        if (!string.IsNullOrWhiteSpace(Search))
+        {
+            var s = Search.Trim();
+            list = list.Where(t =>
+                t.Title.Contains(s, StringComparison.OrdinalIgnoreCase) ||
+                t.Aesthetic.Contains(s, StringComparison.OrdinalIgnoreCase) ||
+                t.Description.Contains(s, StringComparison.OrdinalIgnoreCase)).ToList();
+        }
+
+        Themes = list;
+    }
+
+    private bool IncludesSource(string source)
+    {
+        return string.IsNullOrWhiteSpace(SourceFilter)
+            || SourceFilter == "All"
+            || SourceFilter.Equals(source, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private string BuildCategoryQuery()
+    {
+        return Category?.ToLowerInvariant() switch
         {
             "rain" => "rain window rainy drizzle",
             "fireplace" => "fireplace wood cabin warmth",
@@ -71,9 +115,82 @@ public class IndexModel : PageModel
             "sunset" => "sunset skyline rooftop golden",
             _ => string.IsNullOrWhiteSpace(Search) ? "rain window cozy fireplace city nature neon" : Search.Trim()
         };
+    }
 
-        // 1. Yapay Zeka Tasarımı Piksel Oda Temaları (7 Çekirdek Tema)
-        var aiThemes = new List<ThemeItemViewModel>
+    private async Task<List<ThemeItemViewModel>> LoadPixabayAsync(CancellationToken cancellationToken)
+    {
+        var items = new List<ThemeItemViewModel>();
+        try
+        {
+            var videos = await _videoService.SearchVideosAsync(BuildCategoryQuery(), PageSize, PageNumber, cancellationToken);
+            HasNextPage |= videos.Count >= PageSize;
+            foreach (var v in videos)
+            {
+                items.Add(new ThemeItemViewModel(
+                    $"pixabay-{v.Id}",
+                    CapitalizeFirst(v.Tags?.Split(',').FirstOrDefault() ?? "Döngüsel Video Teması"),
+                    PixabaySource,
+                    "ExternalMedia",
+                    v.MediumVideoUrl,
+                    v.ThumbnailUrl,
+                    "#1e293b",
+                    "#0f172a",
+                    "#38bdf8",
+                    "RainDrops",
+                    $"Pixabay HD Döngüsü • Süre: {v.Duration}s • Etiketler: {v.Tags}",
+                    45));
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "Pixabay video listesi alınamadı");
+        }
+
+        return items;
+    }
+
+    private async Task<List<ThemeItemViewModel>> LoadSavedAsync(CancellationToken cancellationToken)
+    {
+        var items = new List<ThemeItemViewModel>();
+        try
+        {
+            var saved = await _context.SavedAtmospheres
+                .AsNoTracking()
+                .OrderByDescending(s => s.CreatedAt)
+                .Skip((PageNumber - 1) * PageSize)
+                .Take(PageSize + 1)
+                .ToListAsync(cancellationToken);
+
+            HasNextPage |= saved.Count > PageSize;
+            foreach (var s in saved.Take(PageSize))
+            {
+                items.Add(new ThemeItemViewModel(
+                    $"saved-{s.Id}",
+                    s.Name,
+                    SavedSource,
+                    s.Aesthetic,
+                    "https://cdn.pixabay.com/video/2017/08/30/11722-231759069_medium.mp4",
+                    "https://images.unsplash.com/photo-1519692933481-e162a57d6721?w=640",
+                    s.WallColor,
+                    s.FloorColor,
+                    s.AccentLightColor,
+                    s.WeatherEffect,
+                    s.Description ?? "Kullanıcı tarafından kaydedilmiş özel atmosfer.",
+                    s.RecommendedMinutes,
+                    s.CreatedAt));
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "Kayıtlı atmosferler alınamadı");
+        }
+
+        return items;
+    }
+
+    private static List<ThemeItemViewModel> BuildAiThemes()
+    {
+        return new List<ThemeItemViewModel>
         {
             new(
                 "ai-cyberpunk",
@@ -174,83 +291,6 @@ public class IndexModel : PageModel
                 90
             )
         };
-        list.AddRange(aiThemes);
-
-        // 2. Pixabay API Canlı Video Temaları
-        try
-        {
-            var pxbVideos = await _videoService.SearchVideosAsync(categoryQuery, PageSize, PageNumber, cancellationToken);
-            foreach (var v in pxbVideos)
-            {
-                list.Add(new ThemeItemViewModel(
-                    $"pixabay-{v.Id}",
-                    CapitalizeFirst(v.Tags?.Split(',').FirstOrDefault() ?? "Döngüsel Video Teması"),
-                    "Pixabay API",
-                    "ExternalMedia",
-                    v.MediumVideoUrl,
-                    v.ThumbnailUrl,
-                    "#1e293b",
-                    "#0f172a",
-                    "#38bdf8",
-                    "RainDrops",
-                    $"Pixabay HD Döngüsü • Süre: {v.Duration}s • Etiketler: {v.Tags}",
-                    45
-                ));
-            }
-        }
-        catch
-        {
-            // API kotası veya ağ hatasında AI şablonları güvence sağlar
-        }
-
-        // 3. Veritabanından Kullanıcı Kayıtlı Temaları
-        try
-        {
-            var savedFromDb = await _context.SavedAtmospheres
-                .OrderByDescending(s => s.CreatedAt)
-                .Take(10)
-                .ToListAsync(cancellationToken);
-
-            foreach (var s in savedFromDb)
-            {
-                list.Add(new ThemeItemViewModel(
-                    $"saved-{s.Id}",
-                    s.Name,
-                    "Kayıtlı Kütüphane",
-                    s.Aesthetic,
-                    "https://cdn.pixabay.com/video/2017/08/30/11722-231759069_medium.mp4",
-                    "https://images.unsplash.com/photo-1519692933481-e162a57d6721?w=640",
-                    s.WallColor,
-                    s.FloorColor,
-                    s.AccentLightColor,
-                    s.WeatherEffect,
-                    s.Description ?? "Kullanıcı tarafından kaydedilmiş özel atmosfer.",
-                    s.RecommendedMinutes,
-                    s.CreatedAt
-                ));
-            }
-        }
-        catch
-        {
-            // DB erişilemezse devam et
-        }
-
-        // Filtreleme ve Arama
-        if (!string.IsNullOrWhiteSpace(SourceFilter) && SourceFilter != "All")
-        {
-            list = list.Where(t => t.Source.Equals(SourceFilter, StringComparison.OrdinalIgnoreCase)).ToList();
-        }
-
-        if (!string.IsNullOrWhiteSpace(Search))
-        {
-            var s = Search.Trim();
-            list = list.Where(t => 
-                t.Title.Contains(s, StringComparison.OrdinalIgnoreCase) ||
-                t.Aesthetic.Contains(s, StringComparison.OrdinalIgnoreCase) ||
-                t.Description.Contains(s, StringComparison.OrdinalIgnoreCase)).ToList();
-        }
-
-        Themes = list;
     }
 
     private static string CapitalizeFirst(string str)

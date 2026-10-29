@@ -6,11 +6,18 @@ namespace Focus.Admin.Pages.Music;
 
 public class IndexModel : PageModel
 {
-    private readonly IMusicTrackService _musicService;
+    public const int MaxPageNumber = 500;
+    private const string JamendoSource = "Jamendo API";
+    private const string AiSource = "Yapay Zeka Mikser";
+    private const string AmbientSource = "Doğa & Gürültü";
 
-    public IndexModel(IMusicTrackService musicService)
+    private readonly IMusicTrackService _musicService;
+    private readonly ILogger<IndexModel> _logger;
+
+    public IndexModel(IMusicTrackService musicService, ILogger<IndexModel> logger)
     {
         _musicService = musicService;
+        _logger = logger;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -26,7 +33,8 @@ public class IndexModel : PageModel
     public int PageNumber { get; set; } = 1;
 
     public int PageSize { get; set; } = 12;
-    public int TotalPages { get; set; } = 10;
+    public bool HasNextPage { get; set; }
+    public int TotalPages => HasNextPage ? PageNumber + 1 : PageNumber;
 
     public int TotalCount => Tracks.Count;
     public int JamendoCount => Tracks.Count(t => t.Source == "Jamendo API");
@@ -54,10 +62,51 @@ public class IndexModel : PageModel
 
     public async Task OnGetAsync(CancellationToken cancellationToken)
     {
-        if (PageNumber < 1) PageNumber = 1;
+        PageNumber = Math.Clamp(PageNumber, 1, MaxPageNumber);
         var list = new List<SoundTrackViewModel>();
 
-        var genreQuery = Genre?.ToLowerInvariant() switch
+        // Mikser şablonları ve ortam katmanları sabit kümelerdir, yalnızca ilk sayfada gösterilir
+        if (PageNumber == 1)
+        {
+            if (IncludesSource(AiSource))
+            {
+                list.AddRange(BuildAiPresets());
+            }
+
+            if (IncludesSource(AmbientSource))
+            {
+                list.AddRange(BuildAmbientLayers());
+            }
+        }
+
+        if (IncludesSource(JamendoSource))
+        {
+            list.AddRange(await LoadJamendoAsync(cancellationToken));
+        }
+
+        if (!string.IsNullOrWhiteSpace(Search))
+        {
+            var s = Search.Trim();
+            list = list.Where(t =>
+                t.Title.Contains(s, StringComparison.OrdinalIgnoreCase) ||
+                t.Artist.Contains(s, StringComparison.OrdinalIgnoreCase) ||
+                t.Genre.Contains(s, StringComparison.OrdinalIgnoreCase) ||
+                t.Description.Contains(s, StringComparison.OrdinalIgnoreCase)).ToList();
+        }
+
+        Tracks = list;
+    }
+
+    private bool IncludesSource(string source)
+    {
+        return string.IsNullOrWhiteSpace(SourceFilter)
+            || SourceFilter == "All"
+            || SourceFilter.Equals(source, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private string BuildGenreQuery()
+    {
+        return Genre?.ToLowerInvariant() switch
         {
             "lofi" => "lofi chillhop beats",
             "synthwave" => "synthwave retrowave cyberpunk",
@@ -68,9 +117,43 @@ public class IndexModel : PageModel
             "nature" => "nature rain forest stream",
             _ => string.IsNullOrWhiteSpace(Search) ? "lofi" : Search.Trim()
         };
+    }
 
-        // 1. Yapay Zeka 4-Kanallı Akustik Mikser Presets
-        var aiPresets = new List<SoundTrackViewModel>
+    private async Task<List<SoundTrackViewModel>> LoadJamendoAsync(CancellationToken cancellationToken)
+    {
+        var items = new List<SoundTrackViewModel>();
+        try
+        {
+            var tracks = await _musicService.SearchTracksAsync(BuildGenreQuery(), PageSize, PageNumber, cancellationToken);
+            HasNextPage |= tracks.Count >= PageSize;
+            foreach (var t in tracks)
+            {
+                items.Add(new SoundTrackViewModel(
+                    $"jamendo-{t.Id}",
+                    t.Name,
+                    t.ArtistName,
+                    "Jamendo API",
+                    "Lo-Fi Instrumental",
+                    80,
+                    t.AudioUrl,
+                    t.ImageUrl ?? "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=120",
+                    65, 40, 20, 15,
+                    "Ortam Ambiyansı", "Doğal Akış",
+                    $"Jamendo Telifsiz Koleksiyon • Süre: {t.Duration}s"
+                ));
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "Jamendo parça listesi alınamadı");
+        }
+
+        return items;
+    }
+
+    private static List<SoundTrackViewModel> BuildAiPresets()
+    {
+        return new List<SoundTrackViewModel>
         {
             new(
                 "ai-deep-code",
@@ -138,36 +221,11 @@ public class IndexModel : PageModel
                 "Odun çıtırtıları eşliğinde sıcak parmak stili akustik arpejler."
             )
         };
-        list.AddRange(aiPresets);
+    }
 
-        // 2. Jamendo API Parçaları
-        try
-        {
-            var jamendoTracks = await _musicService.SearchTracksAsync(genreQuery, PageSize, PageNumber, cancellationToken);
-            foreach (var t in jamendoTracks)
-            {
-                list.Add(new SoundTrackViewModel(
-                    $"jamendo-{t.Id}",
-                    t.Name,
-                    t.ArtistName,
-                    "Jamendo API",
-                    "Lo-Fi Instrumental",
-                    80,
-                    t.AudioUrl,
-                    t.ImageUrl ?? "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=120",
-                    65, 40, 20, 15,
-                    "Ortam Ambiyansı", "Doğal Akış",
-                    $"Jamendo Telifsiz Koleksiyon • Süre: {t.Duration}s"
-                ));
-            }
-        }
-        catch
-        {
-            // API hatasında AI şablonları devam eder
-        }
-
-        // 3. Doğa Ambiyansı ve Prosedürel Bilişsel Gürültü Katmanları
-        var ambientLayers = new List<SoundTrackViewModel>
+    private static List<SoundTrackViewModel> BuildAmbientLayers()
+    {
+        return new List<SoundTrackViewModel>
         {
             new(
                 "ambient-brown-noise",
@@ -222,24 +280,5 @@ public class IndexModel : PageModel
                 "Dijital soğukluğu kıran, sıcak nostaljik pikap iğnesi dokusu."
             )
         };
-        list.AddRange(ambientLayers);
-
-        // Filtreleme ve Arama
-        if (!string.IsNullOrWhiteSpace(SourceFilter) && SourceFilter != "All")
-        {
-            list = list.Where(t => t.Source.Equals(SourceFilter, StringComparison.OrdinalIgnoreCase)).ToList();
-        }
-
-        if (!string.IsNullOrWhiteSpace(Search))
-        {
-            var s = Search.Trim();
-            list = list.Where(t =>
-                t.Title.Contains(s, StringComparison.OrdinalIgnoreCase) ||
-                t.Artist.Contains(s, StringComparison.OrdinalIgnoreCase) ||
-                t.Genre.Contains(s, StringComparison.OrdinalIgnoreCase) ||
-                t.Description.Contains(s, StringComparison.OrdinalIgnoreCase)).ToList();
-        }
-
-        Tracks = list;
     }
 }

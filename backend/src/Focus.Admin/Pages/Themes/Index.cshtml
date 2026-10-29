@@ -209,7 +209,7 @@
         <!-- Canlı Sayfalama Çubuğu (Pagination) -->
         <div class="d-flex flex-wrap justify-content-between align-items-center mt-4 pt-3 border-top">
             <span class="text-muted small">
-                Sayfa <strong>@Model.PageNumber</strong> / @Model.TotalPages (Toplam @Model.TotalCount öğe listeleniyor)
+                Sayfa <strong>@Model.PageNumber</strong> / @Model.TotalPages@(Model.HasNextPage ? "+" : "") (Bu sayfada @Model.TotalCount öğe listeleniyor)
             </span>
             <div class="d-flex gap-1 align-items-center">
                 @if (Model.PageNumber > 1)
