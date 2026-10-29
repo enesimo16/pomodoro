@@ -2912,7 +2912,7 @@
             btn.innerHTML = `<span class="d-block small fw-bold">Masa ${seatIndex}</span><span class="small">Siz</span>`;
         } else {
             btn.className = 'btn btn-secondary btn-sm w-100 py-2 btn-seat';
-            btn.innerHTML = `<span class="d-block small fw-bold">Masa ${seatIndex}</span><span class="small">${label}</span>`;
+            btn.innerHTML = `<span class="d-block small fw-bold">Masa ${seatIndex}</span><span class="small">${escapeHtml(label)}</span>`;
         }
     }
 
@@ -2941,7 +2941,7 @@
                 document.querySelectorAll('.btn-seat').forEach(btn => resetSeatBtn(btn));
                 if (data.room.members) {
                     data.room.members.forEach(m => {
-                        if (m.seatIndex) {
+                        if (m.seatIndex != null) {
                             markSeat(m.seatIndex, m.userId === currentUserId, m.displayName);
                         }
                     });
