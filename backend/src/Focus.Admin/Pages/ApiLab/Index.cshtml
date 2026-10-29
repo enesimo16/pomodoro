@@ -1669,13 +1669,23 @@
     }
 
     function escapeHtml(text) {
-        if (!text) return '';
+        if (text === null || text === undefined) return '';
         return text.toString()
             .replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")
             .replace(/>/g, "&gt;")
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&#039;");
+    }
+
+    function safeHttpUrl(value) {
+        if (!value) return null;
+        try {
+            const url = new URL(value);
+            return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : null;
+        } catch (e) {
+            return null;
+        }
     }
 
     function updateSessionUI(data) {
@@ -1746,10 +1756,12 @@
                             <span class="text-muted ms-2">(X: ${item.gridX}, Y: ${item.gridY}, Rot: ${item.rotation}°)</span>
                         </div>
                         <div class="d-flex gap-1">
-                            <button class="btn btn-outline-secondary btn-sm py-0 px-2" onclick="moveItemPrompt('${item.id}', ${item.gridX}, ${item.gridY}, ${item.rotation})">Taşı</button>
-                            <button class="btn btn-outline-danger btn-sm py-0 px-2" onclick="removeItem('${item.id}')">Kaldır</button>
+                            <button class="btn btn-outline-secondary btn-sm py-0 px-2" data-act="move">Taşı</button>
+                            <button class="btn btn-outline-danger btn-sm py-0 px-2" data-act="remove">Kaldır</button>
                         </div>
                     `;
+                    row.querySelector('[data-act="move"]').addEventListener('click', () => moveItemPrompt(item.id, item.gridX, item.gridY, item.rotation));
+                    row.querySelector('[data-act="remove"]').addEventListener('click', () => removeItem(item.id));
                     list.appendChild(row);
                 });
             }
@@ -1780,9 +1792,11 @@
 
     // SAĞDAKİ CANLI TEMA & MÜZİK ÖNİZLEMESİNİ GÜNCELLE
     function setPreviewTheme(videoUrl, title, posterUrl = null) {
-        if (!videoUrl) return;
-        videoPlayer.src = videoUrl;
-        if (posterUrl) videoPlayer.poster = posterUrl;
+        const safeVideo = safeHttpUrl(videoUrl);
+        if (!safeVideo) return;
+        videoPlayer.src = safeVideo;
+        const safePoster = safeHttpUrl(posterUrl);
+        if (safePoster) videoPlayer.poster = safePoster;
         videoPlayer.play().catch(e => console.log('Video autoplay:', e));
 
         document.getElementById('badgeStudioTheme').textContent = title;
@@ -1792,12 +1806,14 @@
     }
 
     function setPreviewTrack(audioUrl, title, artist, imgUrl = null) {
-        if (!audioUrl) return;
-        audioPlayer.src = audioUrl;
+        const safeAudio = safeHttpUrl(audioUrl);
+        if (!safeAudio) return;
+        audioPlayer.src = safeAudio;
         document.getElementById('playerTrackTitle').textContent = title;
         document.getElementById('playerArtistName').textContent = artist;
-        if (imgUrl) {
-            document.getElementById('playerTrackImg').src = imgUrl;
+        const safeImg = safeHttpUrl(imgUrl);
+        if (safeImg) {
+            document.getElementById('playerTrackImg').src = safeImg;
         }
         audioPlayer.play().catch(e => console.log('Audio autoplay:', e));
         log(`Sağdaki piksel plak çalara müzik yüklendi: "${title}" - ${artist}`, 'info');
@@ -2375,21 +2391,24 @@
                 videos.forEach((v, idx) => {
                     const card = document.createElement('div');
                     card.className = 'p-2 bg-light rounded border';
-                    const safeTag = escapeHtml(v.tags.split(',')[0].trim());
+                    const tags = String(v.tags || '');
+                    const safeTag = tags.split(',')[0].trim();
                     card.innerHTML = `
                         <div class="d-flex justify-content-between align-items-center mb-1">
-                            <span class="small fw-bold text-dark text-truncate" style="max-width: 220px;">${escapeHtml(v.tags)}</span>
-                            <span class="badge bg-secondary-subtle text-secondary small">${v.duration} sn</span>
+                            <span class="small fw-bold text-dark text-truncate" style="max-width: 220px;">${escapeHtml(tags)}</span>
+                            <span class="badge bg-secondary-subtle text-secondary small">${escapeHtml(v.duration)} sn</span>
                         </div>
                         <div class="d-flex gap-2 align-items-center">
-                            <img src="${v.thumbnailUrl || 'https://images.unsplash.com/photo-1519692933481-e162a57d6721?w=200'}" style="width: 80px; height: 50px; border-radius: 4px; object-fit: cover;" />
+                            <img data-role="thumb" style="width: 80px; height: 50px; border-radius: 4px; object-fit: cover;" />
                             <div class="flex-grow-1">
-                                <button type="button" class="btn btn-sm btn-primary w-100 py-1" onclick="setPreviewTheme('${v.mediumVideoUrl}', '${safeTag}', '${v.thumbnailUrl}')">
+                                <button type="button" class="btn btn-sm btn-primary w-100 py-1" data-act="preview">
                                     ▶ Sağda Oynat & Seç
                                 </button>
                             </div>
                         </div>
                     `;
+                    card.querySelector('[data-role="thumb"]').src = safeHttpUrl(v.thumbnailUrl) || 'https://images.unsplash.com/photo-1519692933481-e162a57d6721?w=200';
+                    card.querySelector('[data-act="preview"]').addEventListener('click', () => setPreviewTheme(v.mediumVideoUrl, safeTag, v.thumbnailUrl));
                     container.appendChild(card);
 
                     // Ilk sonucu otomatik sağdaki önizlemeye koy
@@ -2402,7 +2421,7 @@
             }
         } catch (err) {
             log(`Bağlantı Hatası: ${err.message}`, 'error');
-            container.innerHTML = `<div class="text-danger small p-2">${err.message}</div>`;
+            container.innerHTML = `<div class="text-danger small p-2">${escapeHtml(err.message)}</div>`;
         }
     });
 
@@ -2429,19 +2448,21 @@
                 tracks.forEach((t, idx) => {
                     const card = document.createElement('div');
                     card.className = 'p-2 bg-light rounded border d-flex align-items-center justify-content-between gap-2';
-                    const trackImg = t.imageUrl || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=120';
+                    const trackImg = safeHttpUrl(t.imageUrl) || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=120';
                     card.innerHTML = `
                         <div class="d-flex align-items-center gap-2 text-truncate" style="max-width: 220px;">
-                            <img src="${trackImg}" style="width: 36px; height: 36px; border-radius: 4px; object-fit: cover;" />
+                            <img data-role="thumb" style="width: 36px; height: 36px; border-radius: 4px; object-fit: cover;" />
                             <div class="text-truncate">
                                 <strong class="text-dark small d-block text-truncate">${escapeHtml(t.name)}</strong>
                                 <span class="text-muted small">${escapeHtml(t.artistName)}</span>
                             </div>
                         </div>
-                        <button type="button" class="btn btn-sm btn-outline-success py-1 px-2" onclick="setPreviewTrack('${t.audioUrl}', '${escapeHtml(t.name)}', '${escapeHtml(t.artistName)}', '${trackImg}')">
+                        <button type="button" class="btn btn-sm btn-outline-success py-1 px-2" data-act="play">
                             ▶ Çal
                         </button>
                     `;
+                    card.querySelector('[data-role="thumb"]').src = trackImg;
+                    card.querySelector('[data-act="play"]').addEventListener('click', () => setPreviewTrack(t.audioUrl, t.name, t.artistName, trackImg));
                     container.appendChild(card);
 
                     // Ilk parçayı sağdaki plak çalara yükle
@@ -2454,7 +2475,7 @@
             }
         } catch (err) {
             log(`Bağlantı Hatası: ${err.message}`, 'error');
-            container.innerHTML = `<div class="text-danger small p-2">${err.message}</div>`;
+            container.innerHTML = `<div class="text-danger small p-2">${escapeHtml(err.message)}</div>`;
         }
     });
 
@@ -2590,6 +2611,7 @@
                     card.className = 'p-3 bg-light rounded border d-flex justify-content-between align-items-center gap-2';
 
                     let actionBtn = '';
+                    let canBuy = false;
                     if (item.isOwned) {
                         actionBtn = '<span class="badge bg-success-subtle text-success border px-3 py-2">Sahipsiniz</span>';
                     } else if (!item.canUnlock) {
@@ -2597,7 +2619,8 @@
                     } else if (!item.canAfford) {
                         actionBtn = `<button class="btn btn-sm btn-outline-danger" disabled>Yetersiz Bakiye (${item.coinPrice} Coin)</button>`;
                     } else {
-                        actionBtn = `<button class="btn btn-sm btn-primary" onclick="buyShopItem('${item.id}', '${escapeHtml(item.name)}', ${item.coinPrice})">Satın Al (${item.coinPrice === 0 ? 'Ücretsiz' : item.coinPrice + ' Coin'})</button>`;
+                        canBuy = true;
+                        actionBtn = `<button class="btn btn-sm btn-primary" data-act="buy">Satın Al (${item.coinPrice === 0 ? 'Ücretsiz' : escapeHtml(item.coinPrice) + ' Coin'})</button>`;
                     }
 
                     card.innerHTML = `
@@ -2609,7 +2632,7 @@
                                 <strong class="d-block text-dark">${escapeHtml(item.name)}</strong>
                                 <span class="text-muted small">${escapeHtml(item.description)}</span>
                                 <div class="mt-1 d-flex gap-2 align-items-center">
-                                    <span class="badge bg-secondary-subtle text-secondary small">${item.categoryName}</span>
+                                    <span class="badge bg-secondary-subtle text-secondary small">${escapeHtml(item.categoryName)}</span>
                                     <span class="small text-muted">Gerekli Sv: <strong>${item.requiredLevel}</strong></span>
                                     <span class="badge bg-warning-subtle text-dark border small">${item.coinPrice} Coin</span>
                                 </div>
@@ -2619,6 +2642,9 @@
                             ${actionBtn}
                         </div>
                     `;
+                    if (canBuy) {
+                        card.querySelector('[data-act="buy"]').addEventListener('click', () => buyShopItem(item.id, item.name, item.coinPrice));
+                    }
                     container.appendChild(card);
                 });
             } else {
@@ -2664,7 +2690,7 @@
                                 <strong class="d-block text-dark">${escapeHtml(item.itemName)}</strong>
                                 <span class="text-muted small">${escapeHtml(item.itemDescription)}</span>
                                 <div class="mt-1 d-flex gap-2 align-items-center">
-                                    <span class="badge bg-primary-subtle text-primary border small">${item.categoryName}</span>
+                                    <span class="badge bg-primary-subtle text-primary border small">${escapeHtml(item.categoryName)}</span>
                                     <span class="text-muted small">Edinilme: ${new Date(item.acquiredAt).toLocaleDateString('tr-TR')}</span>
                                 </div>
                             </div>
@@ -2991,17 +3017,18 @@
                         <div>
                             <div class="d-flex align-items-center gap-1">
                                 <span class="badge bg-light text-secondary border">${typeLabel}</span>
-                                <strong class="small text-dark">${r.name}</strong>
-                                <span class="badge bg-secondary-subtle text-secondary font-monospace" style="font-size: 10px;">${r.code}</span>
+                                <strong class="small text-dark">${escapeHtml(r.name)}</strong>
+                                <span class="badge bg-secondary-subtle text-secondary font-monospace" style="font-size: 10px;">${escapeHtml(r.code)}</span>
                             </div>
                             <span class="text-muted small d-block" style="font-size: 11px;">
-                                ${r.description || ''} • Kapasite: ${r.currentMemberCount}/${r.maxCapacity} • Bonus: +%${r.coWorkingBonusPercent}
+                                ${escapeHtml(r.description || '')} • Kapasite: ${escapeHtml(r.currentMemberCount)}/${escapeHtml(r.maxCapacity)} • Bonus: +%${escapeHtml(r.coWorkingBonusPercent)}
                             </span>
                         </div>
-                        <button class="btn btn-sm btn-outline-primary py-1 px-3" onclick="joinStudyRoom('${r.code}')">
+                        <button class="btn btn-sm btn-outline-primary py-1 px-3" data-act="join">
                             Katıl
                         </button>
                     `;
+                    card.querySelector('[data-act="join"]').addEventListener('click', () => joinStudyRoom(r.code));
                     container.appendChild(card);
                 });
             } else {
