@@ -55,7 +55,6 @@
             <div id="listRoomItems"></div>
             <span id="lblTokenPreview"></span>
             <button id="btnCopyToken">Kopyala</button>
-            <div id="studioPreviewCard"></div>
         </div>
     </div>
 
@@ -1561,11 +1560,22 @@
         } catch (e) { }
     }
 
-    async function ensureAuthToken(quiet = false) {
+    let authTokenPromise = null;
+
+    function ensureAuthToken(quiet = false) {
         if (currentTokens.accessToken) {
-            return currentTokens.accessToken;
+            return Promise.resolve(currentTokens.accessToken);
         }
 
+        if (!authTokenPromise) {
+            authTokenPromise = createTestAccount(quiet).finally(() => {
+                authTokenPromise = null;
+            });
+        }
+        return authTokenPromise;
+    }
+
+    async function createTestAccount(quiet) {
         if (!quiet) {
             log('[Test Konsolu] Aktif oturum yok, otomatik test hesabı bağlanıyor...', 'info');
         }
@@ -1601,6 +1611,10 @@
     async function initApiLab() {
         const select = document.getElementById('moduleSelectDropdown');
         if (select) {
+            const hash = window.location.hash;
+            if (hash && Array.from(select.options).some(o => o.value === hash)) {
+                select.value = hash;
+            }
             onModuleTabChange(select);
         }
 
@@ -3279,7 +3293,7 @@
 
         const mood = document.getElementById('checkInMood')?.value || 'Calm';
         const energy = parseInt(document.getElementById('checkInEnergy')?.value || '3');
-        const target = document.getElementById('checkInTarget')?.value?.trim() || '';
+        const target = document.getElementById('checkInIntent')?.value?.trim() || '';
 
         log(`POST ${apiBase}/api/v1/coach/check-in (${mood}, Enerji: ${energy})...`);
         try {
@@ -3298,7 +3312,7 @@
                 const data = await res.json();
                 log(`HTTP 200 OK: Check-In kaydedildi (ID: ${data.id})`, 'success');
                 appendCoachTerminalMessage('Masa Asistanı', `Seans başı niyetin alındı (${mood}, Enerji: ${energy}/5). İyi odaklanmalar!`, true);
-                const tgt = document.getElementById('checkInTarget');
+                const tgt = document.getElementById('checkInIntent');
                 if (tgt) tgt.value = '';
             } else {
                 log(`HTTP ${res.status}: Check-In kaydedilemedi.`, 'error');
