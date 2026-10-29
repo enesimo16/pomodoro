@@ -18,26 +18,37 @@ public class GoogleAuthService : IGoogleAuthService
         _logger = logger;
     }
 
+    public static GoogleJsonWebSignature.ValidationSettings CreateValidationSettings(GoogleAuthSettings googleSettings)
+    {
+        if (string.IsNullOrWhiteSpace(googleSettings.ClientId))
+        {
+            throw new UnauthorizedAccessException("Google girişi yapılandırılmamış.");
+        }
+
+        return new GoogleJsonWebSignature.ValidationSettings
+        {
+            Audience = new[] { googleSettings.ClientId }
+        };
+    }
+
     public async Task<GoogleUserInfo?> ValidateTokenAsync(string idToken, CancellationToken cancellationToken = default)
     {
+        // Audience olmadan dogrulama yapilmaz; yapilandirma eksikse istek reddedilir
+        var settings = CreateValidationSettings(_googleSettings);
+
         try
         {
-            var settings = new GoogleJsonWebSignature.ValidationSettings();
-            if (!string.IsNullOrWhiteSpace(_googleSettings.ClientId))
-            {
-                settings.Audience = new[] { _googleSettings.ClientId };
-            }
-
             var payload = await GoogleJsonWebSignature.ValidateAsync(idToken, settings);
-            if (payload == null)
+            if (payload == null || string.IsNullOrWhiteSpace(payload.Subject))
             {
                 return null;
             }
 
             return new GoogleUserInfo(
                 payload.Subject,
-                payload.Email,
-                payload.Name ?? payload.Email,
+                payload.Email ?? string.Empty,
+                payload.EmailVerified,
+                payload.Name ?? payload.Email ?? string.Empty,
                 payload.Picture);
         }
         catch (InvalidJwtException ex)

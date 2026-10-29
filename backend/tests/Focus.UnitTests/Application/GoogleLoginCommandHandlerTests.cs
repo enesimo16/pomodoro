@@ -39,7 +39,7 @@ public class GoogleLoginCommandHandlerTests
         var googleServiceMock = new Mock<IGoogleAuthService>();
         googleServiceMock
             .Setup(g => g.ValidateTokenAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new GoogleUserInfo("sub_123", "developer@focus.app", "Enes Developer", "avatar.png"));
+            .ReturnsAsync(new GoogleUserInfo("sub_123", "developer@focus.app", true, "Enes Developer", "avatar.png"));
 
         var handler = new GoogleLoginCommandHandler(context, googleServiceMock.Object, jwtService);
         var command = new GoogleLoginCommand("valid_google_token");
@@ -82,7 +82,7 @@ public class GoogleLoginCommandHandlerTests
         var googleServiceMock = new Mock<IGoogleAuthService>();
         googleServiceMock
             .Setup(g => g.ValidateTokenAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new GoogleUserInfo("sub_456", "claimed@focus.app", "Enes Kalici", null));
+            .ReturnsAsync(new GoogleUserInfo("sub_456", "claimed@focus.app", true, "Enes Kalici", null));
 
         var handler = new GoogleLoginCommandHandler(context, googleServiceMock.Object, jwtService);
         var command = new GoogleLoginCommand("valid_google_token", guestUser.Id);

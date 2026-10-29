@@ -29,4 +29,6 @@ public interface IApplicationDbContext
     DbSet<SavedAtmosphere> SavedAtmospheres { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+
+    void DiscardPendingChanges();
 }

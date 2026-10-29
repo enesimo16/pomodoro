@@ -11,6 +11,8 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     {
     }
 
+    public void DiscardPendingChanges() => ChangeTracker.Clear();
+
     public DbSet<User> Users => Set<User>();
     public DbSet<UserAvatar> UserAvatars => Set<UserAvatar>();
     public DbSet<PixelRoom> PixelRooms => Set<PixelRoom>();

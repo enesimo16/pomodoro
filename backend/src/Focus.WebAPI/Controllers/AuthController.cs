@@ -9,7 +9,7 @@ using Microsoft.Extensions.Options;
 namespace Focus.WebAPI.Controllers;
 
 public record GuestLoginRequest(string? DisplayName, string? Locale, string? TimeZoneId);
-public record GoogleLoginRequest(string IdToken, Guid? GuestUserIdToClaim);
+public record GoogleLoginRequest(string IdToken);
 public record RefreshTokenRequest(string? RefreshToken);
 public record RevokeTokenRequest(string? RefreshToken);
 
@@ -50,9 +50,11 @@ public class AuthController : BaseApiController
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Google([FromBody] GoogleLoginRequest request, CancellationToken cancellationToken)
     {
+        // Misafir kimligi istemci govdesinden degil, dogrulanmis oturumdan alinir
+        var guestUserId = TryGetGuestUserId(out var callerGuestId) ? callerGuestId : (Guid?)null;
         var command = new GoogleLoginCommand(
             request.IdToken,
-            request.GuestUserIdToClaim,
+            guestUserId,
             GetClientIpAddress());
 
         try
@@ -71,13 +73,20 @@ public class AuthController : BaseApiController
     /// Mevcut misafir hesabındaki oda, eşya, avatar ve coin ilerlemesini kalıcı bir Google hesabına bağlar (hesap sahiplenme).
     /// </summary>
     [HttpPost("claim")]
+    [Authorize]
     [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Claim([FromBody] GoogleLoginRequest request, CancellationToken cancellationToken)
     {
+        if (!TryGetGuestUserId(out var guestUserId))
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Yalnızca misafir hesaplar sahiplenilebilir." });
+        }
+
         var command = new GoogleLoginCommand(
             request.IdToken,
-            request.GuestUserIdToClaim,
+            guestUserId,
             GetClientIpAddress());
 
         try
@@ -154,6 +163,14 @@ public class AuthController : BaseApiController
         if (result == null) return NotFound();
 
         return Ok(result);
+    }
+
+    private bool TryGetGuestUserId(out Guid guestUserId)
+    {
+        guestUserId = Guid.Empty;
+        return User.Identity?.IsAuthenticated == true
+            && User.FindFirst("is_guest")?.Value == "true"
+            && TryGetUserId(out guestUserId);
     }
 
     private void SetAuthCookies(string accessToken, string refreshToken, DateTime accessTokenExpiresAt)
