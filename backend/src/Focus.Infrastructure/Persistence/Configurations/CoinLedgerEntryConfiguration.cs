@@ -17,6 +17,11 @@ public class CoinLedgerEntryConfiguration : IEntityTypeConfiguration<CoinLedgerE
 
         builder.HasIndex(c => c.UserId);
 
+        // Ayni seans icin ayni nedenle ikinci odul yazilamaz
+        builder.HasIndex(c => new { c.UserId, c.SessionId, c.Reason })
+            .IsUnique()
+            .HasFilter("\"SessionId\" IS NOT NULL");
+
         builder.HasOne(c => c.User)
             .WithMany()
             .HasForeignKey(c => c.UserId)

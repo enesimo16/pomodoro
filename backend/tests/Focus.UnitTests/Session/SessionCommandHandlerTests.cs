@@ -1,3 +1,4 @@
+using Focus.Application.Common.Exceptions;
 using Focus.Application.Features.Session.Commands;
 using Focus.Application.Features.Session.Queries;
 using Focus.Domain.Entities;
@@ -164,5 +165,25 @@ public class SessionCommandHandlerTests
         Assert.NotNull(active);
         Assert.Equal(session.Id, active.Id);
         Assert.Equal(48, active.FocusMinutes);
+    }
+
+    [Fact]
+    public async Task PauseSession_WhenAnotherRequestChangedTheSession_ThrowsConflict()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        using var seed = TestDbContextFactory.CreateShared(dbName);
+        var user = User.CreateGuest("RaceUser");
+        seed.Users.Add(user);
+        var session = FocusSession.Start(user.Id, null, SessionKind.Focus, 25, 5);
+        seed.FocusSessions.Add(session);
+        await seed.SaveChangesAsync();
+
+        using var other = TestDbContextFactory.CreateShared(dbName);
+        using var context = TestDbContextFactory.CreateThrowingOnSave(dbName);
+        context.BeforeSave = () => new PauseSessionCommandHandler(other)
+            .Handle(new PauseSessionCommand(user.Id, session.Id), CancellationToken.None);
+
+        await Assert.ThrowsAsync<ConflictException>(() =>
+            new PauseSessionCommandHandler(context).Handle(new PauseSessionCommand(user.Id, session.Id), CancellationToken.None));
     }
 }

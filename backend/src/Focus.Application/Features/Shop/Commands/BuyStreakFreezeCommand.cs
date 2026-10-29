@@ -1,3 +1,4 @@
+using Focus.Application.Common.Extensions;
 using Focus.Application.Common.Interfaces;
 using Focus.Application.Features.Shop.DTOs;
 using Focus.Domain.Entities;
@@ -59,8 +60,12 @@ public class BuyStreakFreezeCommandHandler : IRequestHandler<BuyStreakFreezeComm
         _context.CoinLedgerEntries.Add(coinEntry);
 
         streak.AddFreeze(1);
+        user.RegisterWalletChange();
 
-        await _context.SaveChangesAsync(cancellationToken);
+        await _context.SaveChangesOrConflictAsync(
+            cancellationToken,
+            "Bakiyen başka bir işlemle eş zamanlı değişti. Lütfen tekrar dene.",
+            treatConstraintViolationAsConflict: true);
 
         var newBalance = currentCoins - FreezePrice;
         return new BuyFreezeResultDto(

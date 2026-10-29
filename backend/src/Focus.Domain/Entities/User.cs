@@ -20,6 +20,7 @@ public class User : BaseEntity<Guid>, IAggregateRoot
     public DateTime CreatedAt { get; private set; }
     public DateTime? UpdatedAt { get; private set; }
     public DateTime? DeletedAt { get; private set; }
+    public Guid ConcurrencyStamp { get; private set; } = Guid.NewGuid();
 
     // Navigation
     public UserAvatar? Avatar { get; private set; }
@@ -102,6 +103,13 @@ public class User : BaseEntity<Guid>, IAggregateRoot
         Level = Math.Max(Level, LevelCurve.LevelForXp(CurrentXp));
 
         UpdatedAt = DateTime.UtcNow;
+        ConcurrencyStamp = Guid.NewGuid();
+    }
+
+    // Bakiye degistiren islemler (harcama/odul) es zamanli calistiginda biri DbUpdateConcurrencyException alir
+    public void RegisterWalletChange()
+    {
+        ConcurrencyStamp = Guid.NewGuid();
     }
 
     public void AddRefreshToken(string tokenHash, DateTime expiresAt, string? createdByIp)

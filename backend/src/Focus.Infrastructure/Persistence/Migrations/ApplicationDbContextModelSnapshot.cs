@@ -700,6 +700,10 @@ namespace Focus.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("UserId");
 
+                    b.HasIndex("UserId", "SessionId", "Reason")
+                        .IsUnique()
+                        .HasFilter("\"SessionId\" IS NOT NULL");
+
                     b.ToTable("coin_ledger_entries", (string)null);
                 });
 
@@ -714,6 +718,10 @@ namespace Focus.Infrastructure.Persistence.Migrations
 
                     b.Property<int>("CoinsEarned")
                         .HasColumnType("integer");
+
+                    b.Property<Guid>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid");
 
                     b.Property<int>("CurrentRound")
                         .HasColumnType("integer");
@@ -784,6 +792,10 @@ namespace Focus.Infrastructure.Persistence.Migrations
                     b.HasIndex("Status");
 
                     b.HasIndex("UserId");
+
+                    b.HasIndex(new[] { "UserId" }, "IX_focus_sessions_UserId_Active")
+                        .IsUnique()
+                        .HasFilter("\"Status\" IN ('Running', 'Paused')");
 
                     b.ToTable("focus_sessions", (string)null);
                 });
@@ -1411,6 +1423,10 @@ namespace Focus.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<Guid>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -1644,7 +1660,8 @@ namespace Focus.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("CatalogItemId");
 
-                    b.HasIndex("UserId", "CatalogItemId");
+                    b.HasIndex("UserId", "CatalogItemId")
+                        .IsUnique();
 
                     b.ToTable("user_inventory_items", (string)null);
                 });
@@ -1695,6 +1712,10 @@ namespace Focus.Infrastructure.Persistence.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
                         .HasColumnType("uuid");
 
                     b.Property<int>("CurrentStreak")

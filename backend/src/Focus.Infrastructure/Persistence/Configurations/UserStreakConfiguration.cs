@@ -17,6 +17,9 @@ public class UserStreakConfiguration : IEntityTypeConfiguration<UserStreak>
         builder.Property(s => s.LongestStreak).IsRequired().HasDefaultValue(0);
         builder.Property(s => s.FreezesAvailable).IsRequired().HasDefaultValue(1);
 
+        builder.Property(s => s.ConcurrencyStamp)
+            .IsConcurrencyToken();
+
         builder.HasOne(s => s.User)
             .WithOne(u => u.Streak)
             .HasForeignKey<UserStreak>(s => s.UserId)

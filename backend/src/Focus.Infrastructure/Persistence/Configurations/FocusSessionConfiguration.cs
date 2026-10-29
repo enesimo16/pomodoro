@@ -28,7 +28,15 @@ public class FocusSessionConfiguration : IEntityTypeConfiguration<FocusSession>
         builder.Property(s => s.MixPresetId)
             .HasMaxLength(100);
 
+        builder.Property(s => s.ConcurrencyStamp)
+            .IsConcurrencyToken();
+
         builder.HasIndex(s => s.UserId);
+
+        // Kullanici basina yalnizca bir aktif (Running/Paused) seans
+        builder.HasIndex(s => s.UserId, "IX_focus_sessions_UserId_Active")
+            .IsUnique()
+            .HasFilter("\"Status\" IN ('Running', 'Paused')");
         builder.HasIndex(s => s.Status);
         builder.HasIndex(s => s.StartedAt);
 

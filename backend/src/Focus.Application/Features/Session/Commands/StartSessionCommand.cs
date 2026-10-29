@@ -1,3 +1,4 @@
+using Focus.Application.Common.Extensions;
 using Focus.Application.Common.Interfaces;
 using Focus.Application.Features.Session.DTOs;
 using Focus.Domain.Entities;
@@ -75,7 +76,7 @@ public class StartSessionCommandHandler : IRequestHandler<StartSessionCommand, F
                 request.TargetRounds);
         }
 
-        await _context.SaveChangesAsync(cancellationToken);
+        await _context.SaveChangesOrConflictAsync(cancellationToken, "Zaten aktif bir seansın var.", treatConstraintViolationAsConflict: true);
 
         return FocusSessionDto.FromEntity(session);
     }

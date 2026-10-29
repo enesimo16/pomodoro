@@ -1,3 +1,4 @@
+using Focus.Application.Common.Extensions;
 using Focus.Application.Common.Interfaces;
 using Focus.Application.Features.Session.DTOs;
 using Focus.Domain.Entities;
@@ -89,6 +90,7 @@ public class CompleteSessionCommandHandler : IRequestHandler<CompleteSessionComm
         if (user != null)
         {
             user.AddXp(xpEarned);
+            if (coinsEarned > 0) user.RegisterWalletChange();
         }
 
         // Coin Ledger
@@ -116,7 +118,7 @@ public class CompleteSessionCommandHandler : IRequestHandler<CompleteSessionComm
             }
         }
 
-        await _context.SaveChangesAsync(cancellationToken);
+        await _context.SaveChangesOrConflictAsync(cancellationToken);
 
         var totalCoins = await _context.CoinLedgerEntries
             .Where(c => c.UserId == request.UserId)

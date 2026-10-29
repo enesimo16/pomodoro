@@ -25,6 +25,7 @@ public class FocusSession : BaseEntity<Guid>
     public int CoinsEarned { get; private set; }
     public string? ThemeId { get; private set; }
     public string? MixPresetId { get; private set; }
+    public Guid ConcurrencyStamp { get; private set; } = Guid.NewGuid();
 
     // Navigation
     public User User { get; private set; } = null!;
@@ -82,6 +83,7 @@ public class FocusSession : BaseEntity<Guid>
 
         Status = SessionStatus.Paused;
         PausedAt = DateTime.UtcNow;
+        Touch();
     }
 
     public void Resume()
@@ -98,6 +100,7 @@ public class FocusSession : BaseEntity<Guid>
 
         Status = SessionStatus.Running;
         PausedAt = null;
+        Touch();
     }
 
     public void Extend(int extraMinutes = 10)
@@ -108,6 +111,7 @@ public class FocusSession : BaseEntity<Guid>
         PlannedEndAt = PlannedEndAt.AddMinutes(validExtra);
         PlannedMinutes += validExtra;
         ExtensionCount++;
+        Touch();
     }
 
     public void Complete(int netSeconds, int xp, int coins)
@@ -117,6 +121,7 @@ public class FocusSession : BaseEntity<Guid>
         NetDurationSeconds = Math.Max(0, netSeconds);
         XpEarned = Math.Max(0, xp);
         CoinsEarned = Math.Max(0, coins);
+        Touch();
     }
 
     public void Abandon(int netSeconds, int xp = 0, int coins = 0)
@@ -126,7 +131,10 @@ public class FocusSession : BaseEntity<Guid>
         NetDurationSeconds = Math.Max(0, netSeconds);
         XpEarned = Math.Max(0, xp);
         CoinsEarned = Math.Max(0, coins);
+        Touch();
     }
+
+    private void Touch() => ConcurrencyStamp = Guid.NewGuid();
 
     public (SessionKind NextKind, int NextRound, bool IsCycleFinished) GetNextCycleStep()
     {

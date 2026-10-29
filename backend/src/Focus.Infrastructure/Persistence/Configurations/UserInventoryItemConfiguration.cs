@@ -27,6 +27,6 @@ public class UserInventoryItemConfiguration : IEntityTypeConfiguration<UserInven
             .HasForeignKey(i => i.CatalogItemId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasIndex(i => new { i.UserId, i.CatalogItemId });
+        builder.HasIndex(i => new { i.UserId, i.CatalogItemId }).IsUnique();
     }
 }

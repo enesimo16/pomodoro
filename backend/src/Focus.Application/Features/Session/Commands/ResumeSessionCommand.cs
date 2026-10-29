@@ -1,3 +1,4 @@
+using Focus.Application.Common.Extensions;
 using Focus.Application.Common.Interfaces;
 using Focus.Application.Features.Session.DTOs;
 using Focus.Domain.Enums;
@@ -34,7 +35,7 @@ public class ResumeSessionCommandHandler : IRequestHandler<ResumeSessionCommand,
         }
 
         session.Resume();
-        await _context.SaveChangesAsync(cancellationToken);
+        await _context.SaveChangesOrConflictAsync(cancellationToken);
 
         return FocusSessionDto.FromEntity(session);
     }

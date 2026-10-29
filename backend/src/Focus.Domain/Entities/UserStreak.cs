@@ -12,6 +12,7 @@ public class UserStreak : BaseEntity<Guid>
     public DateTime? LastActivityDate { get; private set; }
     public int FreezesAvailable { get; private set; } = 1;
     public DateTime? LastFreezeUsedDate { get; private set; }
+    public Guid ConcurrencyStamp { get; private set; } = Guid.NewGuid();
 
     // Navigation
     public User User { get; private set; } = null!;
@@ -34,6 +35,13 @@ public class UserStreak : BaseEntity<Guid>
     }
 
     public (int NewStreak, int BonusCoins, bool FreezeUsed, string Message) RecordActivity(DateTime activityTime)
+    {
+        var result = ApplyActivity(activityTime);
+        ConcurrencyStamp = Guid.NewGuid();
+        return result;
+    }
+
+    private (int NewStreak, int BonusCoins, bool FreezeUsed, string Message) ApplyActivity(DateTime activityTime)
     {
         var today = activityTime.Date;
 
@@ -95,6 +103,7 @@ public class UserStreak : BaseEntity<Guid>
         if (FreezesAvailable >= MaxFreezes) return false;
 
         FreezesAvailable = Math.Min(MaxFreezes, FreezesAvailable + count);
+        ConcurrencyStamp = Guid.NewGuid();
         return true;
     }
 
@@ -114,10 +123,12 @@ public class UserStreak : BaseEntity<Guid>
                 LastFreezeUsedDate = yesterday;
                 // Kacirilan gun korunmus sayilir; ertesi gun RecordActivity ikinci bir dondurucu harcamaz
                 LastActivityDate = yesterday;
+                ConcurrencyStamp = Guid.NewGuid();
                 return (true, false);
             }
 
             CurrentStreak = 0;
+            ConcurrencyStamp = Guid.NewGuid();
             return (false, true);
         }
 

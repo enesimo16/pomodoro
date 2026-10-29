@@ -1,3 +1,4 @@
+using Focus.Application.Common.Exceptions;
 using Focus.Application.Common.Interfaces;
 using Focus.Application.Features.Shop.DTOs;
 using Focus.Domain.Entities;
@@ -36,6 +37,11 @@ public class BuyCatalogItemCommandHandler : IRequestHandler<BuyCatalogItemComman
             .Where(c => c.UserId == request.UserId)
             .SumAsync(c => (int?)c.Coins, cancellationToken) ?? 0;
 
+        if (item.Tier == CatalogTier.ProOnly && !user.IsPro)
+        {
+            return new PurchaseItemResultDto(false, "Bu eşya yalnızca Pro üyelere özeldir.", currentCoins, null);
+        }
+
         if (user.Level < item.RequiredLevel)
         {
             return new PurchaseItemResultDto(
@@ -66,12 +72,31 @@ public class BuyCatalogItemCommandHandler : IRequestHandler<BuyCatalogItemComman
         {
             var coinEntry = new CoinLedgerEntry(request.UserId, CoinTransactionReason.ItemPurchase, -item.CoinPrice);
             _context.CoinLedgerEntries.Add(coinEntry);
+            user.RegisterWalletChange();
         }
 
         var inventoryItem = new UserInventoryItem(request.UserId, item.Id);
         _context.UserInventoryItems.Add(inventoryItem);
 
-        await _context.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            _context.DiscardPendingChanges();
+            throw new ConflictException("Bakiyen başka bir işlemle eş zamanlı değişti. Lütfen tekrar dene.");
+        }
+        catch (DbUpdateException)
+        {
+            // Benzersiz (UserId, CatalogItemId) indeksi: es zamanli ikinci satin alma
+            _context.DiscardPendingChanges();
+            var ownedNow = await _context.UserInventoryItems
+                .AnyAsync(i => i.UserId == request.UserId && i.CatalogItemId == request.CatalogItemId, cancellationToken);
+            if (!ownedNow) throw;
+
+            return new PurchaseItemResultDto(false, "Bu eşyaya zaten sahipsiniz.", currentCoins, null);
+        }
 
         var newBalance = currentCoins - item.CoinPrice;
         var dto = new UserInventoryItemDto(

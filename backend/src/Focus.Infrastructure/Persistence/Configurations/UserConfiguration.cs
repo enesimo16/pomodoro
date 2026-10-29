@@ -31,6 +31,9 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .HasMaxLength(50)
             .HasDefaultValue("Europe/Istanbul");
 
+        builder.Property(u => u.ConcurrencyStamp)
+            .IsConcurrencyToken();
+
         builder.HasQueryFilter(u => u.DeletedAt == null);
 
         builder.HasOne(u => u.Avatar)

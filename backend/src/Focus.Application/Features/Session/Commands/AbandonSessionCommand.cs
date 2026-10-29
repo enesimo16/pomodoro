@@ -1,3 +1,4 @@
+using Focus.Application.Common.Extensions;
 using Focus.Application.Common.Interfaces;
 using Focus.Application.Features.Session.DTOs;
 using Focus.Domain.Enums;
@@ -45,7 +46,7 @@ public class AbandonSessionCommandHandler : IRequestHandler<AbandonSessionComman
         var netSeconds = Math.Max(0, totalElapsedSeconds - currentPauseSeconds);
 
         session.Abandon(netSeconds, xp: 0, coins: 0);
-        await _context.SaveChangesAsync(cancellationToken);
+        await _context.SaveChangesOrConflictAsync(cancellationToken);
 
         return FocusSessionDto.FromEntity(session);
     }
