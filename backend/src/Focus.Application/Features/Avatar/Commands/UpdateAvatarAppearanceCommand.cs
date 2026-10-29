@@ -1,5 +1,6 @@
 using Focus.Application.Common.Interfaces;
 using Focus.Application.Features.Auth.DTOs;
+using Focus.Application.Features.Room;
 using Focus.Domain.Entities;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -30,6 +31,12 @@ public class UpdateAvatarAppearanceCommandHandler : IRequestHandler<UpdateAvatar
 
     public async Task<AvatarDto> Handle(UpdateAvatarAppearanceCommand request, CancellationToken cancellationToken)
     {
+        await EnsureOwnedAsync(request.TopItemId, CatalogOwnership.ClothingCategories, request.UserId, cancellationToken);
+        await EnsureOwnedAsync(request.BottomItemId, CatalogOwnership.ClothingCategories, request.UserId, cancellationToken);
+        await EnsureOwnedAsync(request.ShoesItemId, CatalogOwnership.ClothingCategories, request.UserId, cancellationToken);
+        await EnsureOwnedAsync(request.HatItemId, CatalogOwnership.AccessoryCategories, request.UserId, cancellationToken);
+        await EnsureOwnedAsync(request.GlassesItemId, CatalogOwnership.AccessoryCategories, request.UserId, cancellationToken);
+
         var avatar = await _context.UserAvatars
             .FirstOrDefaultAsync(a => a.UserId == request.UserId, cancellationToken);
 
@@ -54,5 +61,12 @@ public class UpdateAvatarAppearanceCommandHandler : IRequestHandler<UpdateAvatar
         await _context.SaveChangesAsync(cancellationToken);
 
         return AvatarDto.FromEntity(avatar);
+    }
+
+    // Bos deger degisiklik yok (veya aksesuar icin kaldirma) anlamina gelir
+    private async Task EnsureOwnedAsync(string? catalogItemId, IReadOnlySet<Focus.Domain.Enums.CatalogCategory> categories, Guid userId, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(catalogItemId)) return;
+        await CatalogOwnership.RequireOwnedAsync(_context, userId, catalogItemId, categories, cancellationToken);
     }
 }

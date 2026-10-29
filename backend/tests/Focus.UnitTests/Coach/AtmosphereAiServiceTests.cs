@@ -284,6 +284,7 @@ public class AtmosphereAiServiceTests
     public async Task ApplyAtmosphereCommand_ValidRequest_ShouldUpdateRoomAndPreferences()
     {
         var context = CreateDbContext();
+        context.Database.EnsureCreated();
         var user = User.CreateGuest("Can");
         context.Users.Add(user);
         await context.SaveChangesAsync();
@@ -293,7 +294,7 @@ public class AtmosphereAiServiceTests
             user.Id,
             new ApplyAtmosphereRequestDto(
                 RoomId: user.Room!.Id,
-                WallPaperId: "wallpaper_slate_dark",
+                WallPaperId: "wallpaper_brick_white",
                 FloorId: "floor_parquet_oak",
                 FocusMinutes: 50,
                 BreakMinutes: 10,
@@ -304,7 +305,7 @@ public class AtmosphereAiServiceTests
         result.Should().BeTrue();
 
         var updatedRoom = await context.PixelRooms.FirstAsync(r => r.Id == user.Room.Id);
-        updatedRoom.WallPaperId.Should().Be("wallpaper_slate_dark");
+        updatedRoom.WallPaperId.Should().Be("wallpaper_brick_white");
 
         var updatedPrefs = await context.UserPreferences.FirstAsync(p => p.UserId == user.Id);
         updatedPrefs.DefaultFocusMinutes.Should().Be(50);

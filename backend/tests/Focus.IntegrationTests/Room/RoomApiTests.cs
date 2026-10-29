@@ -34,7 +34,8 @@ public class RoomApiTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task AddItemToRoom_ShouldPlaceFurnitureAndReturnCreated()
     {
-        var (client, _) = await _factory.CreateAuthenticatedClientAsync("MobilyaEkleyen");
+        var (client, auth) = await _factory.CreateAuthenticatedClientAsync("MobilyaEkleyen");
+        await _factory.GrantItemAsync(auth.User.Id, "plant_bonsai");
 
         var addResponse = await client.PostAsJsonAsync("/api/v1/room/items", new
         {
@@ -107,15 +108,15 @@ public class RoomApiTests : IClassFixture<CustomWebApplicationFactory>
 
         var response = await client.PatchAsJsonAsync("/api/v1/room/theme", new
         {
-            wallpaperCatalogId = "wallpaper_cyber_neon",
-            floorCatalogId = "floor_tatami_japanese"
+            wallpaperCatalogId = "wallpaper_brick_white",
+            floorCatalogId = "floor_parquet_oak"
         });
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var room = await response.Content.ReadFromJsonAsync<PixelRoomDto>();
-        room!.WallPaperId.Should().Be("wallpaper_cyber_neon");
-        room.FloorId.Should().Be("floor_tatami_japanese");
+        room!.WallPaperId.Should().Be("wallpaper_brick_white");
+        room.FloorId.Should().Be("floor_parquet_oak");
     }
 
     [Fact]
@@ -127,7 +128,7 @@ public class RoomApiTests : IClassFixture<CustomWebApplicationFactory>
         {
             name = "Gezginler Kahvesi",
             isPublic = true,
-            maxVisitors = 8
+            maxVisitors = 5
         });
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -135,7 +136,7 @@ public class RoomApiTests : IClassFixture<CustomWebApplicationFactory>
         var room = await response.Content.ReadFromJsonAsync<PixelRoomDto>();
         room!.Name.Should().Be("Gezginler Kahvesi");
         room.IsPublic.Should().BeTrue();
-        room.MaxVisitors.Should().Be(8);
+        room.MaxVisitors.Should().Be(5);
     }
 
     [Fact]

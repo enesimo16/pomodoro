@@ -2,6 +2,7 @@ namespace Focus.Application.Features.Atmosphere.Commands;
 
 using Focus.Application.Common.Interfaces;
 using Focus.Application.Features.Atmosphere.DTOs;
+using Focus.Application.Features.Room;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -36,6 +37,16 @@ public class ApplyAtmosphereCommandHandler : IRequestHandler<ApplyAtmosphereComm
         var room = req.RoomId.HasValue
             ? await _context.PixelRooms.FirstOrDefaultAsync(r => r.Id == req.RoomId.Value && r.OwnerUserId == command.UserId, cancellationToken)
             : await _context.PixelRooms.FirstOrDefaultAsync(r => r.OwnerUserId == command.UserId, cancellationToken);
+
+        if (!string.IsNullOrWhiteSpace(wallPaperId))
+        {
+            await CatalogOwnership.RequireOwnedAsync(_context, command.UserId, wallPaperId, CatalogOwnership.WallpaperCategories, cancellationToken);
+        }
+
+        if (!string.IsNullOrWhiteSpace(floorId))
+        {
+            await CatalogOwnership.RequireOwnedAsync(_context, command.UserId, floorId, CatalogOwnership.FloorCategories, cancellationToken);
+        }
 
         if (room != null && (!string.IsNullOrWhiteSpace(wallPaperId) || !string.IsNullOrWhiteSpace(floorId)))
         {

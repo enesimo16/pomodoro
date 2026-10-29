@@ -1,5 +1,6 @@
 using Focus.Application.Common.Interfaces;
 using Focus.Application.Features.Auth.DTOs;
+using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,28 +24,27 @@ public class MoveRoomItemCommandHandler : IRequestHandler<MoveRoomItemCommand, R
 
     public async Task<RoomItemDto?> Handle(MoveRoomItemCommand request, CancellationToken cancellationToken)
     {
+        var rotation = RoomPlacement.RequireRotation(request.Rotation);
+
         var room = await _context.PixelRooms
             .Include(r => r.Items)
             .FirstOrDefaultAsync(r => r.OwnerUserId == request.UserId, cancellationToken);
 
-        if (room == null)
+        var existing = room?.Items.FirstOrDefault(i => i.Id == request.ItemId);
+        if (room == null || existing == null)
         {
             return null;
         }
 
-        var normalizedRotation = (request.Rotation % 360 + 360) % 360;
-        var validGridX = Math.Max(0, request.GridX);
-        var validGridY = Math.Max(0, request.GridY);
+        var catalogItem = await _context.CatalogItems.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Id == existing.CatalogItemId, cancellationToken)
+            ?? throw new ValidationException("Geçersiz eşya seçimi.");
 
-        var success = room.MoveItem(request.ItemId, validGridX, validGridY, normalizedRotation);
-        if (!success)
-        {
-            return null;
-        }
+        await RoomPlacement.EnsureFitsAsync(_context, room, catalogItem, request.GridX, request.GridY, rotation, existing.Id, cancellationToken);
 
+        room.MoveItem(request.ItemId, request.GridX, request.GridY, rotation);
         await _context.SaveChangesAsync(cancellationToken);
 
-        var item = room.Items.First(i => i.Id == request.ItemId);
-        return new RoomItemDto(item.Id, item.CatalogItemId, item.GridX, item.GridY, item.Rotation);
+        return new RoomItemDto(existing.Id, existing.CatalogItemId, existing.GridX, existing.GridY, existing.Rotation);
     }
 }

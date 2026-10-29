@@ -5,6 +5,13 @@ namespace Focus.Domain.Entities;
 
 public class PixelRoom : BaseEntity<Guid>
 {
+    public const int GridWidth = 10;
+    public const int GridHeight = 10;
+    public const int MaxItems = 100;
+    public const int MaxNameLength = 100;
+    public const int FreeMaxVisitors = 5;
+    public const int ProMaxVisitors = 20;
+
     private readonly List<RoomItem> _items = new();
 
     public Guid OwnerUserId { get; private set; }
@@ -48,6 +55,25 @@ public class PixelRoom : BaseEntity<Guid>
 
         return room;
     }
+
+    public static bool IsValidRotation(int rotation) => rotation is 0 or 90 or 180 or 270;
+
+    public static (int Width, int Height) Footprint(int width, int height, int rotation)
+    {
+        return rotation is 90 or 270 ? (height, width) : (width, height);
+    }
+
+    public static bool IsWithinGrid(int x, int y, int width, int height)
+    {
+        return x >= 0 && y >= 0 && x + width <= GridWidth && y + height <= GridHeight;
+    }
+
+    public static bool Overlaps(int ax, int ay, int aw, int ah, int bx, int by, int bw, int bh)
+    {
+        return ax < bx + bw && bx < ax + aw && ay < by + bh && by < ay + ah;
+    }
+
+    public static int MaxVisitorsFor(bool isOwnerPro) => isOwnerPro ? ProMaxVisitors : FreeMaxVisitors;
 
     public RoomItem AddItem(string catalogItemId, int gridX, int gridY, int rotation)
     {

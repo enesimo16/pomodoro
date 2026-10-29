@@ -9,7 +9,7 @@ namespace Focus.UnitTests.Room;
 public class RoomCommandHandlerTests
 {
     [Fact]
-    public async Task AddRoomItem_ShouldAddItem_AndNormalizeCoordinatesAndRotation()
+    public async Task AddRoomItem_ShouldAddOwnedItem()
     {
         using var context = TestDbContextFactory.Create();
         var userId = Guid.NewGuid();
@@ -17,20 +17,23 @@ public class RoomCommandHandlerTests
         context.PixelRooms.Add(room);
         await context.SaveChangesAsync();
 
+        context.UserInventoryItems.Add(new UserInventoryItem(userId, "plant_bonsai"));
+        await context.SaveChangesAsync();
+
         var handler = new AddRoomItemCommandHandler(context);
         var command = new AddRoomItemCommand(
             UserId: userId,
-            CatalogItemId: "plant_fiddle_leaf",
-            GridX: -5, // Negatif koordinat 0'a çekilmeli
-            GridY: 3,
-            Rotation: 450); // 450 % 360 = 90 dereceye normalize edilmeli
+            CatalogItemId: "plant_bonsai",
+            GridX: 0,
+            GridY: 6,
+            Rotation: 90);
 
         var result = await handler.Handle(command, CancellationToken.None);
 
         result.Should().NotBeNull();
-        result.CatalogItemId.Should().Be("plant_fiddle_leaf");
+        result.CatalogItemId.Should().Be("plant_bonsai");
         result.GridX.Should().Be(0);
-        result.GridY.Should().Be(3);
+        result.GridY.Should().Be(6);
         result.Rotation.Should().Be(90);
 
         // Veritabanında kontrol
@@ -50,13 +53,13 @@ public class RoomCommandHandlerTests
         var existingItem = room.Items.First();
 
         var handler = new MoveRoomItemCommandHandler(context);
-        var command = new MoveRoomItemCommand(userId, existingItem.Id, GridX: 7, GridY: 8, Rotation: 180);
+        var command = new MoveRoomItemCommand(userId, existingItem.Id, GridX: 6, GridY: 7, Rotation: 180);
 
         var result = await handler.Handle(command, CancellationToken.None);
 
         result.Should().NotBeNull();
-        result!.GridX.Should().Be(7);
-        result.GridY.Should().Be(8);
+        result!.GridX.Should().Be(6);
+        result.GridY.Should().Be(7);
         result.Rotation.Should().Be(180);
     }
 
@@ -90,13 +93,13 @@ public class RoomCommandHandlerTests
         await context.SaveChangesAsync();
 
         var handler = new UpdateRoomThemeCommandHandler(context);
-        var command = new UpdateRoomThemeCommand(userId, "wallpaper_retro_sunset", "floor_marble_white");
+        var command = new UpdateRoomThemeCommand(userId, "wallpaper_brick_white", "floor_parquet_oak");
 
         var result = await handler.Handle(command, CancellationToken.None);
 
         result.Should().NotBeNull();
-        result!.WallPaperId.Should().Be("wallpaper_retro_sunset");
-        result.FloorId.Should().Be("floor_marble_white");
+        result!.WallPaperId.Should().Be("wallpaper_brick_white");
+        result.FloorId.Should().Be("floor_parquet_oak");
     }
 
     [Fact]
@@ -109,13 +112,13 @@ public class RoomCommandHandlerTests
         await context.SaveChangesAsync();
 
         var handler = new UpdateRoomDetailsCommandHandler(context);
-        var command = new UpdateRoomDetailsCommand(userId, "Gece Kuşları Odası", IsPublic: true, MaxVisitors: 8);
+        var command = new UpdateRoomDetailsCommand(userId, "Gece Kuşları Odası", IsPublic: true, MaxVisitors: 5);
 
         var result = await handler.Handle(command, CancellationToken.None);
 
         result.Should().NotBeNull();
         result!.Name.Should().Be("Gece Kuşları Odası");
         result.IsPublic.Should().BeTrue();
-        result.MaxVisitors.Should().Be(8);
+        result.MaxVisitors.Should().Be(5);
     }
 }

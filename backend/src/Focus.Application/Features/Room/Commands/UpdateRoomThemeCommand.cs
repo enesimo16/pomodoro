@@ -22,6 +22,18 @@ public class UpdateRoomThemeCommandHandler : IRequestHandler<UpdateRoomThemeComm
 
     public async Task<PixelRoomDto?> Handle(UpdateRoomThemeCommand request, CancellationToken cancellationToken)
     {
+        if (!string.IsNullOrWhiteSpace(request.WallpaperCatalogId))
+        {
+            await CatalogOwnership.RequireOwnedAsync(
+                _context, request.UserId, request.WallpaperCatalogId, CatalogOwnership.WallpaperCategories, cancellationToken);
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.FloorCatalogId))
+        {
+            await CatalogOwnership.RequireOwnedAsync(
+                _context, request.UserId, request.FloorCatalogId, CatalogOwnership.FloorCategories, cancellationToken);
+        }
+
         var room = await _context.PixelRooms
             .Include(r => r.Items)
             .FirstOrDefaultAsync(r => r.OwnerUserId == request.UserId, cancellationToken);

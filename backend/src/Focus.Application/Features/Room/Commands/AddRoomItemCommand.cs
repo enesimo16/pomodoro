@@ -1,6 +1,7 @@
 using Focus.Application.Common.Interfaces;
 using Focus.Application.Features.Auth.DTOs;
 using Focus.Domain.Entities;
+using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -24,6 +25,10 @@ public class AddRoomItemCommandHandler : IRequestHandler<AddRoomItemCommand, Roo
 
     public async Task<RoomItemDto> Handle(AddRoomItemCommand request, CancellationToken cancellationToken)
     {
+        var rotation = RoomPlacement.RequireRotation(request.Rotation);
+        var catalogItem = await CatalogOwnership.RequireOwnedAsync(
+            _context, request.UserId, request.CatalogItemId, CatalogOwnership.FurnitureCategories, cancellationToken);
+
         var room = await _context.PixelRooms
             .Include(r => r.Items)
             .FirstOrDefaultAsync(r => r.OwnerUserId == request.UserId, cancellationToken);
@@ -34,11 +39,20 @@ public class AddRoomItemCommandHandler : IRequestHandler<AddRoomItemCommand, Roo
             _context.PixelRooms.Add(room);
         }
 
-        var normalizedRotation = (request.Rotation % 360 + 360) % 360;
-        var validGridX = Math.Max(0, request.GridX);
-        var validGridY = Math.Max(0, request.GridY);
+        if (room.Items.Count >= PixelRoom.MaxItems)
+        {
+            throw new ValidationException($"Odada en fazla {PixelRoom.MaxItems} eşya bulunabilir.");
+        }
 
-        var item = room.AddItem(request.CatalogItemId, validGridX, validGridY, normalizedRotation);
+        // Her eşya tek adet sahiplenilir (envanterde (UserId, CatalogItemId) benzersizdir)
+        if (room.Items.Any(i => i.CatalogItemId == catalogItem.Id))
+        {
+            throw new ValidationException("Bu eşya zaten odaya yerleştirilmiş.");
+        }
+
+        await RoomPlacement.EnsureFitsAsync(_context, room, catalogItem, request.GridX, request.GridY, rotation, null, cancellationToken);
+
+        var item = room.AddItem(catalogItem.Id, request.GridX, request.GridY, rotation);
         _context.RoomItems.Add(item);
         await _context.SaveChangesAsync(cancellationToken);
 

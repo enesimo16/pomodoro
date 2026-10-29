@@ -17,25 +17,28 @@ public class UpdateAvatarAppearanceCommandHandlerTests
         context.UserAvatars.Add(avatar);
         await context.SaveChangesAsync();
 
+        context.UserInventoryItems.Add(new UserInventoryItem(userId, "cap_black"));
+        await context.SaveChangesAsync();
+
         var handler = new UpdateAvatarAppearanceCommandHandler(context);
         var command = new UpdateAvatarAppearanceCommand(
             userId,
             SkinTone: "tone_4",
             HairStyle: "curls",
             HairColor: "black",
-            TopItemId: "sweater_green",
-            BottomItemId: "jeans_black",
-            HatItemId: "beanie_grey",
+            TopItemId: "hoodie_gray",
+            BottomItemId: "jeans_basic_blue",
+            HatItemId: "cap_black",
             GlassesItemId: null,
-            ShoesItemId: "sneakers_red");
+            ShoesItemId: "sneakers_white");
 
         var result = await handler.Handle(command, CancellationToken.None);
 
         result.Should().NotBeNull();
         result.SkinTone.Should().Be("tone_4");
         result.HairStyle.Should().Be("curls");
-        result.TopItemCatalogId.Should().Be("sweater_green");
-        result.HatItemCatalogId.Should().Be("beanie_grey");
+        result.TopItemCatalogId.Should().Be("hoodie_gray");
+        result.HatItemCatalogId.Should().Be("cap_black");
     }
 
     [Fact]

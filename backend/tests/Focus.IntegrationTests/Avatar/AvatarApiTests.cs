@@ -44,17 +44,18 @@ public class AvatarApiTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task UpdateAvatar_ShouldUpdateAppearance_AndReturnUpdatedAvatar()
     {
-        var (client, _) = await _factory.CreateAuthenticatedClientAsync("AvatarGuncellemeTesti");
+        var (client, auth) = await _factory.CreateAuthenticatedClientAsync("AvatarGuncellemeTesti");
+        await _factory.GrantItemAsync(auth.User.Id, "cap_black");
 
         var patchResponse = await client.PatchAsJsonAsync("/api/v1/avatar", new
         {
             skinTone = "tone_3",
             hairStyle = "curls",
             hairColor = "blonde",
-            topItemId = "hoodie_black",
-            bottomItemId = "jeans_black",
-            hatItemId = "cap_red",
-            shoesItemId = "sneakers_red"
+            topItemId = "hoodie_gray",
+            bottomItemId = "jeans_basic_blue",
+            hatItemId = "cap_black",
+            shoesItemId = "sneakers_white"
         });
 
         patchResponse.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -64,10 +65,10 @@ public class AvatarApiTests : IClassFixture<CustomWebApplicationFactory>
         updatedAvatar!.SkinTone.Should().Be("tone_3");
         updatedAvatar.HairStyle.Should().Be("curls");
         updatedAvatar.HairColor.Should().Be("blonde");
-        updatedAvatar.TopItemCatalogId.Should().Be("hoodie_black");
-        updatedAvatar.BottomItemCatalogId.Should().Be("jeans_black");
-        updatedAvatar.HatItemCatalogId.Should().Be("cap_red");
-        updatedAvatar.ShoesItemCatalogId.Should().Be("sneakers_red");
+        updatedAvatar.TopItemCatalogId.Should().Be("hoodie_gray");
+        updatedAvatar.BottomItemCatalogId.Should().Be("jeans_basic_blue");
+        updatedAvatar.HatItemCatalogId.Should().Be("cap_black");
+        updatedAvatar.ShoesItemCatalogId.Should().Be("sneakers_white");
     }
 
     [Fact]

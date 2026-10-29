@@ -21,7 +21,7 @@ public record PixelRoomDto(
     int MaxVisitors,
     List<RoomItemDto> Items)
 {
-    public static PixelRoomDto FromEntity(PixelRoom room)
+    public static PixelRoomDto FromEntity(PixelRoom room, bool includeInviteCode = true)
     {
         return new PixelRoomDto(
             room.Id,
@@ -31,7 +31,7 @@ public record PixelRoomDto(
             room.WallPaperId,
             room.FloorId,
             room.IsPublic,
-            room.InviteCode,
+            includeInviteCode ? room.InviteCode : null,
             room.MaxVisitors,
             room.Items.Select(i => new RoomItemDto(i.Id, i.CatalogItemId, i.GridX, i.GridY, i.Rotation)).ToList());
     }

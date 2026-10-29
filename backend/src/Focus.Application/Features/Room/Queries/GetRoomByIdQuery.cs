@@ -33,6 +33,6 @@ public class GetRoomByIdQueryHandler : IRequestHandler<GetRoomByIdQuery, PixelRo
             return null;
         }
 
-        return PixelRoomDto.FromEntity(room);
+        return PixelRoomDto.FromEntity(room, includeInviteCode: request.RequestingUserId == room.OwnerUserId);
     }
 }
