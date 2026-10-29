@@ -37,11 +37,11 @@ public class BuyStreakFreezeCommandHandler : IRequestHandler<BuyStreakFreezeComm
             .Where(c => c.UserId == request.UserId)
             .SumAsync(c => (int?)c.Coins, cancellationToken) ?? 0;
 
-        if (streak.FreezesAvailable >= 2)
+        if (streak.FreezesAvailable >= UserStreak.MaxFreezes)
         {
             return new BuyFreezeResultDto(
                 false,
-                "Zaten maksimum sayıda (2) Seri Dondurucuya sahipsiniz.",
+                $"Zaten maksimum sayıda ({UserStreak.MaxFreezes}) Seri Dondurucuya sahipsiniz.",
                 currentCoins,
                 streak.FreezesAvailable);
         }

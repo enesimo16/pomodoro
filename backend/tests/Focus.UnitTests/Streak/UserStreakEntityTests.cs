@@ -104,4 +104,98 @@ public class UserStreakEntityTests
         Assert.False(added2);
         Assert.Equal(2, streak.FreezesAvailable);
     }
+
+    [Fact]
+    public void OvernightFreeze_MarksMissedDayAsCovered_SoNextActivityKeepsStreakWithoutSecondFreeze()
+    {
+        var streak = UserStreak.CreateDefault(Guid.NewGuid());
+        var day1 = new DateTime(2026, 10, 1, 12, 0, 0, DateTimeKind.Utc);
+        streak.RecordActivity(day1);
+        streak.RecordActivity(day1.AddDays(1));
+        streak.AddFreeze(1);
+        Assert.Equal(2, streak.CurrentStreak);
+        Assert.Equal(2, streak.FreezesAvailable);
+
+        // Oct 3 hic odaklanilmadi; gece isi Oct 4 00:30'da calisir
+        var (freezeUsed, reset) = streak.ApplyOvernightFreezeOrReset(new DateTime(2026, 10, 4, 0, 30, 0, DateTimeKind.Utc));
+        Assert.True(freezeUsed);
+        Assert.False(reset);
+        Assert.Equal(1, streak.FreezesAvailable);
+        Assert.Equal(new DateTime(2026, 10, 3), streak.LastActivityDate);
+
+        var result = streak.RecordActivity(new DateTime(2026, 10, 4, 9, 0, 0, DateTimeKind.Utc));
+
+        Assert.False(result.FreezeUsed);
+        Assert.Equal(3, streak.CurrentStreak);
+        Assert.Equal(1, streak.FreezesAvailable);
+    }
+
+    [Fact]
+    public void OvernightFreeze_WithSingleFreeze_KeepsStreakOnNextActivity()
+    {
+        var streak = UserStreak.CreateDefault(Guid.NewGuid());
+        streak.RecordActivity(new DateTime(2026, 10, 1, 12, 0, 0, DateTimeKind.Utc));
+
+        streak.ApplyOvernightFreezeOrReset(new DateTime(2026, 10, 3, 0, 30, 0, DateTimeKind.Utc));
+        var result = streak.RecordActivity(new DateTime(2026, 10, 3, 10, 0, 0, DateTimeKind.Utc));
+
+        Assert.False(result.FreezeUsed);
+        Assert.Equal(2, streak.CurrentStreak);
+        Assert.Equal(0, streak.FreezesAvailable);
+    }
+
+    [Fact]
+    public void OvernightJob_IsIdempotentWithinTheSameNight()
+    {
+        var streak = UserStreak.CreateDefault(Guid.NewGuid());
+        streak.AddFreeze(1);
+        streak.RecordActivity(new DateTime(2026, 10, 1, 12, 0, 0, DateTimeKind.Utc));
+        var night = new DateTime(2026, 10, 3, 0, 30, 0, DateTimeKind.Utc);
+
+        streak.ApplyOvernightFreezeOrReset(night);
+        var second = streak.ApplyOvernightFreezeOrReset(night.AddHours(1));
+
+        Assert.False(second.FreezeUsed);
+        Assert.False(second.Reset);
+        Assert.Equal(1, streak.FreezesAvailable);
+    }
+
+    [Fact]
+    public void ExtendedAbsence_BurnsOneFreezePerMissedDayThenResetsAndStops()
+    {
+        var streak = UserStreak.CreateDefault(Guid.NewGuid());
+        streak.AddFreeze(1);
+        streak.RecordActivity(new DateTime(2026, 10, 1, 12, 0, 0, DateTimeKind.Utc));
+
+        // Oct 2, 3, 4 ve 5 kacirildi; gece isleri Oct 3..6 arasi calisir
+        var night1 = streak.ApplyOvernightFreezeOrReset(new DateTime(2026, 10, 3, 0, 30, 0, DateTimeKind.Utc));
+        var night2 = streak.ApplyOvernightFreezeOrReset(new DateTime(2026, 10, 4, 0, 30, 0, DateTimeKind.Utc));
+        var night3 = streak.ApplyOvernightFreezeOrReset(new DateTime(2026, 10, 5, 0, 30, 0, DateTimeKind.Utc));
+        var night4 = streak.ApplyOvernightFreezeOrReset(new DateTime(2026, 10, 6, 0, 30, 0, DateTimeKind.Utc));
+
+        Assert.True(night1.FreezeUsed);
+        Assert.True(night2.FreezeUsed);
+        Assert.True(night3.Reset);
+        Assert.False(night4.FreezeUsed);
+        Assert.False(night4.Reset);
+        Assert.Equal(0, streak.FreezesAvailable);
+        Assert.Equal(0, streak.CurrentStreak);
+    }
+
+    [Fact]
+    public void RecordActivity_AfterReset_DoesNotBurnAFreezeForAResetStreak()
+    {
+        var streak = UserStreak.CreateDefault(Guid.NewGuid());
+        streak.RecordActivity(new DateTime(2026, 10, 1, 12, 0, 0, DateTimeKind.Utc));
+        streak.ApplyOvernightFreezeOrReset(new DateTime(2026, 10, 3, 0, 30, 0, DateTimeKind.Utc));
+        streak.ApplyOvernightFreezeOrReset(new DateTime(2026, 10, 4, 0, 30, 0, DateTimeKind.Utc));
+        Assert.Equal(0, streak.CurrentStreak);
+        streak.AddFreeze(1);
+
+        var result = streak.RecordActivity(new DateTime(2026, 10, 4, 10, 0, 0, DateTimeKind.Utc));
+
+        Assert.False(result.FreezeUsed);
+        Assert.Equal(1, streak.CurrentStreak);
+        Assert.Equal(1, streak.FreezesAvailable);
+    }
 }

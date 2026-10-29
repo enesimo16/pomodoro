@@ -4,6 +4,8 @@ namespace Focus.Domain.Entities;
 
 public class UserStreak : BaseEntity<Guid>
 {
+    public const int MaxFreezes = 2;
+
     public Guid UserId { get; private set; }
     public int CurrentStreak { get; private set; }
     public int LongestStreak { get; private set; }
@@ -66,8 +68,8 @@ public class UserStreak : BaseEntity<Guid>
             return (CurrentStreak, bonus, false, msg);
         }
 
-        // 1 gün kaçırılmışsa ve dondurucu varsa dondurucu devreye girer
-        if (LastActivityDate.Value.Date == today.AddDays(-2) && FreezesAvailable > 0)
+        // 1 gün kaçırılmışsa ve dondurucu varsa dondurucu devreye girer (sıfırlanmış seri için dondurucu harcanmaz)
+        if (CurrentStreak > 0 && LastActivityDate.Value.Date == today.AddDays(-2) && FreezesAvailable > 0)
         {
             FreezesAvailable--;
             LastFreezeUsedDate = yesterday;
@@ -90,9 +92,9 @@ public class UserStreak : BaseEntity<Guid>
 
     public bool AddFreeze(int count = 1)
     {
-        if (FreezesAvailable >= 2) return false;
+        if (FreezesAvailable >= MaxFreezes) return false;
 
-        FreezesAvailable = Math.Min(2, FreezesAvailable + count);
+        FreezesAvailable = Math.Min(MaxFreezes, FreezesAvailable + count);
         return true;
     }
 
@@ -110,6 +112,8 @@ public class UserStreak : BaseEntity<Guid>
             {
                 FreezesAvailable--;
                 LastFreezeUsedDate = yesterday;
+                // Kacirilan gun korunmus sayilir; ertesi gun RecordActivity ikinci bir dondurucu harcamaz
+                LastActivityDate = yesterday;
                 return (true, false);
             }
 
