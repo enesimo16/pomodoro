@@ -18,6 +18,8 @@ public class JwtTokenService : IJwtTokenService
         _jwtSettings = jwtOptions.Value;
     }
 
+    public TimeSpan RefreshTokenLifetime => TimeSpan.FromDays(_jwtSettings.RefreshTokenDays);
+
     public (string AccessToken, string RefreshToken, DateTime ExpiresAt) GenerateTokens(User user)
     {
         var expiresAt = DateTime.UtcNow.AddMinutes(_jwtSettings.AccessTokenMinutes);

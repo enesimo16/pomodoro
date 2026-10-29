@@ -1,8 +1,10 @@
 using Focus.Application.Features.Auth.Commands;
 using Focus.Application.Features.Auth.DTOs;
 using Focus.Application.Features.Auth.Queries;
+using Focus.Infrastructure.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace Focus.WebAPI.Controllers;
 
@@ -14,6 +16,13 @@ public record RevokeTokenRequest(string? RefreshToken);
 [Route("api/v1/auth")]
 public class AuthController : BaseApiController
 {
+    private readonly JwtSettings _jwtSettings;
+
+    public AuthController(IOptions<JwtSettings> jwtOptions)
+    {
+        _jwtSettings = jwtOptions.Value;
+    }
+
     /// <summary>
     /// Sıfır sürtünmeyle anında misafir oturumu açar; varsayılan piksel odayı, avatarı ve tercihleri oluşturarak JWT token döndürür.
     /// </summary>
@@ -91,10 +100,10 @@ public class AuthController : BaseApiController
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest? request, CancellationToken cancellationToken)
     {
-        var token = request?.RefreshToken ?? Request.Cookies["focus_rt"];
+        var token = string.IsNullOrEmpty(request?.RefreshToken) ? Request.Cookies["focus_rt"] : request.RefreshToken;
         if (string.IsNullOrEmpty(token))
         {
-            return Unauthorized(new { message = "Yenileme belirteci bulunamadı." });
+            return Unauthorized(new { message = "Oturum geçersiz." });
         }
 
         try
@@ -118,7 +127,7 @@ public class AuthController : BaseApiController
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> Logout([FromBody] RevokeTokenRequest? request, CancellationToken cancellationToken)
     {
-        var token = request?.RefreshToken ?? Request.Cookies["focus_rt"];
+        var token = string.IsNullOrEmpty(request?.RefreshToken) ? Request.Cookies["focus_rt"] : request.RefreshToken;
         if (!string.IsNullOrEmpty(token))
         {
             var command = new RevokeTokenCommand(token, GetClientIpAddress());
@@ -166,7 +175,7 @@ public class AuthController : BaseApiController
             HttpOnly = true,
             Secure = !isDevelopment,
             SameSite = SameSiteMode.Lax,
-            Expires = DateTime.UtcNow.AddDays(30)
+            Expires = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenDays)
         };
 
         Response.Cookies.Append("focus_rt", refreshToken, refreshCookieOptions);

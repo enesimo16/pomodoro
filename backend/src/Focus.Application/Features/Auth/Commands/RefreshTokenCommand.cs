@@ -12,6 +12,8 @@ public record RefreshTokenCommand(
 
 public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, AuthResponseDto>
 {
+    private const string InvalidSessionMessage = "Oturum geçersiz.";
+
     private readonly IApplicationDbContext _context;
     private readonly IJwtTokenService _jwtTokenService;
 
@@ -37,28 +39,23 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, A
 
         if (existingToken == null)
         {
-            throw new UnauthorizedAccessException("Geçersiz yenileme belirteci.");
+            throw new UnauthorizedAccessException(InvalidSessionMessage);
         }
 
         if (existingToken.IsRevoked)
         {
-            // Guvenlik: Belirtec tekrar kullanma girisimi (Replay Attack). Tum aktif oturumlari kapat.
-            var activeTokens = await _context.RefreshTokens
-                .Where(t => t.UserId == existingToken.UserId && t.RevokedAt == null && t.ExpiresAt > DateTime.UtcNow)
-                .ToListAsync(cancellationToken);
-
-            foreach (var t in activeTokens)
+            // Yalnizca rotasyonla degistirilmis belirtecin tekrar sunulmasi replay sayilir; cikis yapilmis belirtec duz reddedilir
+            if (existingToken.WasRotated)
             {
-                t.Revoke(request.IpAddress, "revoked_due_to_replay_attack");
+                await RevokeAllActiveTokensAsync(existingToken.UserId, request.IpAddress, cancellationToken);
             }
 
-            await _context.SaveChangesAsync(cancellationToken);
-            throw new UnauthorizedAccessException("Güvenlik ihlali: Belirteç daha önce kullanılmış. Tüm oturumlar sonlandırıldı.");
+            throw new UnauthorizedAccessException(InvalidSessionMessage);
         }
 
         if (existingToken.IsExpired)
         {
-            throw new UnauthorizedAccessException("Yenileme belirtecinin süresi dolmuş.");
+            throw new UnauthorizedAccessException(InvalidSessionMessage);
         }
 
         var user = existingToken.User;
@@ -66,10 +63,18 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, A
         var newHash = _jwtTokenService.HashToken(newRefreshToken);
 
         existingToken.Revoke(request.IpAddress, newHash);
-        var newRefreshTokenRecord = new RefreshToken(user.Id, newHash, DateTime.UtcNow.AddDays(30), request.IpAddress);
+        var newRefreshTokenRecord = new RefreshToken(user.Id, newHash, DateTime.UtcNow.Add(_jwtTokenService.RefreshTokenLifetime), request.IpAddress);
         _context.RefreshTokens.Add(newRefreshTokenRecord);
 
-        await _context.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            // Ayni belirec es zamanli baska bir istekte tuketildi
+            throw new UnauthorizedAccessException(InvalidSessionMessage);
+        }
 
         return new AuthResponseDto(
             UserDto.FromEntity(user),
@@ -78,5 +83,26 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, A
             newAccessToken,
             newRefreshToken,
             expiresAt);
+    }
+
+    private async Task RevokeAllActiveTokensAsync(Guid userId, string? ipAddress, CancellationToken cancellationToken)
+    {
+        var activeTokens = await _context.RefreshTokens
+            .Where(t => t.UserId == userId && t.RevokedAt == null && t.ExpiresAt > DateTime.UtcNow)
+            .ToListAsync(cancellationToken);
+
+        foreach (var token in activeTokens)
+        {
+            token.Revoke(ipAddress);
+        }
+
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            // Baska bir istek bu belirteclerden bazilarini zaten iptal etti
+        }
     }
 }

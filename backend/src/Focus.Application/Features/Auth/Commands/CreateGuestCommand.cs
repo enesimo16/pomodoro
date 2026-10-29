@@ -34,7 +34,7 @@ public class CreateGuestCommandHandler : IRequestHandler<CreateGuestCommand, Aut
         var (accessToken, refreshToken, expiresAt) = _jwtTokenService.GenerateTokens(user);
         var tokenHash = _jwtTokenService.HashToken(refreshToken);
 
-        user.AddRefreshToken(tokenHash, DateTime.UtcNow.AddDays(30), request.IpAddress);
+        user.AddRefreshToken(tokenHash, DateTime.UtcNow.Add(_jwtTokenService.RefreshTokenLifetime), request.IpAddress);
 
         _context.Users.Add(user);
         _context.CoinLedgerEntries.Add(welcomeBonus);

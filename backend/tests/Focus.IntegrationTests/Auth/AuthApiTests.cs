@@ -128,4 +128,41 @@ public class AuthApiTests : IClassFixture<CustomWebApplicationFactory>
         var body = await response.Content.ReadAsStringAsync();
         body.Should().Contain("DisplayName").And.Contain("TimeZoneId");
     }
+
+    [Fact]
+    public async Task RefreshToken_ReusingRotatedToken_ShouldRevokeNewSession()
+    {
+        var (client, authData) = await _factory.CreateAuthenticatedClientAsync("ReplayTesti");
+
+        var rotated = await client.PostAsJsonAsync("/api/v1/auth/refresh", new { refreshToken = authData.RefreshToken });
+        var newData = (await rotated.Content.ReadFromJsonAsync<AuthResponseDto>())!;
+
+        var replay = await client.PostAsJsonAsync("/api/v1/auth/refresh", new { refreshToken = authData.RefreshToken });
+        var afterReplay = await client.PostAsJsonAsync("/api/v1/auth/refresh", new { refreshToken = newData.RefreshToken });
+
+        replay.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        afterReplay.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task RefreshToken_AfterLogout_ShouldReturnGeneric401()
+    {
+        var (client, authData) = await _factory.CreateAuthenticatedClientAsync("LogoutReplayTesti");
+
+        await client.PostAsJsonAsync("/api/v1/auth/logout", new { refreshToken = authData.RefreshToken });
+        var reuse = await client.PostAsJsonAsync("/api/v1/auth/refresh", new { refreshToken = authData.RefreshToken });
+
+        reuse.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        (await reuse.Content.ReadAsStringAsync()).Should().Contain("Oturum geçersiz");
+    }
+
+    [Fact]
+    public async Task RefreshToken_WithEmptyBodyTokenAndNoCookie_ShouldReturn401()
+    {
+        var client = _factory.CreateClient();
+
+        var response = await client.PostAsJsonAsync("/api/v1/auth/refresh", new { refreshToken = "" });
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
 }

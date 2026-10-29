@@ -12,10 +12,12 @@ public class RefreshToken : BaseEntity<Guid>
     public DateTime? RevokedAt { get; private set; }
     public string? RevokedByIp { get; private set; }
     public string? ReplacedByTokenHash { get; private set; }
+    public Guid ConcurrencyStamp { get; private set; }
 
     public bool IsExpired => DateTime.UtcNow >= ExpiresAt;
     public bool IsRevoked => RevokedAt != null;
     public bool IsActive => !IsRevoked && !IsExpired;
+    public bool WasRotated => ReplacedByTokenHash != null;
 
     // Navigation
     public User User { get; private set; } = null!;
@@ -31,6 +33,7 @@ public class RefreshToken : BaseEntity<Guid>
         ExpiresAt = expiresAt;
         CreatedAt = DateTime.UtcNow;
         CreatedByIp = createdByIp;
+        ConcurrencyStamp = Guid.NewGuid();
     }
 
     public void Revoke(string? revokedByIp, string? replacedByTokenHash = null)
@@ -38,5 +41,6 @@ public class RefreshToken : BaseEntity<Guid>
         RevokedAt = DateTime.UtcNow;
         RevokedByIp = revokedByIp;
         ReplacedByTokenHash = replacedByTokenHash;
+        ConcurrencyStamp = Guid.NewGuid();
     }
 }

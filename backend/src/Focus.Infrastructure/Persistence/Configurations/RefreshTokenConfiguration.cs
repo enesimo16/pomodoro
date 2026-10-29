@@ -27,5 +27,8 @@ public class RefreshTokenConfiguration : IEntityTypeConfiguration<RefreshToken>
 
         builder.Property(t => t.ReplacedByTokenHash)
             .HasMaxLength(128);
+
+        builder.Property(t => t.ConcurrencyStamp)
+            .IsConcurrencyToken();
     }
 }
