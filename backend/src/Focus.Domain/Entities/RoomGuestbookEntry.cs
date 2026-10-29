@@ -5,6 +5,8 @@ namespace Focus.Domain.Entities;
 
 public class RoomGuestbookEntry : BaseEntity<Guid>
 {
+    public const int MaxMessageLength = 300;
+
     public Guid StudyRoomId { get; private set; }
     public Guid SenderUserId { get; private set; }
     public string SenderDisplayName { get; private set; } = string.Empty;
@@ -28,13 +30,17 @@ public class RoomGuestbookEntry : BaseEntity<Guid>
         if (string.IsNullOrWhiteSpace(message))
             throw new ArgumentException("Mesaj bos olamaz.", nameof(message));
 
+        var trimmed = message.Trim();
+        if (trimmed.Length > MaxMessageLength)
+            throw new ArgumentException($"Mesaj en fazla {MaxMessageLength} karakter olabilir.", nameof(message));
+
         return new RoomGuestbookEntry
         {
             Id = Guid.NewGuid(),
             StudyRoomId = studyRoomId,
             SenderUserId = senderUserId,
             SenderDisplayName = senderDisplayName.Trim(),
-            Message = message.Trim(),
+            Message = trimmed,
             GiftType = giftType,
             CreatedAt = DateTime.UtcNow
         };

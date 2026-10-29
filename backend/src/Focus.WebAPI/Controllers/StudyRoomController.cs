@@ -265,6 +265,24 @@ public class StudyRoomController : BaseApiController
         return Ok(entries);
     }
 
+    /// <summary>
+    /// Ziyaretçi defteri kaydını oda sahibi veya kaydı yazan kullanıcı siler.
+    /// </summary>
+    [Authorize]
+    [HttpDelete("{code}/guestbook/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteGuestbookEntry(
+        [FromRoute] string code,
+        [FromRoute] Guid id,
+        CancellationToken cancellationToken)
+    {
+        if (!TryGetUserId(out var userId)) return Unauthorized();
+
+        var deleted = await _guestbookService.DeleteEntryAsync(code, id, userId, cancellationToken);
+        return deleted ? NoContent() : NotFound();
+    }
+
     private async Task BroadcastLeaveAsync(Guid userId, LeftRoomDto left)
     {
         var group = _roomHub.Clients.Group(RoomHub.GroupName(left.RoomCode));

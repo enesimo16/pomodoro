@@ -8,6 +8,8 @@ namespace Focus.Infrastructure.Services;
 
 public class NotificationService : INotificationService
 {
+    public const int MaxListLimit = 100;
+
     private readonly IApplicationDbContext _context;
 
     public NotificationService(IApplicationDbContext context)
@@ -24,7 +26,7 @@ public class NotificationService : INotificationService
             .AsNoTracking()
             .Where(n => n.UserId == userId)
             .OrderByDescending(n => n.CreatedAt)
-            .Take(limit)
+            .Take(Math.Clamp(limit, 1, MaxListLimit))
             .Select(n => new NotificationDto(
                 n.Id,
                 n.Type,

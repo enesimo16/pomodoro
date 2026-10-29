@@ -16,4 +16,10 @@ public interface IGuestbookService
         string roomCode,
         int limit = 30,
         CancellationToken cancellationToken = default);
+
+    Task<bool> DeleteEntryAsync(
+        string roomCode,
+        Guid entryId,
+        Guid requesterUserId,
+        CancellationToken cancellationToken = default);
 }
