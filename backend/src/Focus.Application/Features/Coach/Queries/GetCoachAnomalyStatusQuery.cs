@@ -37,6 +37,20 @@ public class GetCoachAnomalyStatusQueryHandler : IRequestHandler<GetCoachAnomaly
             .OrderByDescending(s => s.StartedAt)
             .ToListAsync(cancellationToken);
 
+        // Uzun suredir ara veren kullanicinin son seansi pencere disinda kalsa da yokluk tespiti icin eklenir
+        if (recentSessions.Count == 0)
+        {
+            var lastSession = await _context.FocusSessions
+                .Where(s => s.UserId == request.UserId)
+                .OrderByDescending(s => s.StartedAt)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (lastSession != null)
+            {
+                recentSessions.Add(lastSession);
+            }
+        }
+
         var recentCheckIns = await _context.SessionCheckIns
             .Where(c => c.UserId == request.UserId && c.CreatedAt >= sinceDate)
             .OrderByDescending(c => c.CreatedAt)

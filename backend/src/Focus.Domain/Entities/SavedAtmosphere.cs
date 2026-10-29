@@ -78,32 +78,38 @@ public class SavedAtmosphere : BaseEntity<Guid>, IAggregateRoot
         {
             Id = Guid.NewGuid(),
             UserId = userId,
-            Name = name.Trim(),
-            Description = description?.Trim() ?? string.Empty,
-            Aesthetic = string.IsNullOrWhiteSpace(aesthetic) ? "RetroStudio" : aesthetic.Trim(),
-            WallColor = string.IsNullOrWhiteSpace(wallColor) ? "#2b2520" : wallColor.Trim(),
-            FloorColor = string.IsNullOrWhiteSpace(floorColor) ? "#1c1815" : floorColor.Trim(),
-            AccentLightColor = string.IsNullOrWhiteSpace(accentLightColor) ? "#ffb86c" : accentLightColor.Trim(),
-            WallPaperId = wallPaperId,
-            FloorId = floorId,
-            WeatherEffect = string.IsNullOrWhiteSpace(weatherEffect) ? "Clear" : weatherEffect.Trim(),
-            WindowVideoQuery = string.IsNullOrWhiteSpace(windowVideoQuery) ? "lofi room window" : windowVideoQuery.Trim(),
-            MusicGenre = string.IsNullOrWhiteSpace(musicGenre) ? "Lo-Fi Chillhop" : musicGenre.Trim(),
-            MusicSearchQuery = string.IsNullOrWhiteSpace(musicSearchQuery) ? "lofi chillhop" : musicSearchQuery.Trim(),
+            Name = Fit(name.Trim(), 150),
+            Description = Fit(description?.Trim() ?? string.Empty, 500),
+            Aesthetic = Fit(string.IsNullOrWhiteSpace(aesthetic) ? "RetroStudio" : aesthetic.Trim(), 50),
+            WallColor = Fit(string.IsNullOrWhiteSpace(wallColor) ? "#2b2520" : wallColor.Trim(), 20),
+            FloorColor = Fit(string.IsNullOrWhiteSpace(floorColor) ? "#1c1815" : floorColor.Trim(), 20),
+            AccentLightColor = Fit(string.IsNullOrWhiteSpace(accentLightColor) ? "#ffb86c" : accentLightColor.Trim(), 20),
+            WallPaperId = FitOrNull(wallPaperId, 100),
+            FloorId = FitOrNull(floorId, 100),
+            WeatherEffect = Fit(string.IsNullOrWhiteSpace(weatherEffect) ? "Clear" : weatherEffect.Trim(), 50),
+            WindowVideoQuery = Fit(string.IsNullOrWhiteSpace(windowVideoQuery) ? "lofi room window" : windowVideoQuery.Trim(), 100),
+            MusicGenre = Fit(string.IsNullOrWhiteSpace(musicGenre) ? "Lo-Fi Chillhop" : musicGenre.Trim(), 100),
+            MusicSearchQuery = Fit(string.IsNullOrWhiteSpace(musicSearchQuery) ? "lofi chillhop" : musicSearchQuery.Trim(), 150),
             MusicVolume = Math.Clamp(musicVolume, 0f, 1f),
-            AmbienceType = string.IsNullOrWhiteSpace(ambienceType) ? "RainOnWindow" : ambienceType.Trim(),
+            AmbienceType = Fit(string.IsNullOrWhiteSpace(ambienceType) ? "RainOnWindow" : ambienceType.Trim(), 50),
             AmbienceVolume = Math.Clamp(ambienceVolume, 0f, 1f),
-            NoiseType = string.IsNullOrWhiteSpace(noiseType) ? "BrownNoise" : noiseType.Trim(),
+            NoiseType = Fit(string.IsNullOrWhiteSpace(noiseType) ? "BrownNoise" : noiseType.Trim(), 50),
             NoiseVolume = Math.Clamp(noiseVolume, 0f, 1f),
             CutoffFrequencyHz = Math.Clamp(cutoffFrequencyHz, 50, 20000),
-            TextureType = string.IsNullOrWhiteSpace(textureType) ? "MechanicalKeyboard" : textureType.Trim(),
+            TextureType = Fit(string.IsNullOrWhiteSpace(textureType) ? "MechanicalKeyboard" : textureType.Trim(), 50),
             TextureVolume = Math.Clamp(textureVolume, 0f, 1f),
             RecommendedMinutes = Math.Clamp(recommendedMinutes, 5, 180),
             BreakMinutes = Math.Clamp(breakMinutes, 1, 60),
-            FlowShieldLevel = string.IsNullOrWhiteSpace(flowShieldLevel) ? "Standard" : flowShieldLevel.Trim(),
+            FlowShieldLevel = Fit(string.IsNullOrWhiteSpace(flowShieldLevel) ? "Standard" : flowShieldLevel.Trim(), 30),
             IsAiGenerated = isAiGenerated,
-            PromptUsed = promptUsed?.Trim(),
+            PromptUsed = FitOrNull(promptUsed?.Trim(), 1000),
             CreatedAt = DateTime.UtcNow
         };
     }
+
+    private static string Fit(string value, int maxLength) =>
+        value.Length <= maxLength ? value : value[..maxLength];
+
+    private static string? FitOrNull(string? value, int maxLength) =>
+        value == null ? null : Fit(value, maxLength);
 }

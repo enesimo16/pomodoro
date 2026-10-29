@@ -16,6 +16,9 @@ public record SubmitSessionReflectionCommand(
 
 public class SubmitSessionReflectionCommandHandler : IRequestHandler<SubmitSessionReflectionCommand, SessionReflectionDto>
 {
+    private const int MinContributionQuality = 4;
+    private const int MaxContributionNoteLength = 280;
+
     private readonly IApplicationDbContext _context;
     private readonly IVectorMemoryService _vectorMemoryService;
     private readonly IAnonymizationService _anonymizationService;
@@ -55,33 +58,52 @@ public class SubmitSessionReflectionCommandHandler : IRequestHandler<SubmitSessi
         var note = string.IsNullOrWhiteSpace(request.DistractionNote) ? "Not girilmedi" : request.DistractionNote.Trim();
 
         // 1. Kisisel Vektor Havuzuna Ekleme (User-Specific Memory)
-        var privateMemoryContent = $"{durationMin} dakikalik seans sonu degeri: Odak {request.FocusQuality}/5, His '{request.MoodAfter}'. Not: {note}";
+        var privateMemoryContent = $"{durationMin} dakikalik seans sonu degeri: Odak {reflection.FocusQuality}/5, His '{request.MoodAfter}'. Not: {note}";
         var privateEmbedding = await _vectorMemoryService.GenerateEmbeddingAsync(privateMemoryContent, cancellationToken);
         await _vectorMemoryService.AddPrivateMemoryAsync(
             request.UserId,
             MemoryCategory.ProductivityPattern,
             privateMemoryContent,
             privateEmbedding,
-            importance: request.FocusQuality,
+            importance: reflection.FocusQuality,
             cancellationToken: cancellationToken);
 
         // 2. Kolektif Anonim Vektor Havuzuna Ekleme (Global Anonymized Wisdom)
-        // Eger yuksek odak veya ogretici bir mola deneyimi varsa kisisel verileri temizleyip havuza kat
-        if (request.FocusQuality >= 4 && !string.IsNullOrWhiteSpace(request.DistractionNote))
+        // Yalnizca tamamlanmis seansin kayitli yansimasi yuksek odak iceriyorsa ve ajan acik ise kisisel veriler temizlenerek havuza katilir
+        if (session.Status == SessionStatus.Completed
+            && reflection.FocusQuality >= MinContributionQuality
+            && !string.IsNullOrWhiteSpace(reflection.DistractionNote)
+            && !await _context.UserPreferences.AnyAsync(p => p.UserId == request.UserId && !p.AgentEnabled, cancellationToken)
+            && !await _context.AgentMemories.AnyAsync(m => m.SourceSessionId == session.Id, cancellationToken))
         {
             var user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == request.UserId, cancellationToken);
-            var sanitizedNote = _anonymizationService.AnonymizeAndGeneralize(request.DistractionNote, user?.DisplayName);
+            var sanitizedNote = _anonymizationService.AnonymizeAndGeneralize(reflection.DistractionNote, user?.DisplayName);
+            if (sanitizedNote.Length > MaxContributionNoteLength)
+            {
+                sanitizedNote = sanitizedNote[..MaxContributionNoteLength];
+            }
 
             if (!string.IsNullOrWhiteSpace(sanitizedNote))
             {
-                var globalContent = $"{durationMin} dakikalik odaklanmada '{request.MoodAfter}' deneyimi saglayan strateji: {sanitizedNote}";
+                var globalContent = $"{durationMin} dakikalik odaklanmada '{reflection.MoodAfter}' deneyimi saglayan strateji: {sanitizedNote}";
                 var globalEmbedding = await _vectorMemoryService.GenerateEmbeddingAsync(globalContent, cancellationToken);
-                await _vectorMemoryService.AddGlobalMemoryAsync(
+
+                _context.AgentMemories.Add(AgentMemory.CreateGlobal(
                     MemoryCategory.DeepWorkStrategy,
                     globalContent,
                     globalEmbedding,
                     importance: 4,
-                    cancellationToken: cancellationToken);
+                    sourceSessionId: session.Id));
+
+                try
+                {
+                    await _context.SaveChangesAsync(cancellationToken);
+                }
+                catch (DbUpdateException)
+                {
+                    // Ayni seans icin eszamanli katki: benzersiz indeks ikinci kaydi reddeder
+                    _context.DiscardPendingChanges();
+                }
             }
         }
 

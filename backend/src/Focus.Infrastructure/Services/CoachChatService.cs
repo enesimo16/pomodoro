@@ -17,7 +17,9 @@ public class CoachChatService : ICoachChatService
     private readonly ApplicationDbContext _context;
     private readonly IFocusCoachEngine _coachEngine;
     private readonly IVectorMemoryService _vectorMemoryService;
-    private readonly IAnonymizationService _anonymizationService;
+    private readonly IAiUsageService _aiUsageService;
+    private const int ChatMaxOutputTokens = 150;
+
     private readonly HttpClient _httpClient;
     private readonly AiSettings _aiSettings;
     private readonly ILogger<CoachChatService> _logger;
@@ -26,7 +28,7 @@ public class CoachChatService : ICoachChatService
         ApplicationDbContext context,
         IFocusCoachEngine coachEngine,
         IVectorMemoryService vectorMemoryService,
-        IAnonymizationService anonymizationService,
+        IAiUsageService aiUsageService,
         HttpClient httpClient,
         IOptions<AiSettings> aiSettings,
         ILogger<CoachChatService> logger)
@@ -34,7 +36,7 @@ public class CoachChatService : ICoachChatService
         _context = context;
         _coachEngine = coachEngine;
         _vectorMemoryService = vectorMemoryService;
-        _anonymizationService = anonymizationService;
+        _aiUsageService = aiUsageService;
         _httpClient = httpClient;
         _aiSettings = aiSettings.Value;
         _logger = logger;
@@ -56,6 +58,20 @@ public class CoachChatService : ICoachChatService
             .Where(s => s.UserId == userId && s.StartedAt >= sinceDate)
             .OrderByDescending(s => s.StartedAt)
             .ToListAsync(cancellationToken);
+
+        // Uzun suredir ara veren kullanicinin son seansi pencere disinda kalsa da yokluk tespiti icin eklenir
+        if (recentSessions.Count == 0)
+        {
+            var lastSession = await _context.FocusSessions
+                .Where(s => s.UserId == userId)
+                .OrderByDescending(s => s.StartedAt)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (lastSession != null)
+            {
+                recentSessions.Add(lastSession);
+            }
+        }
 
         var recentCheckIns = await _context.SessionCheckIns
             .Where(c => c.UserId == userId && c.CreatedAt >= sinceDate)
@@ -82,7 +98,7 @@ public class CoachChatService : ICoachChatService
 
         if (_aiSettings.IsGeminiConfigured)
         {
-            reply = await GenerateGeminiResponseAsync(user.DisplayName, userMessage, anomaly, memories, cancellationToken);
+            reply = await GenerateGeminiResponseAsync(userId, user.DisplayName, userMessage, anomaly, memories, cancellationToken);
         }
         else
         {
@@ -92,7 +108,9 @@ public class CoachChatService : ICoachChatService
         // 4. Eger kullanici bir aliskanlik/tercih paylastiysa yeni hafiza uret
         var generatedNewMemory = false;
         var lowerMsg = userMessage.ToLowerInvariant();
-        if (lowerMsg.Contains("dakika") || lowerMsg.Contains("severim") || lowerMsg.Contains("muzik") || lowerMsg.Contains("gece") || lowerMsg.Contains("sabah"))
+        var agentDisabled = await _context.UserPreferences
+            .AnyAsync(p => p.UserId == userId && !p.AgentEnabled, cancellationToken);
+        if (!agentDisabled && (lowerMsg.Contains("dakika") || lowerMsg.Contains("severim") || lowerMsg.Contains("muzik") || lowerMsg.Contains("gece") || lowerMsg.Contains("sabah")))
         {
             var newMemoryContent = $"Kullanici tercihi: {userMessage.Trim()}";
             var newEmbedding = await _vectorMemoryService.GenerateEmbeddingAsync(newMemoryContent, cancellationToken);
@@ -116,6 +134,7 @@ public class CoachChatService : ICoachChatService
     }
 
     private async Task<string> GenerateGeminiResponseAsync(
+        Guid userId,
         string displayName,
         string userMessage,
         CoachAnomalyStatusDto anomaly,
@@ -124,29 +143,39 @@ public class CoachChatService : ICoachChatService
     {
         try
         {
-            var memoryContext = string.Join("\n", memories.Select(m => $"- {(m.IsGlobal ? "[Kolektif Bilgelik]" : "[Kisisel Hafiza]")}: {m.Content}"));
             var systemPrompt = $"""
                 Sen kullanicinin calisma masasindaki retro terminalde canlanan bilge, samimi ve kisa konusan kisisel odaklanma kocusun.
                 Tıbbi teshis koymazsin. Kullaniciya emir vermezsin veya 'calismayi birak/azalt' demezsin.
                 Amacin kullaniciyi sakinlestirmek, aktif toparlanmayi ve derin odagi desteklemektir.
                 En fazla 2-3 kisa cumle ile cevap ver.
+                {PromptSafety.MemoryBlockInstruction}
+                """;
 
-                Kullanici Adi: {displayName}
+            var userContent = $"""
+                Kullanici Adi: {PromptSafety.SanitizeInline(displayName, PromptSafety.MaxDisplayNameLength)}
                 Anomali Durumu: {anomaly.AnomalyType} (Yorgunluk Skoru: {anomaly.DailyFatigueScore}/100, Haftalik Odak: {anomaly.WeeklyFocusMinutes} dk)
                 Hafiza Bilgileri:
-                {memoryContext}
+                {PromptSafety.BuildMemoryBlock(memories)}
+
+                Kullanici Mesaji:
+                {userMessage}
                 """;
+
+            await _aiUsageService.ConsumeOrThrowAsync(
+                userId,
+                PromptSafety.EstimateTokens(systemPrompt, userContent) + ChatMaxOutputTokens,
+                cancellationToken);
 
             var payload = new
             {
                 system_instruction = new { parts = new[] { new { text = systemPrompt } } },
                 contents = new[]
                 {
-                    new { role = "user", parts = new[] { new { text = userMessage } } }
+                    new { role = "user", parts = new[] { new { text = userContent } } }
                 },
                 generationConfig = new
                 {
-                    maxOutputTokens = 150,
+                    maxOutputTokens = ChatMaxOutputTokens,
                     temperature = 0.7
                 }
             };

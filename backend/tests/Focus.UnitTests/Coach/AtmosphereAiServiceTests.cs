@@ -29,18 +29,35 @@ public class AtmosphereAiServiceTests
         return new ApplicationDbContext(options);
     }
 
-    private static (AtmosphereAiService Service, ApplicationDbContext Context) CreateSut()
+    private sealed class StubHandler : HttpMessageHandler
+    {
+        private readonly string _body;
+
+        public StubHandler(string body)
+        {
+            _body = body;
+        }
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+            => Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK) { Content = new StringContent(_body) });
+    }
+
+    private static (AtmosphereAiService Service, ApplicationDbContext Context) CreateSut(
+        AiSettings? settings = null,
+        HttpMessageHandler? handler = null,
+        IAiUsageService? usage = null,
+        int weatherCode = 1)
     {
         var context = CreateDbContext();
 
         var mockCoachEngine = new Mock<IFocusCoachEngine>();
-        mockCoachEngine.Setup(e => e.CalculateDailyFatigueScore(It.IsAny<List<FocusSession>>()))
+        mockCoachEngine.Setup(e => e.CalculateDailyFatigueScore(It.IsAny<List<FocusSession>>(), It.IsAny<TimeZoneInfo>()))
             .Returns(20.0);
 
         var mockVectorMemory = new Mock<IVectorMemoryService>();
         mockVectorMemory.Setup(v => v.GenerateEmbeddingAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new float[768]);
-        mockVectorMemory.Setup(v => v.QueryHybridMemoriesAsync(It.IsAny<Guid>(), It.IsAny<float[]>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+        mockVectorMemory.Setup(v => v.QueryHybridMemoriesAsync(It.IsAny<Guid>(), It.IsAny<float[]?>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<MemoryInsightDto>());
 
         var anonymizationService = new AnonymizationService();
@@ -50,7 +67,7 @@ public class AtmosphereAiServiceTests
             .ReturnsAsync(new WeatherReportDto(
                 Temperature: 18.5,
                 WindSpeed: 10.0,
-                WeatherCode: 1,
+                WeatherCode: weatherCode,
                 WeatherCondition: "Clear",
                 SuggestedTheme: "RetroStudio",
                 WindowEffect: "Clear",
@@ -60,8 +77,8 @@ public class AtmosphereAiServiceTests
                 IsDay: true,
                 Time: DateTime.UtcNow));
 
-        var apiSettings = Options.Create(new AiSettings());
-        var httpClient = new HttpClient();
+        var apiSettings = Options.Create(settings ?? new AiSettings());
+        var httpClient = handler == null ? new HttpClient() : new HttpClient(handler) { BaseAddress = new Uri(GeminiSettings.BaseUrl) };
         var logger = NullLogger<AtmosphereAiService>.Instance;
 
         var service = new AtmosphereAiService(
@@ -70,6 +87,8 @@ public class AtmosphereAiServiceTests
             mockVectorMemory.Object,
             anonymizationService,
             mockWeather.Object,
+            usage ?? Mock.Of<IAiUsageService>(),
+            TimeProvider.System,
             httpClient,
             apiSettings,
             logger);
@@ -213,13 +232,13 @@ public class AtmosphereAiServiceTests
 
         // 75 yorgunluk skoru ureten mock
         var mockCoachEngine = new Mock<IFocusCoachEngine>();
-        mockCoachEngine.Setup(e => e.CalculateDailyFatigueScore(It.IsAny<List<FocusSession>>()))
+        mockCoachEngine.Setup(e => e.CalculateDailyFatigueScore(It.IsAny<List<FocusSession>>(), It.IsAny<TimeZoneInfo>()))
             .Returns(75.0);
 
         var mockVectorMemory = new Mock<IVectorMemoryService>();
         mockVectorMemory.Setup(v => v.GenerateEmbeddingAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new float[768]);
-        mockVectorMemory.Setup(v => v.QueryHybridMemoriesAsync(It.IsAny<Guid>(), It.IsAny<float[]>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+        mockVectorMemory.Setup(v => v.QueryHybridMemoriesAsync(It.IsAny<Guid>(), It.IsAny<float[]?>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<MemoryInsightDto>());
 
         var anonymizationService = new AnonymizationService();
@@ -233,6 +252,8 @@ public class AtmosphereAiServiceTests
             mockVectorMemory.Object,
             anonymizationService,
             mockWeather.Object,
+            Mock.Of<IAiUsageService>(),
+            TimeProvider.System,
             new HttpClient(),
             Options.Create(new AiSettings()),
             NullLogger<AtmosphereAiService>.Instance);
@@ -336,9 +357,10 @@ public class AtmosphereAiServiceTests
             CreatedAt: DateTime.UtcNow);
 
         // 1. Save
-        var saved = await saveHandler.Handle(new SaveAtmosphereCommand(user.Id, generated, "Özel Salonum"), CancellationToken.None);
+        var saved = await saveHandler.Handle(new SaveAtmosphereCommand(user.Id, generated, "Özel Salonum", "gercek prompt"), CancellationToken.None);
         saved.Should().NotBeNull();
         saved.Name.Should().Be("Özel Salonum");
+        saved.PromptUsed.Should().Be("gercek prompt");
 
         // 2. Get
         var list = await getHandler.Handle(new GetSavedAtmospheresQuery(user.Id), CancellationToken.None);
@@ -351,5 +373,235 @@ public class AtmosphereAiServiceTests
 
         var listAfter = await getHandler.Handle(new GetSavedAtmospheresQuery(user.Id), CancellationToken.None);
         listAfter.Should().BeEmpty();
+    }
+
+    private static async Task<(AtmosphereAiService Sut, ApplicationDbContext Context, User User, FocusSession Session)> SeedCompletedSessionAsync(
+        int quality = 5,
+        string note = "ahmet@example.com ile calistim ve cok verimli gecti")
+    {
+        var (sut, context) = CreateSut();
+        var user = User.CreateGuest("Ahmet");
+        context.Users.Add(user);
+        var session = FocusSession.Start(user.Id, null, SessionKind.Focus, 45, 10);
+        session.Complete(45 * 60, 50, 10);
+        context.FocusSessions.Add(session);
+        context.SessionReflections.Add(new SessionReflection(session.Id, user.Id, quality, SessionMoodAfter.Accomplished, note));
+        await context.SaveChangesAsync();
+        return (sut, context, user, session);
+    }
+
+    [Fact]
+    public async Task ContributeSessionInsight_CalledTwiceForSameSession_ContributesOnce()
+    {
+        var (sut, context, user, session) = await SeedCompletedSessionAsync();
+
+        (await sut.ContributeSessionInsightAsync(user.Id, session.Id)).Should().BeTrue();
+        (await sut.ContributeSessionInsightAsync(user.Id, session.Id)).Should().BeFalse();
+
+        (await context.AgentMemories.CountAsync(m => m.SourceSessionId == session.Id)).Should().Be(1);
+    }
+
+    [Fact]
+    public async Task ContributeSessionInsight_LowStoredQuality_IsRejected()
+    {
+        var (sut, context, user, session) = await SeedCompletedSessionAsync(quality: 2);
+
+        (await sut.ContributeSessionInsightAsync(user.Id, session.Id)).Should().BeFalse();
+        (await context.AgentMemories.AnyAsync()).Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task ContributeSessionInsight_ForAnotherUsersSession_IsRejected()
+    {
+        var (sut, context, _, session) = await SeedCompletedSessionAsync();
+        var intruder = User.CreateGuest("Intruder");
+        context.Users.Add(intruder);
+        await context.SaveChangesAsync();
+
+        (await sut.ContributeSessionInsightAsync(intruder.Id, session.Id)).Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task ContributeSessionInsight_WithoutSessionOrWithRunningSession_IsRejected()
+    {
+        var (sut, context) = CreateSut();
+        var user = User.CreateGuest("Deniz");
+        context.Users.Add(user);
+        var running = FocusSession.Start(user.Id, null, SessionKind.Focus, 45, 10);
+        context.FocusSessions.Add(running);
+        await context.SaveChangesAsync();
+
+        (await sut.ContributeSessionInsightAsync(user.Id, Guid.Empty)).Should().BeFalse();
+        (await sut.ContributeSessionInsightAsync(user.Id, running.Id)).Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task ContributeSessionInsight_WhenAgentDisabled_IsRejected()
+    {
+        var (sut, context, user, session) = await SeedCompletedSessionAsync();
+        var prefs = await context.UserPreferences.FirstAsync(p => p.UserId == user.Id);
+        prefs.UpdatePreferences(25, 5, 15, false, true, null, agentEnabled: false);
+        await context.SaveChangesAsync();
+
+        (await sut.ContributeSessionInsightAsync(user.Id, session.Id)).Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task ContributeSessionInsight_CapsNoteLength()
+    {
+        var (sut, context, user, session) = await SeedCompletedSessionAsync(note: new string('a', 340));
+
+        (await sut.ContributeSessionInsightAsync(user.Id, session.Id)).Should().BeTrue();
+
+        var memory = await context.AgentMemories.SingleAsync();
+        memory.Content.Length.Should().BeLessThan(400);
+    }
+
+    [Fact]
+    public async Task GenerateAutoAtmosphere_WithRainWeatherCode_ChoosesRainAmbience()
+    {
+        var (sut, context) = CreateSut(weatherCode: 61);
+        var user = User.CreateGuest("Yagmur");
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        var result = await sut.GenerateAutoAtmosphereAsync(user.Id);
+
+        result.SoundscapeMixer.Layer2Ambience.AmbienceType.Should().Be("RainOnWindow");
+    }
+
+    private static string BuildGeminiReply()
+    {
+        var atmosphere = new
+        {
+            themeName = "Tema\u0001",
+            description = "d",
+            visualTheme = new
+            {
+                aesthetic = "Evil",
+                wallColor = "red;}",
+                floorColor = "#112233",
+                accentLightColor = "#zzzzzz",
+                wallPaperId = "../x",
+                floorId = "floor_parquet_oak",
+                weatherEffect = "Meteor",
+                windowVideoQuery = "q"
+            },
+            soundscapeMixer = new
+            {
+                presetName = "p",
+                layer1Melody = new { genre = "g", searchQuery = "s", volume = 9, targetBpm = 9000 },
+                layer2Ambience = new { ambienceType = "Nope", volume = -3 },
+                layer3Noise = new { noiseType = "PinkNoise", volume = 0.5, cutoffFrequencyHz = 1 },
+                layer4Texture = new { textureType = "TapeHiss", volume = 0.2 }
+            },
+            recommendedSession = new { durationMinutes = 99999, breakMinutes = -5, flowShieldLevel = "Strict", targetRounds = 500 },
+            coachMessage = "hi"
+        };
+
+        var inner = System.Text.Json.JsonSerializer.Serialize(atmosphere);
+        return System.Text.Json.JsonSerializer.Serialize(new
+        {
+            candidates = new[] { new { content = new { parts = new[] { new { text = inner } } } } }
+        });
+    }
+
+    [Fact]
+    public async Task GenerateAtmosphere_WithGeminiOutOfRangeOutput_ClampsAndWhitelistsValues()
+    {
+        var settings = new AiSettings { Gemini = new GeminiSettings { ApiKey = "key" } };
+        var (sut, context) = CreateSut(settings, new StubHandler(BuildGeminiReply()));
+        var user = User.CreateGuest("Gemini");
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        var result = await sut.GenerateAtmosphereAsync(user.Id, new GenerateAtmosphereRequestDto("sakin bir oda", null, null, null, null, null));
+
+        result.Source.Should().Be("PromptGenerated");
+        result.ThemeName.Should().Be("Tema");
+        result.VisualTheme.Aesthetic.Should().Be("RetroStudio");
+        result.VisualTheme.WallColor.Should().Be("#1f1d24");
+        result.VisualTheme.FloorColor.Should().Be("#112233");
+        result.VisualTheme.AccentLightColor.Should().Be("#ffb86c");
+        result.VisualTheme.WallPaperId.Should().Be("wallpaper_brick_white");
+        result.VisualTheme.WeatherEffect.Should().Be("Clear");
+        result.SoundscapeMixer.Layer1Melody.Volume.Should().Be(1f);
+        result.SoundscapeMixer.Layer1Melody.TargetBpm.Should().Be(200);
+        result.SoundscapeMixer.Layer2Ambience.AmbienceType.Should().Be("RainOnWindow");
+        result.SoundscapeMixer.Layer2Ambience.Volume.Should().Be(0f);
+        result.SoundscapeMixer.Layer3Noise.CutoffFrequencyHz.Should().Be(100);
+        result.RecommendedSession.DurationMinutes.Should().Be(180);
+        result.RecommendedSession.BreakMinutes.Should().Be(1);
+        result.RecommendedSession.TargetRounds.Should().Be(12);
+    }
+
+    [Fact]
+    public async Task GenerateAtmosphere_WhenDailyBudgetExceeded_Throws()
+    {
+        var usage = new Mock<IAiUsageService>();
+        usage.Setup(u => u.ConsumeOrThrowAsync(It.IsAny<Guid>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Focus.Application.Common.Exceptions.AiBudgetExceededException());
+        var settings = new AiSettings { Gemini = new GeminiSettings { ApiKey = "key" } };
+        var (sut, context) = CreateSut(settings, new StubHandler("{}"), usage.Object);
+        var user = User.CreateGuest("Butce");
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        var act = () => sut.GenerateAtmosphereAsync(user.Id, new GenerateAtmosphereRequestDto("oda", null, null, null, null, null));
+
+        await act.Should().ThrowAsync<Focus.Application.Common.Exceptions.AiBudgetExceededException>();
+    }
+
+    [Fact]
+    public async Task ApplyAtmosphereCommand_ClampsMinutesAndReturnsFalseWhenNothingApplied()
+    {
+        var context = CreateDbContext();
+        context.Database.EnsureCreated();
+        var user = User.CreateGuest("Sinir");
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+        var handler = new ApplyAtmosphereCommandHandler(context);
+
+        var applied = await handler.Handle(new ApplyAtmosphereCommand(user.Id, new ApplyAtmosphereRequestDto(FocusMinutes: 9999, BreakMinutes: -4)), CancellationToken.None);
+
+        applied.Should().BeTrue();
+        var prefs = await context.UserPreferences.FirstAsync(p => p.UserId == user.Id);
+        prefs.DefaultFocusMinutes.Should().Be(180);
+        prefs.ShortBreakMinutes.Should().Be(1);
+
+        var stranger = await handler.Handle(new ApplyAtmosphereCommand(Guid.NewGuid(), new ApplyAtmosphereRequestDto(FocusMinutes: 30)), CancellationToken.None);
+        stranger.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task SaveAtmosphere_TruncatesOverlongTextToColumnLimits()
+    {
+        var context = CreateDbContext();
+        var user = User.CreateGuest("Uzun");
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+        var generated = new GeneratedAtmosphereDto
+        {
+            ThemeName = new string('t', 400),
+            Description = new string('d', 900)
+        };
+
+        var saved = await new SaveAtmosphereCommandHandler(context).Handle(
+            new SaveAtmosphereCommand(user.Id, generated, null, new string('p', 3000)), CancellationToken.None);
+
+        saved.Name.Length.Should().Be(150);
+        saved.Description.Length.Should().Be(500);
+        saved.PromptUsed!.Length.Should().Be(1000);
+    }
+
+    [Fact]
+    public async Task SaveAtmosphereValidator_RejectsMissingNestedObjects()
+    {
+        var validator = new SaveAtmosphereCommandValidator();
+        var broken = new GeneratedAtmosphereDto { VisualTheme = null!, SoundscapeMixer = null! };
+
+        var result = await validator.ValidateAsync(new SaveAtmosphereCommand(Guid.NewGuid(), broken));
+
+        result.IsValid.Should().BeFalse();
     }
 }

@@ -70,13 +70,8 @@ public class AtmosphereAiController : BaseApiController
     {
         if (!TryGetUserId(out var userId)) return Unauthorized();
 
-        if (request.Atmosphere == null)
-        {
-            return BadRequest(new { message = "Kaydedilecek atmosfer nesnesi gereklidir." });
-        }
-
         var customName = !string.IsNullOrWhiteSpace(request.CustomName) ? request.CustomName : request.Name;
-        var result = await Mediator.Send(new SaveAtmosphereCommand(userId, request.Atmosphere, customName), cancellationToken);
+        var result = await Mediator.Send(new SaveAtmosphereCommand(userId, request.Atmosphere, customName, request.PromptUsed), cancellationToken);
         return Ok(result);
     }
 
@@ -124,22 +119,13 @@ public class AtmosphereAiController : BaseApiController
     {
         if (!TryGetUserId(out var userId)) return Unauthorized();
 
-        var notes = !string.IsNullOrWhiteSpace(request.DistractionOrLearningNotes)
-            ? request.DistractionOrLearningNotes
-            : request.Notes;
-
-        var contributed = await Mediator.Send(new ContributeSessionInsightCommand(
-            userId,
-            request.SessionId,
-            request.PlannedDurationMinutes,
-            request.FocusQuality,
-            notes), cancellationToken);
+        var contributed = await Mediator.Send(new ContributeSessionInsightCommand(userId, request.SessionId), cancellationToken);
 
         return Ok(new { contributed });
     }
 }
 
-public record SaveAtmosphereApiRequest(GeneratedAtmosphereDto Atmosphere, string? CustomName = null, string? Name = null);
+public record SaveAtmosphereApiRequest(GeneratedAtmosphereDto Atmosphere, string? CustomName = null, string? Name = null, string? PromptUsed = null);
 public record ContributeInsightApiRequest(
     Guid? SessionId = null,
     int? PlannedDurationMinutes = null,

@@ -62,6 +62,7 @@ public static class DependencyInjection
         // Faz 5: Yapay Zeka Koc, Cift Katmanli Hafiza & Atmosfer Uretim Servisleri
         services.AddSingleton<IAnonymizationService, AnonymizationService>();
         services.AddScoped<IFocusCoachEngine, FocusCoachEngine>();
+        services.AddScoped<IAiUsageService, AiUsageService>();
         services.AddHttpClient<IVectorMemoryService, VectorMemoryService>(ConfigureGeminiClient);
         services.AddHttpClient<ICoachChatService, CoachChatService>(ConfigureGeminiClient);
         services.AddHttpClient<IAtmosphereAiService, AtmosphereAiService>(ConfigureGeminiClient);

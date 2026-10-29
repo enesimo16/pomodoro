@@ -67,6 +67,7 @@ builder.Services.AddFocusRateLimiting(builder.Configuration);
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<ValidationExceptionHandler>();
 builder.Services.AddExceptionHandler<ConflictExceptionHandler>();
+builder.Services.AddExceptionHandler<AiBudgetExceededExceptionHandler>();
 
 // CORS Yapilandirmasi
 builder.Services.AddCors();

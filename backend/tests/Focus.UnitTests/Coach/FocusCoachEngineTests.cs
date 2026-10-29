@@ -13,7 +13,7 @@ public class FocusCoachEngineTests
     [Fact]
     public void CalculateDailyFatigueScore_WithNoSessions_ReturnsZero()
     {
-        var score = _engine.CalculateDailyFatigueScore(new List<FocusSession>());
+        var score = _engine.CalculateDailyFatigueScore(new List<FocusSession>(), TimeZoneInfo.Utc);
         score.Should().Be(0);
     }
 
@@ -23,7 +23,7 @@ public class FocusCoachEngineTests
         var session = FocusSession.Start(Guid.NewGuid(), null, SessionKind.Focus, 120, 15);
         session.Complete(netSeconds: 120 * 60, xp: 1200, coins: 120);
 
-        var score = _engine.CalculateDailyFatigueScore(new List<FocusSession> { session });
+        var score = _engine.CalculateDailyFatigueScore(new List<FocusSession> { session }, TimeZoneInfo.Utc);
         score.Should().BeGreaterThan(30);
     }
 

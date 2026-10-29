@@ -24,11 +24,6 @@ public class CoachController : BaseApiController
     {
         if (!TryGetUserId(out var userId)) return Unauthorized();
 
-        if (string.IsNullOrWhiteSpace(request.Message))
-        {
-            return BadRequest(new { message = "Mesaj alanı boş olamaz." });
-        }
-
         var result = await Mediator.Send(new SendCoachChatCommand(userId, request.Message), cancellationToken);
         return Ok(result);
     }

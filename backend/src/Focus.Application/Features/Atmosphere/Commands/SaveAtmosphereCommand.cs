@@ -9,7 +9,8 @@ using Microsoft.EntityFrameworkCore;
 public record SaveAtmosphereCommand(
     Guid UserId,
     GeneratedAtmosphereDto Atmosphere,
-    string? CustomName = null
+    string? CustomName = null,
+    string? PromptUsed = null
 ) : IRequest<SavedAtmosphereDto>;
 
 public class SaveAtmosphereCommandHandler : IRequestHandler<SaveAtmosphereCommand, SavedAtmosphereDto>
@@ -52,7 +53,7 @@ public class SaveAtmosphereCommandHandler : IRequestHandler<SaveAtmosphereComman
             breakMinutes: atm.RecommendedSession.BreakMinutes,
             flowShieldLevel: atm.RecommendedSession.FlowShieldLevel,
             isAiGenerated: true,
-            promptUsed: atm.Description);
+            promptUsed: command.PromptUsed);
 
         _context.SavedAtmospheres.Add(entity);
         await _context.SaveChangesAsync(cancellationToken);

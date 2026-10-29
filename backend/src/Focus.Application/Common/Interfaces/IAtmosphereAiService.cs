@@ -15,9 +15,6 @@ public interface IAtmosphereAiService
 
     Task<bool> ContributeSessionInsightAsync(
         Guid userId,
-        Guid? sessionId = null,
-        int? plannedDurationMinutes = null,
-        int? focusQuality = null,
-        string? notes = null,
+        Guid sessionId,
         CancellationToken cancellationToken = default);
 }

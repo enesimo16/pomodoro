@@ -1,3 +1,4 @@
+using Focus.Application.Common;
 using Focus.Application.Common.Interfaces;
 using Focus.Application.Features.Coach.DTOs;
 using Focus.Domain.Entities;
@@ -20,13 +21,14 @@ public class FocusCoachEngine : IFocusCoachEngine
         UserStreak? streak)
     {
         var now = DateTime.UtcNow;
-        var today = now.Date;
+        var timeZone = UserTimeZone.Resolve(user.TimeZoneId);
+        var localToday = UserTimeZone.ToLocal(now, timeZone).Date;
 
         var todaySessions = recentSessions
-            .Where(s => s.StartedAt.Date == today)
+            .Where(s => UserTimeZone.ToLocal(s.StartedAt, timeZone).Date == localToday)
             .ToList();
 
-        var dailyFatigue = CalculateDailyFatigueScore(todaySessions);
+        var dailyFatigue = CalculateDailyFatigueScore(todaySessions, timeZone);
         var weeklyMinutes = CalculateWeeklyTotalMinutes(recentSessions);
 
         var lastSession = recentSessions.OrderByDescending(s => s.StartedAt).FirstOrDefault();
@@ -100,7 +102,7 @@ public class FocusCoachEngine : IFocusCoachEngine
             RecommendedAction: "Mevcut calisma ve mola dongunuzu koruyarak devam edebilirsiniz.");
     }
 
-    public double CalculateDailyFatigueScore(List<FocusSession> todaySessions)
+    public double CalculateDailyFatigueScore(List<FocusSession> todaySessions, TimeZoneInfo timeZone)
     {
         if (todaySessions == null || todaySessions.Count == 0) return 0;
 
@@ -120,7 +122,7 @@ public class FocusCoachEngine : IFocusCoachEngine
             }
 
             // Gece 00:00 - 05:00 arasi seans orani
-            if (s.StartedAt.Hour >= 0 && s.StartedAt.Hour < 5)
+            if (UserTimeZone.ToLocal(s.StartedAt, timeZone).Hour < 5)
             {
                 nightMinutes += durationMin;
             }

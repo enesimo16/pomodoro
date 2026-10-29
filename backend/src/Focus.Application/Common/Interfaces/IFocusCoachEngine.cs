@@ -12,6 +12,6 @@ public interface IFocusCoachEngine
         List<SessionReflection> recentReflections,
         UserStreak? streak);
 
-    double CalculateDailyFatigueScore(List<FocusSession> todaySessions);
+    double CalculateDailyFatigueScore(List<FocusSession> todaySessions, TimeZoneInfo timeZone);
     int CalculateWeeklyTotalMinutes(List<FocusSession> past7DaysSessions);
 }

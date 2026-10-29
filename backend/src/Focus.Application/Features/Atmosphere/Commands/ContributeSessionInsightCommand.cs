@@ -3,13 +3,7 @@ namespace Focus.Application.Features.Atmosphere.Commands;
 using Focus.Application.Common.Interfaces;
 using MediatR;
 
-public record ContributeSessionInsightCommand(
-    Guid UserId,
-    Guid? SessionId = null,
-    int? PlannedDurationMinutes = null,
-    int? FocusQuality = null,
-    string? DistractionOrLearningNotes = null
-) : IRequest<bool>;
+public record ContributeSessionInsightCommand(Guid UserId, Guid? SessionId = null) : IRequest<bool>;
 
 public class ContributeSessionInsightCommandHandler : IRequestHandler<ContributeSessionInsightCommand, bool>
 {
@@ -24,10 +18,7 @@ public class ContributeSessionInsightCommandHandler : IRequestHandler<Contribute
     {
         return await _atmosphereAiService.ContributeSessionInsightAsync(
             command.UserId,
-            command.SessionId,
-            command.PlannedDurationMinutes,
-            command.FocusQuality,
-            command.DistractionOrLearningNotes,
+            command.SessionId ?? Guid.Empty,
             cancellationToken);
     }
 }
