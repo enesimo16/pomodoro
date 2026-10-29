@@ -27,8 +27,10 @@ public class WrappedApiTests : IClassFixture<CustomWebApplicationFactory>
         var wrapped = await response.Content.ReadFromJsonAsync<FocusWrappedDto>();
         wrapped.Should().NotBeNull();
         wrapped!.Period.Should().Be("Weekly");
-        wrapped.ChronotypeName.Should().NotBeNullOrWhiteSpace();
-        wrapped.TopDayOfWeek.Should().NotBeNullOrWhiteSpace();
+        wrapped.ChronotypeName.Should().BeNull();
+        wrapped.TopDayOfWeek.Should().BeNull();
+        wrapped.TopTheme.Should().BeNull();
+        wrapped.CompletionRate.Should().BeNull();
         wrapped.SummaryInsight.Should().NotBeNullOrWhiteSpace();
     }
 

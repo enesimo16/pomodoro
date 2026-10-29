@@ -8,22 +8,24 @@ namespace Focus.Infrastructure.Services;
 public class FocusWrappedService : IFocusWrappedService
 {
     private readonly IApplicationDbContext _context;
+    private readonly TimeProvider _clock;
 
-    public FocusWrappedService(IApplicationDbContext context)
+    public FocusWrappedService(IApplicationDbContext context, TimeProvider clock)
     {
         _context = context;
+        _clock = clock;
     }
 
     public Task<FocusWrappedDto> GetWeeklyWrappedAsync(Guid userId, CancellationToken cancellationToken = default)
     {
-        var endDate = DateTime.UtcNow;
+        var endDate = _clock.GetUtcNow().UtcDateTime;
         var startDate = endDate.AddDays(-7);
         return BuildWrappedAsync(userId, "Weekly", startDate, endDate, cancellationToken);
     }
 
     public Task<FocusWrappedDto> GetMonthlyWrappedAsync(Guid userId, CancellationToken cancellationToken = default)
     {
-        var endDate = DateTime.UtcNow;
+        var endDate = _clock.GetUtcNow().UtcDateTime;
         var startDate = endDate.AddDays(-30);
         return BuildWrappedAsync(userId, "Monthly", startDate, endDate, cancellationToken);
     }
@@ -35,61 +37,62 @@ public class FocusWrappedService : IFocusWrappedService
         DateTime endDate,
         CancellationToken cancellationToken)
     {
-        var allSessions = await _context.FocusSessions
+        var focusSessions = await _context.FocusSessions
             .AsNoTracking()
-            .Where(s => s.UserId == userId && s.StartedAt >= startDate && s.StartedAt <= endDate)
+            .Where(s => s.UserId == userId
+                && s.Kind == SessionKind.Focus
+                && s.StartedAt >= startDate
+                && s.StartedAt <= endDate)
             .ToListAsync(cancellationToken);
 
-        var completedSessions = allSessions
+        var completedSessions = focusSessions
             .Where(s => s.Status == SessionStatus.Completed)
             .ToList();
 
-        var totalSessions = allSessions.Count;
-        var completedCount = completedSessions.Count;
-        var completionRate = totalSessions > 0 ? Math.Round((double)completedCount / totalSessions * 100, 1) : 0;
-        var totalFocusMinutes = completedSessions.Sum(s => s.NetDurationSeconds) / 60;
-        var coinsEarned = completedSessions.Sum(s => s.CoinsEarned);
-        var xpEarned = completedSessions.Sum(s => s.XpEarned);
+        // Hala suren (Running/Paused) seanslar tamamlanma oranini dusurmesin
+        var finishedSessions = focusSessions
+            .Where(s => s.Status == SessionStatus.Completed || s.Status == SessionStatus.Abandoned)
+            .ToList();
 
-        // En verimli gün
-        var topDayOfWeek = "Pazartesi";
-        if (completedSessions.Count > 0)
+        var completedCount = completedSessions.Count;
+        double? completionRate = finishedSessions.Count > 0
+            ? Math.Round((double)completedCount / finishedSessions.Count * 100, 1)
+            : null;
+        var totalFocusMinutes = completedSessions.Sum(s => s.NetDurationSeconds) / 60;
+        var coinsEarned = finishedSessions.Sum(s => s.CoinsEarned);
+        var xpEarned = finishedSessions.Sum(s => s.XpEarned);
+
+        string? topDayOfWeek = null;
+        string? topTheme = null;
+        Chronotype? chronotype = null;
+        string? chronotypeName = null;
+        string? peakTimeOfDay = null;
+
+        if (completedCount > 0)
         {
-            var dayGroup = completedSessions
+            var topDay = completedSessions
                 .GroupBy(s => s.StartedAt.DayOfWeek)
                 .OrderByDescending(g => g.Sum(s => s.NetDurationSeconds))
+                .ThenBy(g => g.Key)
                 .First().Key;
+            topDayOfWeek = ToTurkishDay(topDay);
 
-            topDayOfWeek = ToTurkishDay(dayGroup);
-        }
+            (var detectedChronotype, chronotypeName, peakTimeOfDay) = DetermineChronotype(completedSessions);
+            chronotype = detectedChronotype;
 
-        // Kronotip ve yoğun zaman aralığı
-        var (chronotype, chronotypeName, peakTimeOfDay) = DetermineChronotype(completedSessions);
-
-        // En popüler tema
-        var topTheme = "rain window";
-        if (completedSessions.Count > 0)
-        {
-            var favTheme = completedSessions
+            topTheme = completedSessions
                 .Where(s => !string.IsNullOrEmpty(s.ThemeId))
                 .GroupBy(s => s.ThemeId!)
                 .OrderByDescending(g => g.Count())
+                .ThenBy(g => g.Key, StringComparer.Ordinal)
                 .Select(g => g.Key)
                 .FirstOrDefault();
-
-            if (!string.IsNullOrEmpty(favTheme))
-                topTheme = favTheme;
         }
 
-        // Seri bilgisi
         var streak = await _context.UserStreaks
             .AsNoTracking()
             .FirstOrDefaultAsync(s => s.UserId == userId, cancellationToken);
 
-        var currentStreak = streak?.CurrentStreak ?? 0;
-        var longestStreak = streak?.LongestStreak ?? 0;
-
-        // İlham verici özet
         var summaryInsight = GenerateSummaryInsight(period, totalFocusMinutes, chronotypeName, topDayOfWeek);
 
         return new FocusWrappedDto(
@@ -106,17 +109,14 @@ public class FocusWrappedService : IFocusWrappedService
             topTheme,
             coinsEarned,
             xpEarned,
-            currentStreak,
-            longestStreak,
+            streak?.CurrentStreak ?? 0,
+            streak?.LongestStreak ?? 0,
             summaryInsight
         );
     }
 
     private static (Chronotype chronotype, string name, string peakTime) DetermineChronotype(List<Domain.Entities.FocusSession> sessions)
     {
-        if (sessions.Count == 0)
-            return (Chronotype.Balanced, "Dengeli Ritim", "14:00 - 18:00");
-
         int morning = 0, afternoon = 0, evening = 0, night = 0;
 
         foreach (var s in sessions)
@@ -136,10 +136,8 @@ public class FocusWrappedService : IFocusWrappedService
             return (Chronotype.DayAchiever, "Gündüz Odakçısı", "13:00 - 17:00");
         if (max == evening)
             return (Chronotype.EveningFlow, "Akşam Ritmi", "19:00 - 23:00");
-        if (max == night)
-            return (Chronotype.NightOwl, "Gece Baykuşu", "00:00 - 04:00");
 
-        return (Chronotype.Balanced, "Dengeli Ritim", "10:00 - 16:00");
+        return (Chronotype.NightOwl, "Gece Baykuşu", "00:00 - 04:00");
     }
 
     private static string ToTurkishDay(DayOfWeek day) => day switch
@@ -151,19 +149,19 @@ public class FocusWrappedService : IFocusWrappedService
         DayOfWeek.Friday => "Cuma",
         DayOfWeek.Saturday => "Cumartesi",
         DayOfWeek.Sunday => "Pazar",
-        _ => "Pazartesi"
+        _ => throw new ArgumentOutOfRangeException(nameof(day))
     };
 
-    private static string GenerateSummaryInsight(string period, int minutes, string chronotype, string topDay)
+    private static string GenerateSummaryInsight(string period, int minutes, string? chronotype, string? topDay)
     {
         var hours = (minutes / 60.0).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture);
         var periodName = period == "Weekly" ? "Bu hafta" : "Bu ay";
 
-        if (minutes >= 600)
+        if (minutes >= 600 && chronotype != null && topDay != null)
             return $"{periodName} masada tam {hours} saat geçirdin! {topDay} günleri zirve performansa ulaştın ve gerçek bir {chronotype} gibi parladın.";
-        if (minutes > 0)
+        if (minutes > 0 && topDay != null)
             return $"{periodName} {hours} saatlik odaklanma ritmi yakaladın. En aktif olduğun gün {topDay} oldu.";
 
-        return $"{periodName} yeni seanslar başlatarak çalışma odanın enerjisini ve ritmini yükseltebilirsin.";
+        return $"{periodName} henüz tamamlanmış bir odak seansın yok. Yeni bir seans başlatarak ritmini yakalayabilirsin.";
     }
 }
