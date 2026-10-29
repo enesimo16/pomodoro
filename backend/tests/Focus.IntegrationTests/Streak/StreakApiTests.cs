@@ -50,6 +50,7 @@ public class StreakApiTests : IClassFixture<CustomWebApplicationFactory>
         var session = await startResponse.Content.ReadFromJsonAsync<FocusSessionDto>();
 
         // 2. Seansı tamamla
+        _factory.Clock.Advance(TimeSpan.FromMinutes(25));
         var completeResponse = await client.PostAsync($"/api/v1/sessions/{session!.Id}/complete", null);
         completeResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 

@@ -43,6 +43,7 @@ public class StatsApiTests : IClassFixture<CustomWebApplicationFactory>
         startResponse.StatusCode.Should().Be(HttpStatusCode.Created);
         var session = await startResponse.Content.ReadFromJsonAsync<FocusSessionDto>();
 
+        _factory.Clock.Advance(TimeSpan.FromMinutes(30));
         var completeResponse = await client.PostAsync($"/api/v1/sessions/{session!.Id}/complete", null);
         completeResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
@@ -54,6 +55,7 @@ public class StatsApiTests : IClassFixture<CustomWebApplicationFactory>
         updatedStats!.TotalCompletedSessions.Should().Be(1);
         updatedStats.TodaySessionCount.Should().Be(1);
         updatedStats.CurrentStreak.Should().Be(1);
+        updatedStats.TotalFocusMinutes.Should().Be(30);
         updatedStats.Last7Days.Should().HaveCount(7);
     }
 }

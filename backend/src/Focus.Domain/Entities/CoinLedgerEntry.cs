@@ -27,13 +27,13 @@ public class CoinLedgerEntry : BaseEntity<Guid>
     // EF Core constructor
     private CoinLedgerEntry() { }
 
-    public CoinLedgerEntry(Guid userId, CoinTransactionReason reason, int coins, Guid? sessionId = null)
+    public CoinLedgerEntry(Guid userId, CoinTransactionReason reason, int coins, Guid? sessionId = null, DateTime? createdAt = null)
     {
         Id = Guid.NewGuid();
         UserId = userId;
         Reason = reason;
         Coins = coins;
         SessionId = sessionId;
-        CreatedAt = DateTime.UtcNow;
+        CreatedAt = createdAt ?? DateTime.UtcNow;
     }
 }

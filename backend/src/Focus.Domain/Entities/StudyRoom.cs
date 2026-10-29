@@ -5,6 +5,8 @@ namespace Focus.Domain.Entities;
 
 public class StudyRoom : BaseEntity<Guid>, IAggregateRoot
 {
+    public const int CoWorkingBonusPercent = 15;
+
     private readonly List<RoomMember> _members = new();
     private readonly List<RoomInvitation> _invitations = new();
 
@@ -170,13 +172,12 @@ public class StudyRoom : BaseEntity<Guid>, IAggregateRoot
 
     public int CalculateCoWorkingBonusPercent()
     {
-        var focusingCount = _members.Count(m => m.IsFocusing);
-        return focusingCount switch
-        {
-            2 => 10,
-            3 => 15,
-            >= 4 => 20,
-            _ => 0
-        };
+        return CoWorkingBonusPercentFor(_members.Count(m => m.IsFocusing));
+    }
+
+    // docs/algoritmalar.md 3.1: odada bir arkadasla es zamanli odaklanilirsa her iki tarafa +%15
+    public static int CoWorkingBonusPercentFor(int focusingCount)
+    {
+        return focusingCount >= 2 ? CoWorkingBonusPercent : 0;
     }
 }

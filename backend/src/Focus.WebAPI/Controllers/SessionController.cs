@@ -56,11 +56,22 @@ public class SessionController : BaseApiController
     /// </summary>
     [HttpPost]
     [ProducesResponseType(typeof(FocusSessionDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> StartSession([FromBody] StartSessionRequest request, CancellationToken cancellationToken)
     {
         if (!TryGetUserId(out var userId)) return Unauthorized();
 
-        var kind = Enum.TryParse<SessionKind>(request.Kind, true, out var parsedKind) ? parsedKind : SessionKind.Focus;
+        if (!Enum.TryParse<SessionKind>(request.Kind, true, out var kind) || !Enum.IsDefined(kind))
+        {
+            return ValidationProblem(new ValidationProblemDetails(new Dictionary<string, string[]>
+            {
+                [nameof(request.Kind)] = ["Geçersiz seans türü. Geçerli değerler: Focus, Break."]
+            })
+            {
+                Title = "Doğrulama hatası"
+            });
+        }
 
         var command = new StartSessionCommand(
             userId,

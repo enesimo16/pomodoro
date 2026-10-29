@@ -1,7 +1,7 @@
 using Focus.Application.Common.Extensions;
 using Focus.Application.Common.Interfaces;
 using Focus.Application.Features.Session.DTOs;
-using Focus.Domain.Entities;
+using Focus.Application.Features.Session.Services;
 using Focus.Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -13,10 +13,14 @@ public record CompleteSessionCommand(Guid UserId, Guid? SessionId = null) : IReq
 public class CompleteSessionCommandHandler : IRequestHandler<CompleteSessionCommand, SessionCompletionResultDto?>
 {
     private readonly IApplicationDbContext _context;
+    private readonly SessionSettlementService _settlement;
+    private readonly TimeProvider _clock;
 
-    public CompleteSessionCommandHandler(IApplicationDbContext context)
+    public CompleteSessionCommandHandler(IApplicationDbContext context, SessionSettlementService settlement, TimeProvider clock)
     {
         _context = context;
+        _settlement = settlement;
+        _clock = clock;
     }
 
     public async Task<SessionCompletionResultDto?> Handle(CompleteSessionCommand request, CancellationToken cancellationToken)
@@ -35,106 +39,28 @@ public class CompleteSessionCommandHandler : IRequestHandler<CompleteSessionComm
             return null;
         }
 
-        var now = DateTime.UtcNow;
-        var totalElapsedSeconds = (int)(now - session.StartedAt).TotalSeconds;
-        var currentPauseSeconds = session.TotalPausedSeconds;
+        var now = _clock.GetUtcNow().UtcDateTime;
+        var settlement = await _settlement.CompleteAsync(session, now, cancellationToken);
 
-        if (session.Status == SessionStatus.Paused && session.PausedAt.HasValue)
-        {
-            currentPauseSeconds += (int)(now - session.PausedAt.Value).TotalSeconds;
-        }
-
-        var netSeconds = Math.Max(0, totalElapsedSeconds - currentPauseSeconds);
-
-        int xpEarned;
-        int coinsEarned;
-        CoinTransactionReason reason;
-
-        if (session.Kind == SessionKind.Focus)
-        {
-            var minutes = Math.Max(1, netSeconds / 60);
-            xpEarned = minutes * 10;
-            coinsEarned = minutes * 1;
-            reason = CoinTransactionReason.SessionReward;
-
-            // Birlikte Odaklanma Bonusu (Faz 4 - 2 kisi: +%10, 3 kisi: +%15, 4+ kisi: +%20)
-            var currentMember = await _context.RoomMembers
-                .Include(m => m.Room)
-                    .ThenInclude(r => r.Members)
-                .FirstOrDefaultAsync(m => m.UserId == request.UserId, cancellationToken);
-
-            if (currentMember != null)
-            {
-                var bonusPercent = currentMember.Room.CalculateCoWorkingBonusPercent();
-                if (bonusPercent > 0)
-                {
-                    var extraXp = (int)Math.Round(xpEarned * (bonusPercent / 100.0));
-                    var extraCoins = Math.Max(1, (int)Math.Round(coinsEarned * (bonusPercent / 100.0)));
-                    xpEarned += extraXp;
-                    coinsEarned += extraCoins;
-                }
-            }
-        }
-        else
-        {
-            xpEarned = 50;
-            coinsEarned = 10;
-            reason = CoinTransactionReason.BreakBonus;
-        }
-
-        session.Complete(netSeconds, xpEarned, coinsEarned);
-
-        // Kullaniciyi guncelle
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == request.UserId, cancellationToken);
-        var oldLevel = user?.Level ?? 1;
-        if (user != null)
-        {
-            user.AddXp(xpEarned);
-            if (coinsEarned > 0) user.RegisterWalletChange();
-        }
-
-        // Coin Ledger
-        if (coinsEarned > 0)
-        {
-            var ledgerEntry = new CoinLedgerEntry(request.UserId, reason, coinsEarned, session.Id);
-            _context.CoinLedgerEntries.Add(ledgerEntry);
-        }
-
-        // Streak kaydi (sadece Odaklanma seanslari icin)
-        if (session.Kind == SessionKind.Focus)
-        {
-            var streak = await _context.UserStreaks.FirstOrDefaultAsync(s => s.UserId == request.UserId, cancellationToken);
-            if (streak == null)
-            {
-                streak = UserStreak.CreateDefault(request.UserId);
-                _context.UserStreaks.Add(streak);
-            }
-
-            var streakResult = streak.RecordActivity(now);
-            if (streakResult.BonusCoins > 0)
-            {
-                var streakCoinEntry = new CoinLedgerEntry(request.UserId, CoinTransactionReason.StreakReward, streakResult.BonusCoins, session.Id);
-                _context.CoinLedgerEntries.Add(streakCoinEntry);
-            }
-        }
-
-        await _context.SaveChangesOrConflictAsync(cancellationToken);
+        await _context.SaveChangesOrConflictAsync(
+            cancellationToken,
+            "Seans başka bir istek tarafından zaten tamamlandı.",
+            treatConstraintViolationAsConflict: true);
 
         var totalCoins = await _context.CoinLedgerEntries
             .Where(c => c.UserId == request.UserId)
-            .SumAsync(c => c.Coins, cancellationToken);
+            .SumAsync(c => (int?)c.Coins, cancellationToken) ?? 0;
 
         var (nextKind, nextRound, isCycleFinished) = session.GetNextCycleStep();
-        var sessionDto = FocusSessionDto.FromEntity(session);
 
         return new SessionCompletionResultDto(
-            sessionDto,
-            xpEarned,
-            coinsEarned,
-            user?.Level ?? 1,
-            user?.CurrentXp ?? 0,
+            FocusSessionDto.FromEntity(session, now),
+            settlement.Xp,
+            settlement.Coins,
+            settlement.User?.Level ?? 1,
+            settlement.User?.CurrentXp ?? 0,
             totalCoins,
-            (user?.Level ?? 1) > oldLevel,
+            settlement.LevelUp,
             nextKind.ToString(),
             nextRound,
             isCycleFinished);

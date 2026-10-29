@@ -47,11 +47,11 @@ public class StudyRoomEntityTests
     [Theory]
     [InlineData(0, 0)]
     [InlineData(1, 0)]
-    [InlineData(2, 10)]
+    [InlineData(2, 15)]
     [InlineData(3, 15)]
-    [InlineData(4, 20)]
-    [InlineData(5, 20)]
-    public void CalculateCoWorkingBonusPercent_ShouldScaleCorrectly(int focusingCount, int expectedBonus)
+    [InlineData(4, 15)]
+    [InlineData(5, 15)]
+    public void CalculateCoWorkingBonusPercent_ShouldBeFlatFifteenPercentWhenAtLeastTwoFocus(int focusingCount, int expectedBonus)
     {
         var room = StudyRoom.CreatePublicLibrary("Test Library", "LIB-TEST", "Description", capacity: 20);
 

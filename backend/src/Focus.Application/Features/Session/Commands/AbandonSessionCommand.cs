@@ -1,6 +1,7 @@
 using Focus.Application.Common.Extensions;
 using Focus.Application.Common.Interfaces;
 using Focus.Application.Features.Session.DTOs;
+using Focus.Application.Features.Session.Services;
 using Focus.Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -12,10 +13,14 @@ public record AbandonSessionCommand(Guid UserId, Guid? SessionId = null) : IRequ
 public class AbandonSessionCommandHandler : IRequestHandler<AbandonSessionCommand, FocusSessionDto?>
 {
     private readonly IApplicationDbContext _context;
+    private readonly SessionSettlementService _settlement;
+    private readonly TimeProvider _clock;
 
-    public AbandonSessionCommandHandler(IApplicationDbContext context)
+    public AbandonSessionCommandHandler(IApplicationDbContext context, SessionSettlementService settlement, TimeProvider clock)
     {
         _context = context;
+        _settlement = settlement;
+        _clock = clock;
     }
 
     public async Task<FocusSessionDto?> Handle(AbandonSessionCommand request, CancellationToken cancellationToken)
@@ -34,20 +39,14 @@ public class AbandonSessionCommandHandler : IRequestHandler<AbandonSessionComman
             return null;
         }
 
-        var now = DateTime.UtcNow;
-        var totalElapsedSeconds = (int)(now - session.StartedAt).TotalSeconds;
-        var currentPauseSeconds = session.TotalPausedSeconds;
+        var now = _clock.GetUtcNow().UtcDateTime;
+        await _settlement.AbandonAsync(session, now, cancellationToken);
 
-        if (session.Status == SessionStatus.Paused && session.PausedAt.HasValue)
-        {
-            currentPauseSeconds += (int)(now - session.PausedAt.Value).TotalSeconds;
-        }
+        await _context.SaveChangesOrConflictAsync(
+            cancellationToken,
+            "Seans başka bir istek tarafından zaten sonlandırıldı.",
+            treatConstraintViolationAsConflict: true);
 
-        var netSeconds = Math.Max(0, totalElapsedSeconds - currentPauseSeconds);
-
-        session.Abandon(netSeconds, xp: 0, coins: 0);
-        await _context.SaveChangesOrConflictAsync(cancellationToken);
-
-        return FocusSessionDto.FromEntity(session);
+        return FocusSessionDto.FromEntity(session, now);
     }
 }

@@ -4,21 +4,29 @@ using Focus.Application.Features.Session.Queries;
 using Focus.Domain.Entities;
 using Focus.Domain.Enums;
 using Focus.UnitTests.Common;
+using Microsoft.EntityFrameworkCore;
 using Xunit;
 
 namespace Focus.UnitTests.Session;
 
 public class SessionCommandHandlerTests
 {
+    private static async Task<(SessionTestKit Kit, User User)> CreateKitWithUserAsync(string name = "TimerUser")
+    {
+        var context = TestDbContextFactory.Create();
+        var kit = new SessionTestKit(context);
+        var user = User.CreateGuest(name);
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+        return (kit, user);
+    }
+
     [Fact]
     public async Task StartSession_CreatesSession_And_UpdatesUserPreferences()
     {
-        using var context = TestDbContextFactory.Create();
-        var user = User.CreateGuest("TimerUser");
-        context.Users.Add(user);
-        await context.SaveChangesAsync();
+        var (kit, user) = await CreateKitWithUserAsync();
+        using var context = kit.Context;
 
-        var handler = new StartSessionCommandHandler(context);
         var command = new StartSessionCommand(
             user.Id,
             SessionKind.Focus,
@@ -28,7 +36,7 @@ public class SessionCommandHandlerTests
             TargetRounds: 4,
             ThemeId: "rainy_window");
 
-        var result = await handler.Handle(command, CancellationToken.None);
+        var result = await kit.StartHandler.Handle(command, CancellationToken.None);
 
         Assert.NotNull(result);
         Assert.Equal("Focus", result.Kind);
@@ -37,6 +45,7 @@ public class SessionCommandHandlerTests
         Assert.Equal(17, result.BreakMinutes);
         Assert.Equal(1, result.CurrentRound);
         Assert.Equal(4, result.TargetRounds);
+        Assert.Equal(kit.Clock.UtcNow, result.StartedAt);
 
         var prefs = context.UserPreferences.FirstOrDefault(p => p.UserId == user.Id);
         Assert.NotNull(prefs);
@@ -46,60 +55,73 @@ public class SessionCommandHandlerTests
     }
 
     [Fact]
-    public async Task StartSession_AbandonsExistingRunningSession()
+    public async Task StartSession_AbandonsExistingRunningSession_AndKeepsASingleActiveSession()
     {
-        using var context = TestDbContextFactory.Create();
-        var user = User.CreateGuest("TimerUser");
-        context.Users.Add(user);
-        var oldSession = FocusSession.Start(user.Id, null, SessionKind.Focus, 25, 5);
+        var (kit, user) = await CreateKitWithUserAsync();
+        using var context = kit.Context;
+        var oldSession = FocusSession.Start(user.Id, null, SessionKind.Focus, 25, 5, now: kit.Clock.UtcNow);
         context.FocusSessions.Add(oldSession);
         await context.SaveChangesAsync();
+        kit.Clock.Advance(TimeSpan.FromMinutes(3));
 
-        var handler = new StartSessionCommandHandler(context);
-        var command = new StartSessionCommand(user.Id, SessionKind.Focus, 48, 17);
+        var result = await kit.StartHandler.Handle(new StartSessionCommand(user.Id, SessionKind.Focus, 48, 17), CancellationToken.None);
 
-        var result = await handler.Handle(command, CancellationToken.None);
-
-        Assert.NotNull(result);
         Assert.NotEqual(oldSession.Id, result.Id);
         Assert.Equal(SessionStatus.Abandoned, oldSession.Status);
+        Assert.Equal(1, await context.FocusSessions.CountAsync(s => s.UserId == user.Id && (s.Status == SessionStatus.Running || s.Status == SessionStatus.Paused)));
     }
 
     [Fact]
-    public async Task PauseAndResume_TogglesSessionState()
+    public async Task StartSession_WhenOldSessionIsPaused_UsesNetTimeUpToThePause()
     {
-        using var context = TestDbContextFactory.Create();
-        var user = User.CreateGuest("TimerUser");
-        context.Users.Add(user);
-        var session = FocusSession.Start(user.Id, null, SessionKind.Focus, 25, 5);
+        var (kit, user) = await CreateKitWithUserAsync();
+        using var context = kit.Context;
+        var oldSession = FocusSession.Start(user.Id, null, SessionKind.Focus, 25, 5, now: kit.Clock.UtcNow);
+        context.FocusSessions.Add(oldSession);
+        await context.SaveChangesAsync();
+
+        // 7 dk calis, 2 saat duraklat
+        kit.Clock.Advance(TimeSpan.FromMinutes(7));
+        await kit.PauseHandler.Handle(new PauseSessionCommand(user.Id, oldSession.Id), CancellationToken.None);
+        kit.Clock.Advance(TimeSpan.FromHours(2));
+
+        await kit.StartHandler.Handle(new StartSessionCommand(user.Id, SessionKind.Focus, 25, 5), CancellationToken.None);
+
+        Assert.Equal(SessionStatus.Abandoned, oldSession.Status);
+        Assert.Equal(7 * 60, oldSession.NetDurationSeconds);
+    }
+
+    [Fact]
+    public async Task PauseAndResume_TogglesSessionState_AndExcludesPausedTimeFromNet()
+    {
+        var (kit, user) = await CreateKitWithUserAsync();
+        using var context = kit.Context;
+        var session = FocusSession.Start(user.Id, null, SessionKind.Focus, 25, 5, now: kit.Clock.UtcNow);
         context.FocusSessions.Add(session);
         await context.SaveChangesAsync();
 
-        // Pause
-        var pauseHandler = new PauseSessionCommandHandler(context);
-        var paused = await pauseHandler.Handle(new PauseSessionCommand(user.Id, session.Id), CancellationToken.None);
+        var paused = await kit.PauseHandler.Handle(new PauseSessionCommand(user.Id, session.Id), CancellationToken.None);
         Assert.NotNull(paused);
         Assert.Equal("Paused", paused.Status);
 
-        // Resume
-        var resumeHandler = new ResumeSessionCommandHandler(context);
-        var resumed = await resumeHandler.Handle(new ResumeSessionCommand(user.Id, session.Id), CancellationToken.None);
+        kit.Clock.Advance(TimeSpan.FromMinutes(10));
+        var resumed = await kit.ResumeHandler.Handle(new ResumeSessionCommand(user.Id, session.Id), CancellationToken.None);
         Assert.NotNull(resumed);
         Assert.Equal("Running", resumed.Status);
+        Assert.Equal(600, resumed.TotalPausedSeconds);
+        Assert.Equal(kit.Clock.UtcNow.AddMinutes(25), resumed.PlannedEndAt);
     }
 
     [Fact]
     public async Task ExtendSession_AddsExtraMinutes()
     {
-        using var context = TestDbContextFactory.Create();
-        var user = User.CreateGuest("TimerUser");
-        context.Users.Add(user);
-        var session = FocusSession.Start(user.Id, null, SessionKind.Focus, 25, 5);
+        var (kit, user) = await CreateKitWithUserAsync();
+        using var context = kit.Context;
+        var session = FocusSession.Start(user.Id, null, SessionKind.Focus, 25, 5, now: kit.Clock.UtcNow);
         context.FocusSessions.Add(session);
         await context.SaveChangesAsync();
 
-        var handler = new ExtendSessionCommandHandler(context);
-        var extended = await handler.Handle(new ExtendSessionCommand(user.Id, 10, session.Id), CancellationToken.None);
+        var extended = await kit.ExtendHandler.Handle(new ExtendSessionCommand(user.Id, 10, session.Id), CancellationToken.None);
 
         Assert.NotNull(extended);
         Assert.Equal(35, extended.PlannedMinutes);
@@ -107,43 +129,67 @@ public class SessionCommandHandlerTests
     }
 
     [Fact]
-    public async Task CompleteSession_AwardsXpAndCoins_AndProgression()
+    public async Task ExtendSession_AllowsOnlyMaxExtensions()
     {
-        using var context = TestDbContextFactory.Create();
-        var user = User.CreateGuest("TimerUser");
-        context.Users.Add(user);
-        var session = FocusSession.Start(user.Id, null, SessionKind.Focus, 48, 17, 1, 4);
+        var (kit, user) = await CreateKitWithUserAsync();
+        using var context = kit.Context;
+        var session = FocusSession.Start(user.Id, null, SessionKind.Focus, 25, 5, now: kit.Clock.UtcNow);
         context.FocusSessions.Add(session);
         await context.SaveChangesAsync();
 
-        var handler = new CompleteSessionCommandHandler(context);
-        var result = await handler.Handle(new CompleteSessionCommand(user.Id, session.Id), CancellationToken.None);
+        for (var i = 0; i < 3; i++)
+        {
+            await kit.ExtendHandler.Handle(new ExtendSessionCommand(user.Id, 10, session.Id), CancellationToken.None);
+        }
 
-        Assert.NotNull(result);
-        Assert.True(result.XpEarned >= 0);
-        Assert.True(result.CoinsEarned >= 0);
-        Assert.Equal("Break", result.NextKind);
-        Assert.Equal(1, result.NextRound);
-        Assert.False(result.IsCycleFinished);
+        var ex = await Assert.ThrowsAsync<ConflictException>(() =>
+            kit.ExtendHandler.Handle(new ExtendSessionCommand(user.Id, 10, session.Id), CancellationToken.None));
 
-        // Verify coin ledger
-        var entries = context.CoinLedgerEntries.Where(c => c.UserId == user.Id).ToList();
-        Assert.True(entries.Count >= 1);
-        Assert.Equal(CoinTransactionReason.SessionReward, entries.Last().Reason);
+        Assert.Contains("3", ex.Message);
+        Assert.Equal(3, session.ExtensionCount);
+        Assert.Equal(55, session.PlannedMinutes);
+    }
+
+    [Fact]
+    public async Task ExtendSession_CapsTotalAtMaxContinuousFocusMinutes()
+    {
+        var (kit, user) = await CreateKitWithUserAsync();
+        using var context = kit.Context;
+        var session = FocusSession.Start(user.Id, null, SessionKind.Focus, 85, 5, now: kit.Clock.UtcNow);
+        context.FocusSessions.Add(session);
+        await context.SaveChangesAsync();
+
+        var extended = await kit.ExtendHandler.Handle(new ExtendSessionCommand(user.Id, 10, session.Id), CancellationToken.None);
+        Assert.Equal(90, extended!.PlannedMinutes);
+
+        await Assert.ThrowsAsync<ConflictException>(() =>
+            kit.ExtendHandler.Handle(new ExtendSessionCommand(user.Id, 10, session.Id), CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task ExtendSession_IsRejectedForBreakSessions()
+    {
+        var (kit, user) = await CreateKitWithUserAsync();
+        using var context = kit.Context;
+        var session = FocusSession.Start(user.Id, null, SessionKind.Break, 25, 5, now: kit.Clock.UtcNow);
+        context.FocusSessions.Add(session);
+        await context.SaveChangesAsync();
+
+        await Assert.ThrowsAsync<ConflictException>(() =>
+            kit.ExtendHandler.Handle(new ExtendSessionCommand(user.Id, 10, session.Id), CancellationToken.None));
+        Assert.Equal(5, session.PlannedMinutes);
     }
 
     [Fact]
     public async Task AbandonSession_SetsStatusAbandoned()
     {
-        using var context = TestDbContextFactory.Create();
-        var user = User.CreateGuest("TimerUser");
-        context.Users.Add(user);
-        var session = FocusSession.Start(user.Id, null, SessionKind.Focus, 25, 5);
+        var (kit, user) = await CreateKitWithUserAsync();
+        using var context = kit.Context;
+        var session = FocusSession.Start(user.Id, null, SessionKind.Focus, 25, 5, now: kit.Clock.UtcNow);
         context.FocusSessions.Add(session);
         await context.SaveChangesAsync();
 
-        var handler = new AbandonSessionCommandHandler(context);
-        var result = await handler.Handle(new AbandonSessionCommand(user.Id, session.Id), CancellationToken.None);
+        var result = await kit.AbandonHandler.Handle(new AbandonSessionCommand(user.Id, session.Id), CancellationToken.None);
 
         Assert.NotNull(result);
         Assert.Equal("Abandoned", result.Status);
@@ -152,9 +198,8 @@ public class SessionCommandHandlerTests
     [Fact]
     public async Task GetActiveSession_ReturnsRunningOrPaused()
     {
-        using var context = TestDbContextFactory.Create();
-        var user = User.CreateGuest("TimerUser");
-        context.Users.Add(user);
+        var (kit, user) = await CreateKitWithUserAsync();
+        using var context = kit.Context;
         var session = FocusSession.Start(user.Id, null, SessionKind.Focus, 48, 17);
         context.FocusSessions.Add(session);
         await context.SaveChangesAsync();
@@ -180,10 +225,12 @@ public class SessionCommandHandlerTests
 
         using var other = TestDbContextFactory.CreateShared(dbName);
         using var context = TestDbContextFactory.CreateThrowingOnSave(dbName);
-        context.BeforeSave = () => new PauseSessionCommandHandler(other)
+        var otherKit = new SessionTestKit(other);
+        var kit = new SessionTestKit(context);
+        context.BeforeSave = () => otherKit.PauseHandler
             .Handle(new PauseSessionCommand(user.Id, session.Id), CancellationToken.None);
 
         await Assert.ThrowsAsync<ConflictException>(() =>
-            new PauseSessionCommandHandler(context).Handle(new PauseSessionCommand(user.Id, session.Id), CancellationToken.None));
+            kit.PauseHandler.Handle(new PauseSessionCommand(user.Id, session.Id), CancellationToken.None));
     }
 }

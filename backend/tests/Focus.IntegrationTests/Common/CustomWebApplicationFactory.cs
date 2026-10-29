@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Focus.IntegrationTests.Common;
 
@@ -20,6 +21,8 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
     public const string TestSigningKey = "integration-tests-signing-key-0123456789abcdef";
 
     private readonly string _databaseName = Guid.NewGuid().ToString();
+
+    public OffsetTimeProvider Clock { get; } = new();
 
     protected virtual string EnvironmentName => "Development";
 
@@ -66,6 +69,9 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
             });
 
             services.AddScoped<IApplicationDbContext>(sp => sp.GetRequiredService<ApplicationDbContext>());
+
+            services.RemoveAll<TimeProvider>();
+            services.AddSingleton<TimeProvider>(Clock);
 
             // Hangfire Postgres deposu yerine bellek ici depo kullanilir; testler veritabani gerektirmez
             services.AddHangfire(config => config.UseInMemoryStorage());

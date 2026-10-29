@@ -30,9 +30,9 @@ public record FocusSessionDto(
     int NextRound,
     bool IsCycleFinished)
 {
-    public static FocusSessionDto FromEntity(FocusSession session)
+    public static FocusSessionDto FromEntity(FocusSession session, DateTime? currentTime = null)
     {
-        var now = DateTime.UtcNow;
+        var now = currentTime ?? DateTime.UtcNow;
         var remainingSeconds = 0;
 
         if (session.Status == SessionStatus.Running)

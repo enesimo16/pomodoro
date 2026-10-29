@@ -3,8 +3,25 @@ using Focus.Domain.Enums;
 
 namespace Focus.Domain.Entities;
 
+public enum ExtendOutcome
+{
+    Extended = 0,
+    NotActive = 1,
+    NotAllowedForBreak = 2,
+    ExtensionLimitReached = 3,
+    ContinuousLimitReached = 4
+}
+
 public class FocusSession : BaseEntity<Guid>
 {
+    public const int MinMinutes = 1;
+    public const int MaxFocusMinutes = 180;
+    public const int MaxBreakMinutes = 60;
+    public const int MaxRounds = 20;
+    public const int MaxExtensionMinutes = 30;
+    public const int DefaultMaxExtensions = 3;
+    public const int DefaultMaxContinuousMinutes = 90;
+
     public Guid UserId { get; private set; }
     public Guid? RoomId { get; private set; }
     public SessionKind Kind { get; private set; }
@@ -43,15 +60,16 @@ public class FocusSession : BaseEntity<Guid>
         int currentRound = 1,
         int targetRounds = 4,
         string? themeId = null,
-        string? mixPresetId = null)
+        string? mixPresetId = null,
+        DateTime? now = null)
     {
-        var validFocus = Math.Clamp(focusMinutes, 1, 180);
-        var validBreak = Math.Clamp(breakMinutes, 1, 60);
-        var validRounds = Math.Clamp(targetRounds, 1, 20);
+        var validFocus = Math.Clamp(focusMinutes, MinMinutes, MaxFocusMinutes);
+        var validBreak = Math.Clamp(breakMinutes, MinMinutes, MaxBreakMinutes);
+        var validRounds = Math.Clamp(targetRounds, 1, MaxRounds);
         var validCurrentRound = Math.Clamp(currentRound, 1, validRounds);
 
         var plannedMinutes = kind == SessionKind.Focus ? validFocus : validBreak;
-        var now = DateTime.UtcNow;
+        var startedAt = now ?? DateTime.UtcNow;
 
         return new FocusSession
         {
@@ -65,8 +83,8 @@ public class FocusSession : BaseEntity<Guid>
             PlannedMinutes = plannedMinutes,
             CurrentRound = validCurrentRound,
             TargetRounds = validRounds,
-            StartedAt = now,
-            PlannedEndAt = now.AddMinutes(plannedMinutes),
+            StartedAt = startedAt,
+            PlannedEndAt = startedAt.AddMinutes(plannedMinutes),
             TotalPausedSeconds = 0,
             NetDurationSeconds = 0,
             ExtensionCount = 0,
@@ -77,24 +95,26 @@ public class FocusSession : BaseEntity<Guid>
         };
     }
 
-    public void Pause()
+    public bool IsActive => Status == SessionStatus.Running || Status == SessionStatus.Paused;
+
+    public void Pause(DateTime? now = null)
     {
         if (Status != SessionStatus.Running) return;
 
         Status = SessionStatus.Paused;
-        PausedAt = DateTime.UtcNow;
+        PausedAt = now ?? DateTime.UtcNow;
         Touch();
     }
 
-    public void Resume()
+    public void Resume(DateTime? now = null)
     {
         if (Status != SessionStatus.Paused) return;
 
-        var now = DateTime.UtcNow;
+        var resumedAt = now ?? DateTime.UtcNow;
         if (PausedAt.HasValue)
         {
-            var pauseDuration = (int)(now - PausedAt.Value).TotalSeconds;
-            TotalPausedSeconds += Math.Max(0, pauseDuration);
+            var pauseDuration = Math.Max(0, (int)(resumedAt - PausedAt.Value).TotalSeconds);
+            TotalPausedSeconds += pauseDuration;
             PlannedEndAt = PlannedEndAt.AddSeconds(pauseDuration);
         }
 
@@ -103,31 +123,55 @@ public class FocusSession : BaseEntity<Guid>
         Touch();
     }
 
-    public void Extend(int extraMinutes = 10)
+    // Akis Korumasi: yalnizca odak seanslari, en fazla maxExtensions kez ve toplam sure maxContinuousMinutes'i gecmeyecek sekilde uzatilir
+    public ExtendOutcome Extend(
+        int extraMinutes = 10,
+        int maxExtensions = DefaultMaxExtensions,
+        int maxContinuousMinutes = DefaultMaxContinuousMinutes)
     {
-        if (Status != SessionStatus.Running && Status != SessionStatus.Paused) return;
+        if (!IsActive) return ExtendOutcome.NotActive;
+        if (Kind != SessionKind.Focus) return ExtendOutcome.NotAllowedForBreak;
+        if (ExtensionCount >= maxExtensions) return ExtendOutcome.ExtensionLimitReached;
 
-        var validExtra = Math.Clamp(extraMinutes, 1, 30);
+        var remainingCapacity = maxContinuousMinutes - PlannedMinutes;
+        if (remainingCapacity <= 0) return ExtendOutcome.ContinuousLimitReached;
+
+        var validExtra = Math.Min(Math.Clamp(extraMinutes, 1, MaxExtensionMinutes), remainingCapacity);
         PlannedEndAt = PlannedEndAt.AddMinutes(validExtra);
         PlannedMinutes += validExtra;
         ExtensionCount++;
         Touch();
+        return ExtendOutcome.Extended;
     }
 
-    public void Complete(int netSeconds, int xp, int coins)
+    // Net odak suresi: duraklatmalar dusulur, planlanan sureyi (uzatmalar dahil) asamaz
+    public int GetNetSeconds(DateTime until)
+    {
+        var activeSeconds = (until - StartedAt).TotalSeconds - TotalPausedSeconds;
+        if (Status == SessionStatus.Paused && PausedAt.HasValue)
+        {
+            activeSeconds -= (until - PausedAt.Value).TotalSeconds;
+        }
+
+        return Math.Clamp((int)Math.Floor(activeSeconds), 0, PlannedMinutes * 60);
+    }
+
+    public void Complete(int netSeconds, int xp, int coins, DateTime? endedAt = null)
     {
         Status = SessionStatus.Completed;
-        EndedAt = DateTime.UtcNow;
+        EndedAt = endedAt ?? DateTime.UtcNow;
+        PausedAt = null;
         NetDurationSeconds = Math.Max(0, netSeconds);
         XpEarned = Math.Max(0, xp);
         CoinsEarned = Math.Max(0, coins);
         Touch();
     }
 
-    public void Abandon(int netSeconds, int xp = 0, int coins = 0)
+    public void Abandon(int netSeconds, int xp = 0, int coins = 0, DateTime? endedAt = null)
     {
         Status = SessionStatus.Abandoned;
-        EndedAt = DateTime.UtcNow;
+        EndedAt = endedAt ?? DateTime.UtcNow;
+        PausedAt = null;
         NetDurationSeconds = Math.Max(0, netSeconds);
         XpEarned = Math.Max(0, xp);
         CoinsEarned = Math.Max(0, coins);

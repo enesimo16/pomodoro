@@ -1,5 +1,6 @@
 using System.Text;
 using Focus.Application.Common.Interfaces;
+using Focus.Application.Common.Options;
 using Focus.Infrastructure.Authentication;
 using Focus.Infrastructure.BackgroundJobs;
 using Focus.Infrastructure.Common;
@@ -41,6 +42,7 @@ public static class DependencyInjection
                 JwtSettings.HasValidSigningKey,
                 $"Auth:Jwt:SigningKey tanimli degil veya {JwtSettings.MinSigningKeyBytes} bayttan kisa. Auth__Jwt__SigningKey ortam degiskeni ile en az {JwtSettings.MinSigningKeyBytes} baytlik gizli bir anahtar verin.")
             .ValidateOnStart();
+        services.Configure<AlgorithmOptions>(configuration.GetSection(AlgorithmOptions.SectionName));
         services.Configure<GoogleAuthSettings>(configuration.GetSection(GoogleAuthSettings.SectionName));
         services.Configure<ExternalApiSettings>(configuration.GetSection(ExternalApiSettings.SectionName));
 

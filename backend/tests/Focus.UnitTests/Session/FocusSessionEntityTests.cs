@@ -136,4 +136,84 @@ public class FocusSessionEntityTests
         Assert.Equal(expectedNextRound, nextRound);
         Assert.Equal(expectedIsFinished, isFinished);
     }
+
+    [Fact]
+    public void Extend_StopsAfterMaxExtensions()
+    {
+        var session = FocusSession.Start(Guid.NewGuid(), null, SessionKind.Focus, 25, 5);
+
+        Assert.Equal(ExtendOutcome.Extended, session.Extend(10));
+        Assert.Equal(ExtendOutcome.Extended, session.Extend(10));
+        Assert.Equal(ExtendOutcome.Extended, session.Extend(10));
+        Assert.Equal(ExtendOutcome.ExtensionLimitReached, session.Extend(10));
+        Assert.Equal(3, session.ExtensionCount);
+        Assert.Equal(55, session.PlannedMinutes);
+    }
+
+    [Fact]
+    public void Extend_ClipsToContinuousFocusLimit_ThenRejects()
+    {
+        var session = FocusSession.Start(Guid.NewGuid(), null, SessionKind.Focus, 80, 5);
+        var plannedEnd = session.PlannedEndAt;
+
+        Assert.Equal(ExtendOutcome.Extended, session.Extend(30));
+        Assert.Equal(90, session.PlannedMinutes);
+        Assert.Equal(plannedEnd.AddMinutes(10), session.PlannedEndAt);
+        Assert.Equal(ExtendOutcome.ContinuousLimitReached, session.Extend(5));
+    }
+
+    [Fact]
+    public void Extend_IsNotAllowedOnBreaks_OrFinishedSessions()
+    {
+        var breakSession = FocusSession.Start(Guid.NewGuid(), null, SessionKind.Break, 25, 5);
+        Assert.Equal(ExtendOutcome.NotAllowedForBreak, breakSession.Extend(10));
+
+        var finished = FocusSession.Start(Guid.NewGuid(), null, SessionKind.Focus, 25, 5);
+        finished.Abandon(0);
+        Assert.Equal(ExtendOutcome.NotActive, finished.Extend(10));
+    }
+
+    [Fact]
+    public void GetNetSeconds_SubtractsPausesAndClampsToPlannedTime()
+    {
+        var start = new DateTime(2026, 10, 10, 12, 0, 0, DateTimeKind.Utc);
+        var session = FocusSession.Start(Guid.NewGuid(), null, SessionKind.Focus, 25, 5, now: start);
+
+        session.Pause(start.AddMinutes(10));
+        session.Resume(start.AddMinutes(40));
+
+        Assert.Equal(30 * 60, session.TotalPausedSeconds);
+        Assert.Equal(15 * 60, session.GetNetSeconds(start.AddMinutes(45)));
+        Assert.Equal(25 * 60, session.GetNetSeconds(start.AddHours(10)));
+        Assert.Equal(0, session.GetNetSeconds(start.AddMinutes(-5)));
+    }
+
+    [Fact]
+    public void GetNetSeconds_WhilePaused_StopsAtThePauseInstant()
+    {
+        var start = new DateTime(2026, 10, 10, 12, 0, 0, DateTimeKind.Utc);
+        var session = FocusSession.Start(Guid.NewGuid(), null, SessionKind.Focus, 25, 5, now: start);
+
+        session.Pause(start.AddMinutes(7));
+
+        Assert.Equal(7 * 60, session.GetNetSeconds(start.AddHours(3)));
+    }
+
+    [Fact]
+    public void StateChanges_RegenerateTheConcurrencyStamp()
+    {
+        var session = FocusSession.Start(Guid.NewGuid(), null, SessionKind.Focus, 25, 5);
+        var stamps = new List<Guid> { session.ConcurrencyStamp };
+
+        session.Pause();
+        stamps.Add(session.ConcurrencyStamp);
+        session.Resume();
+        stamps.Add(session.ConcurrencyStamp);
+        session.Extend(5);
+        stamps.Add(session.ConcurrencyStamp);
+        session.Complete(0, 0, 0);
+        stamps.Add(session.ConcurrencyStamp);
+
+        Assert.Equal(stamps.Count, stamps.Distinct().Count());
+    }
 }

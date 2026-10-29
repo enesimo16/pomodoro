@@ -1,6 +1,7 @@
 using Focus.Application.Common.Extensions;
 using Focus.Application.Common.Interfaces;
 using Focus.Application.Features.Session.DTOs;
+using Focus.Application.Features.Session.Services;
 using Focus.Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -12,10 +13,14 @@ public record PauseSessionCommand(Guid UserId, Guid? SessionId = null) : IReques
 public class PauseSessionCommandHandler : IRequestHandler<PauseSessionCommand, FocusSessionDto?>
 {
     private readonly IApplicationDbContext _context;
+    private readonly SessionSettlementService _settlement;
+    private readonly TimeProvider _clock;
 
-    public PauseSessionCommandHandler(IApplicationDbContext context)
+    public PauseSessionCommandHandler(IApplicationDbContext context, SessionSettlementService settlement, TimeProvider clock)
     {
         _context = context;
+        _settlement = settlement;
+        _clock = clock;
     }
 
     public async Task<FocusSessionDto?> Handle(PauseSessionCommand request, CancellationToken cancellationToken)
@@ -34,9 +39,11 @@ public class PauseSessionCommandHandler : IRequestHandler<PauseSessionCommand, F
             return null;
         }
 
-        session.Pause();
+        var now = _clock.GetUtcNow().UtcDateTime;
+        session.Pause(now);
+        await _settlement.SetFocusingAsync(request.UserId, false, cancellationToken);
         await _context.SaveChangesOrConflictAsync(cancellationToken);
 
-        return FocusSessionDto.FromEntity(session);
+        return FocusSessionDto.FromEntity(session, now);
     }
 }
