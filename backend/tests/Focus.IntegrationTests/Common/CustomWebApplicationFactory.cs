@@ -30,7 +30,10 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
         ["Auth:Jwt:SigningKey"] = TestSigningKey,
         ["Auth:Jwt:Issuer"] = "focus-api",
         ["Auth:Jwt:Audience"] = "focus-web",
-        ["Cors:AllowedOrigins"] = "http://localhost:3000"
+        ["Cors:AllowedOrigins"] = "http://localhost:3000",
+        ["RateLimiting:Auth:PermitLimit"] = "100000",
+        ["RateLimiting:Ai:PermitLimit"] = "100000",
+        ["RateLimiting:Media:PermitLimit"] = "100000"
     };
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)

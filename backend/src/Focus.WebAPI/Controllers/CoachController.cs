@@ -2,7 +2,9 @@ using Focus.Application.Features.Coach.Commands;
 using Focus.Application.Features.Coach.DTOs;
 using Focus.Application.Features.Coach.Queries;
 using Microsoft.AspNetCore.Authorization;
+using Focus.WebAPI.RateLimiting;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Focus.WebAPI.Controllers;
 
@@ -13,6 +15,7 @@ public class CoachController : BaseApiController
     /// Masaüstü terminalindeki AI Koç ile sohbet eder; RAG çift katmanlı vektör hafızasını ve anomali tetikleyicilerini kullanarak kişiselleştirilmiş rehberlik sunar.
     /// </summary>
     [Authorize]
+    [EnableRateLimiting(RateLimitPolicies.Ai)]
     [HttpPost("chat")]
     [ProducesResponseType(typeof(CoachChatResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

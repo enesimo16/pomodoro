@@ -2,7 +2,9 @@ using Focus.Application.Features.Atmosphere.Commands;
 using Focus.Application.Features.Atmosphere.DTOs;
 using Focus.Application.Features.Atmosphere.Queries;
 using Microsoft.AspNetCore.Authorization;
+using Focus.WebAPI.RateLimiting;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Focus.WebAPI.Controllers;
 
@@ -13,6 +15,7 @@ public class AtmosphereAiController : BaseApiController
     /// Kullanıcının serbest metin prompt'u veya seçtiği tercihlere göre tam bir piksel oda teması ve 4 kanallı ses mikseri üretir.
     /// </summary>
     [Authorize]
+    [EnableRateLimiting(RateLimitPolicies.Ai)]
     [HttpPost("generate")]
     [ProducesResponseType(typeof(GeneratedAtmosphereDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -28,6 +31,7 @@ public class AtmosphereAiController : BaseApiController
     /// Kullanıcının anlık yorgunluk skoru, sirkadiyen dilimi, yerel hava durumu ve kolektif yapay zeka hafızasına göre otomatik tema ve müzik önerir.
     /// </summary>
     [Authorize]
+    [EnableRateLimiting(RateLimitPolicies.Ai)]
     [HttpGet("auto-recommend")]
     [ProducesResponseType(typeof(GeneratedAtmosphereDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

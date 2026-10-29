@@ -3,7 +3,9 @@ using Focus.Application.Features.Auth.DTOs;
 using Focus.Application.Features.Auth.Queries;
 using Focus.Infrastructure.Authentication;
 using Microsoft.AspNetCore.Authorization;
+using Focus.WebAPI.RateLimiting;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Options;
 
 namespace Focus.WebAPI.Controllers;
@@ -26,6 +28,7 @@ public class AuthController : BaseApiController
     /// <summary>
     /// Sıfır sürtünmeyle anında misafir oturumu açar; varsayılan piksel odayı, avatarı ve tercihleri oluşturarak JWT token döndürür.
     /// </summary>
+    [EnableRateLimiting(RateLimitPolicies.Auth)]
     [HttpPost("guest")]
     [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> Guest([FromBody] GuestLoginRequest? request, CancellationToken cancellationToken)
@@ -45,6 +48,7 @@ public class AuthController : BaseApiController
     /// <summary>
     /// Google OAuth id_token kullanarak giriş yapar veya yeni hesap oluşturur.
     /// </summary>
+    [EnableRateLimiting(RateLimitPolicies.Auth)]
     [HttpPost("google")]
     [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -72,6 +76,7 @@ public class AuthController : BaseApiController
     /// <summary>
     /// Mevcut misafir hesabındaki oda, eşya, avatar ve coin ilerlemesini kalıcı bir Google hesabına bağlar (hesap sahiplenme).
     /// </summary>
+    [EnableRateLimiting(RateLimitPolicies.Auth)]
     [HttpPost("claim")]
     [Authorize]
     [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status200OK)]
@@ -104,6 +109,7 @@ public class AuthController : BaseApiController
     /// <summary>
     /// Süresi dolan JWT Access Token'ı geçerli bir Refresh Token ile yeniler.
     /// </summary>
+    [EnableRateLimiting(RateLimitPolicies.Auth)]
     [HttpPost("refresh")]
     [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

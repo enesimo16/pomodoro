@@ -4,6 +4,7 @@ using Focus.Infrastructure.Common;
 using Focus.Infrastructure.Persistence;
 using Focus.WebAPI.ExceptionHandling;
 using Focus.WebAPI.Hubs;
+using Focus.WebAPI.RateLimiting;
 using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
@@ -61,6 +62,7 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddFocusForwardedHeaders();
+builder.Services.AddFocusRateLimiting(builder.Configuration);
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<ValidationExceptionHandler>();
 
@@ -103,6 +105,7 @@ else
 app.UseCors("FocusClientCors");
 
 app.UseAuthentication();
+app.UseRateLimiter();
 app.UseAuthorization();
 
 app.UseMiddleware<Focus.Infrastructure.Middleware.UserAccessTrackingMiddleware>();

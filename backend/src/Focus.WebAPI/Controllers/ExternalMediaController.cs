@@ -1,10 +1,13 @@
 using Focus.Application.Common.Interfaces;
 using Focus.Application.Features.ExternalMedia.DTOs;
+using Focus.WebAPI.RateLimiting;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Focus.WebAPI.Controllers;
 
 [Route("api/v1/media")]
+[EnableRateLimiting(RateLimitPolicies.Media)]
 public class ExternalMediaController : BaseApiController
 {
     private readonly IThemeVideoService _videoService;
