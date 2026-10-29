@@ -31,7 +31,7 @@
                            placeholder="http://localhost:5000 veya https://api.domain.com" 
                            value="@Model.WebApiBaseUrl" 
                            oninput="onApiBaseUrlChanged(this.value)" style="max-width: 280px;" />
-                    <button type="button" class="polaris-btn polaris-btn-secondary polaris-btn-sm" onclick="copyApiBaseUrl(this)">
+                    <button type="button" class="polaris-btn polaris-btn-secondary polaris-btn-sm" data-copy-base>
                         Kopyala
                     </button>
                     <button type="button" class="polaris-btn polaris-btn-secondary polaris-btn-sm" onclick="resetApiBaseUrl()" title="Varsayılan localhost adresine sıfırla">
@@ -93,7 +93,7 @@
             <div class="tab-pane fade show active" id="qs-env">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <span class="small text-muted">Next.js projenizin kök dizinindeki <code>.env.local</code> dosyasına yapıştırın:</span>
-                    <button type="button" class="polaris-btn polaris-btn-secondary polaris-btn-sm" onclick="copyText(document.getElementById('envSnippet').textContent.trim(), this)">
+                    <button type="button" class="polaris-btn polaris-btn-secondary polaris-btn-sm" data-copy-from="envSnippet">
                         Tümünü Kopyala
                     </button>
                 </div>
@@ -102,10 +102,7 @@ NEXT_PUBLIC_API_URL=@Model.WebApiBaseUrl/api/v1
 
 # SignalR Gerçek Zamanlı Hub Adresleri
 NEXT_PUBLIC_SIGNALR_TIMER_URL=@Model.WebApiBaseUrl/hubs/timer
-NEXT_PUBLIC_SIGNALR_ROOM_URL=@Model.WebApiBaseUrl/hubs/room
-
-# Admin Paneli Stealth Passkey (Yerel Geliştirici Erişimi)
-FOCUS_ADMIN_PASSKEY=&lt;ADMIN_KEY&gt;</code></pre>
+NEXT_PUBLIC_SIGNALR_ROOM_URL=@Model.WebApiBaseUrl/hubs/room</code></pre>
             </div>
 
             <!-- TAB 2: Güvenlik & Admin Key'leri -->
@@ -127,7 +124,7 @@ FOCUS_ADMIN_PASSKEY=&lt;ADMIN_KEY&gt;</code></pre>
                                 <td><span class="badge bg-dark text-white">Yönetici / Geliştirici (@Model.AdminKeyCount anahtar tanımlı)</span></td>
                                 <td><code>?admin_key=&lt;ADMIN_KEY&gt;</code></td>
                                 <td class="text-end">
-                                    <button type="button" class="btn btn-outline-dark btn-sm py-0 px-2" style="font-size: 11px;" onclick="copyText('?admin_key=&lt;ADMIN_KEY&gt;', this)">
+                                    <button type="button" class="btn btn-outline-dark btn-sm py-0 px-2" style="font-size: 11px;" data-copy="?admin_key=&lt;ADMIN_KEY&gt;">
                                         Kopyala
                                     </button>
                                 </td>
@@ -147,7 +144,7 @@ FOCUS_ADMIN_PASSKEY=&lt;ADMIN_KEY&gt;</code></pre>
             <div class="tab-pane fade" id="qs-auth">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <span class="small text-muted">Next.js için 401 Unauthorized durumunda otomatik token yenileyen istemci fonksiyonu:</span>
-                    <button type="button" class="polaris-btn polaris-btn-secondary polaris-btn-sm" onclick="copyText(document.getElementById('authSnippet').textContent.trim(), this)">
+                    <button type="button" class="polaris-btn polaris-btn-secondary polaris-btn-sm" data-copy-from="authSnippet">
                         Kodu Kopyala
                     </button>
                 </div>
@@ -161,7 +158,7 @@ export async function fetchWithAuth(endpoint: string, options: RequestInit = {})
     ...options.headers,
   };
 
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || '@Model.WebApiBaseUrl/api/v1';
   let response = await fetch(`${baseUrl}${endpoint}`, { ...options, headers });
 
   // Access Token süresi dolmuşsa (401), Refresh Token ile otomatik yenile
@@ -175,12 +172,13 @@ export async function fetchWithAuth(endpoint: string, options: RequestInit = {})
       });
 
       if (refreshRes.ok) {
-        const { data } = await refreshRes.json();
-        localStorage.setItem('focus_at', data.accessToken);
-        localStorage.setItem('focus_rt', data.refreshToken);
+        // AuthResponseDto düz döner: { user, avatar, room, accessToken, refreshToken, expiresAt }
+        const auth = await refreshRes.json();
+        localStorage.setItem('focus_at', auth.accessToken);
+        localStorage.setItem('focus_rt', auth.refreshToken);
 
         // İsteği yeni Access Token ile tekrarla
-        headers['Authorization'] = `Bearer ${data.accessToken}`;
+        headers['Authorization'] = `Bearer ${auth.accessToken}`;
         return fetch(`${baseUrl}${endpoint}`, { ...options, headers });
       }
     }
@@ -194,7 +192,7 @@ export async function fetchWithAuth(endpoint: string, options: RequestInit = {})
             <div class="tab-pane fade" id="qs-signalr">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <span class="small text-muted"><code>npm install @@microsoft/signalr</code> sonrası canlı sayaç ve oda dinleme şablonu:</span>
-                    <button type="button" class="polaris-btn polaris-btn-secondary polaris-btn-sm" onclick="copyText(document.getElementById('signalrSnippet').textContent.trim(), this)">
+                    <button type="button" class="polaris-btn polaris-btn-secondary polaris-btn-sm" data-copy-from="signalrSnippet">
                         Kodu Kopyala
                     </button>
                 </div>
@@ -202,26 +200,21 @@ export async function fetchWithAuth(endpoint: string, options: RequestInit = {})
 import * as signalR from '@@microsoft/signalr';
 
 export function createTimerHubConnection(accessToken: string) {
-  const hubUrl = process.env.NEXT_PUBLIC_SIGNALR_TIMER_URL || 'http://localhost:5000/hubs/timer';
+  const hubUrl = process.env.NEXT_PUBLIC_SIGNALR_TIMER_URL || '@Model.WebApiBaseUrl/hubs/timer';
 
   const connection = new signalR.HubConnectionBuilder()
-    .withUrl(hubUrl, {
-      accessTokenFactory: () => accessToken,
-      skipNegotiation: false,
-      transport: signalR.HttpTransportType.WebSockets | signalR.HttpTransportType.LongPolling
-    })
+    .withUrl(hubUrl, { accessTokenFactory: () => accessToken })
     .withAutomaticReconnect()
     .build();
 
-  // Canlı Saniye Tiklerini Dinle
-  connection.on('ReceiveTick', ({ remainingSeconds, elapsedSeconds }) => {
-    console.log('Kalan Saniye:', remainingSeconds);
-  });
-
-  // Seans Durum Değişikliklerini Dinle (Running, Paused, FlowShieldBroken)
-  connection.on('ReceiveStateChanged', ({ status }) => {
-    console.log('Seans Durumu:', status);
-  });
+  // Sunucu damgalı sayaç olayları: payload FocusSessionDto (kalan süre için remainingSeconds)
+  connection.on('TimerStarted', (session) => console.log('Başladı:', session.remainingSeconds));
+  connection.on('TimerPaused', (session) => console.log('Duraklatıldı:', session.status));
+  connection.on('TimerResumed', (session) => console.log('Devam ediyor:', session.status));
+  connection.on('TimerExtended', (session) => console.log('Uzatıldı:', session.plannedEndAt));
+  connection.on('TimerAbandoned', (session) => console.log('Bırakıldı:', session.id));
+  connection.on('TimerCompleted', (result) => console.log('Tamamlandı:', result.xpEarned, result.coinsEarned, result.levelUp));
+  connection.on('DeskLightToggled', (isTurnedOn) => console.log('Masa lambası:', isTurnedOn));
 
   return connection;
 }</code></pre>
@@ -301,13 +294,13 @@ export function createTimerHubConnection(accessToken: string) {
                                     <span class="polaris-badge polaris-badge-neutral">Herkese Açık</span>
                                 }
 
-                                <button type="button" class="polaris-btn polaris-btn-secondary polaris-btn-sm" onclick="copyEndpointUrl('@ep.Path', this)" title="Tam uç nokta URL'ini kopyala">
+                                <button type="button" class="polaris-btn polaris-btn-secondary polaris-btn-sm" data-copy-path="@ep.Path" title="Tam uç nokta URL'ini kopyala">
                                     URL Kopyala
                                 </button>
 
                                 @if (!string.IsNullOrEmpty(ep.TestLabTab))
                                 {
-                                    <a asp-page="/ApiLab/Index" class="polaris-btn polaris-btn-secondary polaris-btn-sm" title="Bu ucu API Test Konsolunda canlı dene">
+                                    <a asp-page="/ApiLab/Index" asp-fragment="@ep.TestLabTab.TrimStart('#')" class="polaris-btn polaris-btn-secondary polaris-btn-sm" title="Bu ucu API Test Konsolunda canlı dene">
                                         Test Et
                                     </a>
                                 }
@@ -325,7 +318,7 @@ export function createTimerHubConnection(accessToken: string) {
                                             <span class="fw-bold text-muted small" style="font-size: 11px;">TypeScript Gövde Modeli</span>
                                             @if (!string.IsNullOrEmpty(ep.TypeScriptRequest))
                                             {
-                                                <button type="button" class="btn btn-link btn-sm text-dark p-0 text-decoration-none" style="font-size: 11px;" onclick="copyCode(this)">
+                                                <button type="button" class="btn btn-link btn-sm text-dark p-0 text-decoration-none" style="font-size: 11px;" data-copy-code>
                                                     Kopyala
                                                 </button>
                                             }
@@ -341,12 +334,12 @@ export function createTimerHubConnection(accessToken: string) {
                                             <span class="fw-bold text-muted small" style="font-size: 11px;">Başarılı Yanıt (200 OK)</span>
                                             @if (!string.IsNullOrEmpty(ep.JsonSuccessResponse))
                                             {
-                                                <button type="button" class="btn btn-link btn-sm text-dark p-0 text-decoration-none" style="font-size: 11px;" onclick="copyCode(this)">
+                                                <button type="button" class="btn btn-link btn-sm text-dark p-0 text-decoration-none" style="font-size: 11px;" data-copy-code>
                                                     Kopyala
                                                 </button>
                                             }
                                         </div>
-                                        <pre class="m-0 p-2 text-dark font-monospace small bg-light rounded" style="font-size: 11.5px; max-height: 160px; overflow-y: auto; white-space: pre-wrap;"><code>@(ep.JsonSuccessResponse ?? "{\n  \"success\": true\n}")</code></pre>
+                                        <pre class="m-0 p-2 text-dark font-monospace small bg-light rounded" style="font-size: 11.5px; max-height: 160px; overflow-y: auto; white-space: pre-wrap;"><code>@(ep.JsonSuccessResponse ?? "// Yanıt gövdesi yok (204 No Content)")</code></pre>
                                     </div>
                                 </div>
                             </div>
@@ -377,7 +370,7 @@ export function createTimerHubConnection(accessToken: string) {
                         <div>
                             <span class="fw-bold text-dark fs-6">@hub.HubName</span>
                             <code class="ms-2 text-muted font-monospace"><span class="dynamic-api-base">@Model.WebApiBaseUrl</span>@hub.Path</code>
-                            <button type="button" class="btn btn-link btn-sm text-dark p-0 text-decoration-none ms-2" style="font-size: 11px;" onclick="copyEndpointUrl('@hub.Path', this)">
+                            <button type="button" class="btn btn-link btn-sm text-dark p-0 text-decoration-none ms-2" style="font-size: 11px;" data-copy-path="@hub.Path">
                                 URL Kopyala
                             </button>
                         </div>
@@ -394,7 +387,7 @@ export function createTimerHubConnection(accessToken: string) {
                                 <div class="border rounded p-2 bg-light">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <span class="fw-bold text-dark font-monospace small">@ev.EventName</span>
-                                        <button type="button" class="btn btn-link btn-sm text-dark p-0 text-decoration-none" style="font-size: 11px;" onclick="copyCode(this)">
+                                        <button type="button" class="btn btn-link btn-sm text-dark p-0 text-decoration-none" style="font-size: 11px;" data-copy-code>
                                             Kopyala
                                         </button>
                                     </div>
@@ -412,7 +405,7 @@ export function createTimerHubConnection(accessToken: string) {
                                 <div class="border rounded p-2 bg-white">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <span class="fw-semibold text-dark font-monospace small">@m.MethodName</span>
-                                        <button type="button" class="btn btn-link btn-sm text-dark p-0 text-decoration-none" style="font-size: 11px;" onclick="copyText('@m.TypeScriptParameters', this)">
+                                        <button type="button" class="btn btn-link btn-sm text-dark p-0 text-decoration-none" style="font-size: 11px;" data-copy="@m.TypeScriptParameters">
                                             Kopyala
                                         </button>
                                     </div>
@@ -440,6 +433,7 @@ export function createTimerHubConnection(accessToken: string) {
     const lsStore = safeStorage('localStorage');
     let activeFilter = 'all';
     const defaultApiBaseUrl = '@Model.WebApiBaseUrl';
+    let renderedBaseUrl = defaultApiBaseUrl;
 
     function getActiveBaseUrl() {
         return (lsStore.get('focus_custom_api_base_url') || defaultApiBaseUrl).trim().replace(/\/+$/, '');
@@ -462,45 +456,24 @@ export function createTimerHubConnection(accessToken: string) {
         updateDynamicUrls(defaultApiBaseUrl);
     }
 
-    function copyApiBaseUrl(btn) {
-        const url = getActiveBaseUrl();
-        copyText(url, btn);
-    }
-
-    function copyEndpointUrl(path, btn) {
-        const fullUrl = `${getActiveBaseUrl()}${path}`;
-        copyText(fullUrl, btn);
-    }
-
     function updateDynamicUrls(baseUrl) {
         // 1. Tüm dinamik base URL metinlerini güncelle
         document.querySelectorAll('.dynamic-api-base').forEach(el => {
             el.textContent = baseUrl;
         });
 
-        // 2. .env.local kod bloğunu güncelle
-        const envEl = document.getElementById('envSnippet');
-        if (envEl) {
-            envEl.textContent = `# Focus WebAPI Taban Adresi\nNEXT_PUBLIC_API_URL=${baseUrl}/api/v1\n\n# SignalR Gerçek Zamanlı Hub Adresleri\nNEXT_PUBLIC_SIGNALR_TIMER_URL=${baseUrl}/hubs/timer\nNEXT_PUBLIC_SIGNALR_ROOM_URL=${baseUrl}/hubs/room\n\n# Admin Paneli Stealth Passkey (Yerel Geliştirici Erişimi)\nFOCUS_ADMIN_PASSKEY=<ADMIN_KEY>`;
-        }
+        // 2. Kod bloklarındaki taban adresi güncelle
+        ['envSnippet', 'authSnippet', 'signalrSnippet'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = el.textContent.split(renderedBaseUrl).join(baseUrl);
+        });
+        renderedBaseUrl = baseUrl;
 
-        // 3. Token Refresh kod bloğunu güncelle
-        const authEl = document.getElementById('authSnippet');
-        if (authEl) {
-            authEl.textContent = `// lib/apiClient.ts\nexport async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {\n  let token = typeof window !== 'undefined' ? localStorage.getItem('focus_at') : null;\n\n  const headers = {\n    'Content-Type': 'application/json',\n    ...(token ? { 'Authorization': \`Bearer \${token}\` } : {}),\n    ...options.headers,\n  };\n\n  const baseUrl = process.env.NEXT_PUBLIC_API_URL || '${baseUrl}/api/v1';\n  let response = await fetch(\`\${baseUrl}\${endpoint}\`, { ...options, headers });\n\n  // Access Token süresi dolmuşsa (401), Refresh Token ile otomatik yenile\n  if (response.status === 401 && typeof window !== 'undefined') {\n    const refreshToken = localStorage.getItem('focus_rt');\n    if (refreshToken) {\n      const refreshRes = await fetch(\`\${baseUrl}/auth/refresh\`, {\n        method: 'POST',\n        headers: { 'Content-Type': 'application/json' },\n        body: JSON.stringify({ refreshToken }),\n      });\n\n      if (refreshRes.ok) {\n        const { data } = await refreshRes.json();\n        localStorage.setItem('focus_at', data.accessToken);\n        localStorage.setItem('focus_rt', data.refreshToken);\n\n        // İsteği yeni Access Token ile tekrarla\n        headers['Authorization'] = \`Bearer \${data.accessToken}\`;\n        return fetch(\`\${baseUrl}\${endpoint}\`, { ...options, headers });\n      }\n    }\n  }\n\n  return response;\n}`;
-        }
-
-        // 4. SignalR istemci kod bloğunu güncelle
-        const signalrEl = document.getElementById('signalrSnippet');
-        if (signalrEl) {
-            signalrEl.textContent = `// lib/timerHub.ts\nimport * as signalR from '@@microsoft/signalr';\n\nexport function createTimerHubConnection(accessToken: string) {\n  const hubUrl = process.env.NEXT_PUBLIC_SIGNALR_TIMER_URL || '${baseUrl}/hubs/timer';\n\n  const connection = new signalR.HubConnectionBuilder()\n    .withUrl(hubUrl, {\n      accessTokenFactory: () => accessToken,\n      skipNegotiation: false,\n      transport: signalR.HttpTransportType.WebSockets | signalR.HttpTransportType.LongPolling\n    })\n    .withAutomaticReconnect()\n    .build();\n\n  // Canlı Saniye Tiklerini Dinle\n  connection.on('ReceiveTick', ({ remainingSeconds, elapsedSeconds }) => {\n    console.log('Kalan Saniye:', remainingSeconds);\n  });\n\n  // Seans Durum Değişikliklerini Dinle (Running, Paused, FlowShieldBroken)\n  connection.on('ReceiveStateChanged', ({ status }) => {\n    console.log('Seans Durumu:', status);\n  });\n\n  return connection;\n}`;
-        }
-
-        // 5. Üstteki Swagger linkini güncelle
+        // 3. Üstteki Swagger linkini güncelle
         const swBtn = document.getElementById('btnSwaggerLink');
         if (swBtn) swBtn.href = `${baseUrl}/swagger`;
 
-        // 6. Sol menüdeki Swagger linkini güncelle
+        // 4. Sol menüdeki Swagger linkini güncelle
         const sideSw = document.getElementById('sidebarSwaggerLink');
         if (sideSw) sideSw.href = `${baseUrl}/swagger`;
     }
@@ -568,22 +541,61 @@ export function createTimerHubConnection(accessToken: string) {
         });
     }
 
-    function copyText(text, btn) {
-        if (!text) return;
-        navigator.clipboard.writeText(text).then(() => {
-            const orig = btn.textContent;
-            btn.textContent = 'Kopyalandı!';
-            setTimeout(() => { btn.textContent = orig; }, 1500);
-        });
+    function flashButton(btn) {
+        const orig = btn.textContent;
+        btn.textContent = 'Kopyalandı!';
+        setTimeout(() => { btn.textContent = orig; }, 1500);
     }
 
-    function copyCode(btn) {
-        const parent = btn.closest('.border, .polaris-card-body');
-        const codeEl = parent ? parent.querySelector('code') : null;
-        if (codeEl) {
-            copyText(codeEl.textContent.trim(), btn);
+    function fallbackCopy(text) {
+        const area = document.createElement('textarea');
+        area.value = text;
+        area.setAttribute('readonly', '');
+        area.style.position = 'fixed';
+        area.style.opacity = '0';
+        document.body.appendChild(area);
+        area.select();
+        let ok = false;
+        try {
+            ok = document.execCommand('copy');
+        } catch (e) {
+            ok = false;
         }
+        document.body.removeChild(area);
+        return ok;
     }
+
+    async function copyText(text, btn) {
+        if (!text) return;
+        let ok = false;
+        try {
+            await navigator.clipboard.writeText(text);
+            ok = true;
+        } catch (e) {
+            ok = fallbackCopy(text);
+        }
+        if (ok && btn) flashButton(btn);
+    }
+
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-copy], [data-copy-from], [data-copy-path], [data-copy-code], [data-copy-base]');
+        if (!btn) return;
+
+        if (btn.hasAttribute('data-copy')) {
+            copyText(btn.getAttribute('data-copy'), btn);
+        } else if (btn.hasAttribute('data-copy-from')) {
+            const source = document.getElementById(btn.getAttribute('data-copy-from'));
+            if (source) copyText(source.textContent.trim(), btn);
+        } else if (btn.hasAttribute('data-copy-path')) {
+            copyText(getActiveBaseUrl() + btn.getAttribute('data-copy-path'), btn);
+        } else if (btn.hasAttribute('data-copy-code')) {
+            const parent = btn.closest('.border, .polaris-card-body');
+            const codeEl = parent ? parent.querySelector('code') : null;
+            if (codeEl) copyText(codeEl.textContent.trim(), btn);
+        } else if (btn.hasAttribute('data-copy-base')) {
+            copyText(getActiveBaseUrl(), btn);
+        }
+    });
 
     function toggleQuickstart() {
         const content = document.getElementById('quickstartContent');
