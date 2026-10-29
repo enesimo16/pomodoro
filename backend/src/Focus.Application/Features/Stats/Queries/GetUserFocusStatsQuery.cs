@@ -1,5 +1,6 @@
 using Focus.Application.Common.Interfaces;
 using Focus.Application.Features.Stats.DTOs;
+using Focus.Domain.Common;
 using Focus.Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -26,8 +27,8 @@ public class GetUserFocusStatsQueryHandler : IRequestHandler<GetUserFocusStatsQu
         var level = user?.Level ?? 1;
         var currentXp = user?.CurrentXp ?? 0;
 
-        var baseForCurrent = (long)Math.Pow(level - 1, 2) * 100;
-        var baseForNext = (long)Math.Pow(level, 2) * 100;
+        var baseForCurrent = LevelCurve.XpRequiredForLevel(level);
+        var baseForNext = LevelCurve.XpRequiredForLevel(level + 1);
         var range = Math.Max(1, baseForNext - baseForCurrent);
         var progress = Math.Clamp((double)(currentXp - baseForCurrent) / range * 100.0, 0.0, 100.0);
 

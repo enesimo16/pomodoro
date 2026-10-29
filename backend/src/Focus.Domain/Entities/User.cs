@@ -99,12 +99,7 @@ public class User : BaseEntity<Guid>, IAggregateRoot
         if (xp <= 0) return;
 
         CurrentXp += xp;
-        // Level formülü: Level = 1 + floor(sqrt(XP / 100))
-        var calculatedLevel = 1 + (int)Math.Floor(Math.Sqrt(CurrentXp / 100.0));
-        if (calculatedLevel > Level)
-        {
-            Level = calculatedLevel;
-        }
+        Level = Math.Max(Level, LevelCurve.LevelForXp(CurrentXp));
 
         UpdatedAt = DateTime.UtcNow;
     }

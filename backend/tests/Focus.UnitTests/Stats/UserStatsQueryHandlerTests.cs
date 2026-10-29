@@ -13,7 +13,7 @@ public class UserStatsQueryHandlerTests
     {
         using var context = TestDbContextFactory.Create();
         var user = User.CreateGuest("StatsMaster");
-        user.AddXp(500); // Level 3
+        user.AddXp(500); // Level 2 (455 XP esigi)
         context.Users.Add(user);
 
         var streak = UserStreak.CreateDefault(user.Id);
@@ -41,7 +41,7 @@ public class UserStatsQueryHandlerTests
         Assert.Equal(50, stats.TodayFocusMinutes);
         Assert.Equal(2, stats.TodaySessionCount);
         Assert.Equal(2, stats.CurrentStreak);
-        Assert.Equal(3, stats.CurrentLevel);
+        Assert.Equal(2, stats.CurrentLevel);
         Assert.Equal(500, stats.CurrentXp);
         Assert.Equal(120, stats.TotalCoins);
         Assert.Equal(1, stats.InventoryItemCount);
@@ -53,8 +53,8 @@ public class UserStatsQueryHandlerTests
     {
         using var context = TestDbContextFactory.Create();
         var user = User.CreateGuest("LevelProgressTest");
-        // Level 1: 0 to 99 XP. If XP = 50, progress should be 50%
-        user.AddXp(50);
+        // Level 1: 0 - 454 XP, Level 2 esigi 455 XP
+        user.AddXp(91);
         context.Users.Add(user);
         await context.SaveChangesAsync();
 
@@ -62,9 +62,9 @@ public class UserStatsQueryHandlerTests
         var stats = await handler.Handle(new GetUserFocusStatsQuery(user.Id), CancellationToken.None);
 
         Assert.Equal(1, stats.CurrentLevel);
-        Assert.Equal(50, stats.CurrentXp);
+        Assert.Equal(91, stats.CurrentXp);
         Assert.Equal(0, stats.XpRequiredForCurrentLevel);
-        Assert.Equal(100, stats.XpRequiredForNextLevel);
-        Assert.Equal(50.0, stats.LevelProgressPercentage);
+        Assert.Equal(455, stats.XpRequiredForNextLevel);
+        Assert.Equal(20.0, stats.LevelProgressPercentage);
     }
 }

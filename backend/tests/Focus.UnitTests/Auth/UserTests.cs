@@ -69,13 +69,15 @@ public class UserTests
         var user = User.CreateGuest();
 
         // Act & Assert
-        // Level formulu: 1 + floor(sqrt(XP / 100))
-        // 100 XP -> sqrt(1) = 1 -> Level 2
-        user.AddXp(100);
+        // Level 2 esigi 150 * 2^1.6 = 455 XP
+        user.AddXp(454);
+        user.Level.Should().Be(1);
+
+        user.AddXp(1);
         user.Level.Should().Be(2);
 
-        // 400 XP -> sqrt(4) = 2 -> Level 3
-        user.AddXp(300); // Toplam 400 XP
+        // Level 3 esigi 150 * 3^1.6 = 870 XP
+        user.AddXp(415);
         user.Level.Should().Be(3);
     }
 }
