@@ -1,8 +1,10 @@
+using System.Globalization;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Focus.Application.Common.Interfaces;
 using Focus.Application.Features.ExternalMedia.DTOs;
 using Focus.Infrastructure.Common;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -12,15 +14,19 @@ public class OpenMeteoWeatherService : IWeatherService
 {
     private readonly HttpClient _httpClient;
     private readonly ExternalApiSettings _settings;
+    private readonly IMemoryCache _cache;
     private readonly ILogger<OpenMeteoWeatherService> _logger;
+    private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(30);
 
     public OpenMeteoWeatherService(
         HttpClient httpClient,
         IOptions<ExternalApiSettings> options,
+        IMemoryCache cache,
         ILogger<OpenMeteoWeatherService> logger)
     {
         _httpClient = httpClient;
         _settings = options.Value;
+        _cache = cache;
         _logger = logger;
     }
 
@@ -59,37 +65,58 @@ public class OpenMeteoWeatherService : IWeatherService
                 DateTime.UtcNow);
         }
 
+        var roundedLatitude = Math.Round(latitude, 2);
+        var roundedLongitude = Math.Round(longitude, 2);
+        var cacheKey = string.Create(CultureInfo.InvariantCulture, $"weather:{roundedLatitude}:{roundedLongitude}");
+        if (_cache.TryGetValue(cacheKey, out WeatherReportDto? cached) && cached != null)
+        {
+            return cached;
+        }
+
         var baseUrl = string.IsNullOrWhiteSpace(_settings.OpenMeteo.BaseUrl)
             ? "https://api.open-meteo.com/v1"
             : _settings.OpenMeteo.BaseUrl.TrimEnd('/');
 
-        var url = $"{baseUrl}/forecast?latitude={latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}&longitude={longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}&current_weather=true";
+        var url = string.Create(CultureInfo.InvariantCulture, $"{baseUrl}/forecast?latitude={roundedLatitude}&longitude={roundedLongitude}&current_weather=true");
 
         try
         {
-            var response = await _httpClient.GetAsync(url, cancellationToken);
+            using var response = await _httpClient.GetAsync(url, cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
-                _logger.LogWarning("Open-Meteo returned status {StatusCode}", response.StatusCode);
-                return GetDefaultReport();
+                _logger.LogWarning("Open-Meteo returned status {StatusCode}", (int)response.StatusCode);
+                return null;
             }
 
-            var doc = await response.Content.ReadFromJsonAsync<JsonDocument>(cancellationToken: cancellationToken);
+            using var doc = await response.Content.ReadFromJsonAsync<JsonDocument>(cancellationToken: cancellationToken);
             if (doc == null || !doc.RootElement.TryGetProperty("current_weather", out var cw))
             {
-                return GetDefaultReport();
+                _logger.LogWarning("Open-Meteo returned an unexpected payload.");
+                return null;
             }
 
-            var temp = cw.TryGetProperty("temperature", out var t) ? t.GetDouble() : 20.0;
-            var wind = cw.TryGetProperty("windspeed", out var w) ? w.GetDouble() : 5.0;
-            var code = cw.TryGetProperty("weathercode", out var c) ? c.GetInt32() : 0;
+            if (!cw.TryGetProperty("temperature", out var t) || !cw.TryGetProperty("weathercode", out var c))
+            {
+                _logger.LogWarning("Open-Meteo payload is missing temperature or weather code.");
+                return null;
+            }
+
+            var temp = t.GetDouble();
+            var wind = cw.TryGetProperty("windspeed", out var w) ? w.GetDouble() : 0.0;
+            var code = c.GetInt32();
             var isDay = cw.TryGetProperty("is_day", out var id) && id.GetInt32() == 1;
             var timeStr = cw.TryGetProperty("time", out var tm) ? tm.GetString() : null;
 
-            var time = DateTime.TryParse(timeStr, out var parsedTime) ? parsedTime : DateTime.UtcNow;
+            var time = DateTime.TryParse(
+                timeStr,
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
+                out var parsedTime)
+                ? parsedTime
+                : DateTime.UtcNow;
             var details = InterpretWeatherCode(code, isDay);
 
-            return new WeatherReportDto(
+            var report = new WeatherReportDto(
                 temp,
                 wind,
                 code,
@@ -101,11 +128,18 @@ public class OpenMeteoWeatherService : IWeatherService
                 details.Description,
                 isDay,
                 time);
+
+            _cache.Set(cacheKey, report, CacheDuration);
+            return report;
         }
-        catch (Exception ex)
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            _logger.LogError(ex, "Failed to fetch weather from Open-Meteo");
-            return GetDefaultReport();
+            throw;
+        }
+        catch (Exception ex) when (ex is HttpRequestException or JsonException or OperationCanceledException or InvalidOperationException or FormatException)
+        {
+            _logger.LogWarning(ex, "Failed to fetch weather from Open-Meteo");
+            return null;
         }
     }
 
@@ -194,21 +228,5 @@ public class OpenMeteoWeatherService : IWeatherService
                 "Oda sessiz ve huzurlu."
             )
         };
-    }
-
-    private static WeatherReportDto GetDefaultReport()
-    {
-        return new WeatherReportDto(
-            21.5,
-            8.2,
-            1,
-            "Az Bulutlu",
-            "breeze_loft",
-            "light_clouds",
-            "Hafif Park Esintisi & Kafe Uğultusu",
-            "#FFEAA7",
-            "Hafif beyaz bulutlar süzülüyor. Zihni dinlendiren tazeleyici bir hava.",
-            true,
-            DateTime.UtcNow);
     }
 }

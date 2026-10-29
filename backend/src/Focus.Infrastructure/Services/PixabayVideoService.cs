@@ -3,6 +3,7 @@ using System.Text.Json;
 using Focus.Application.Common.Interfaces;
 using Focus.Application.Features.ExternalMedia.DTOs;
 using Focus.Infrastructure.Common;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -12,15 +13,19 @@ public class PixabayVideoService : IThemeVideoService
 {
     private readonly HttpClient _httpClient;
     private readonly ExternalApiSettings _settings;
+    private readonly IMemoryCache _cache;
     private readonly ILogger<PixabayVideoService> _logger;
+    private static readonly TimeSpan CacheDuration = TimeSpan.FromHours(1);
 
     public PixabayVideoService(
         HttpClient httpClient,
         IOptions<ExternalApiSettings> options,
+        IMemoryCache cache,
         ILogger<PixabayVideoService> logger)
     {
         _httpClient = httpClient;
         _settings = options.Value;
+        _cache = cache;
         _logger = logger;
 
         if (!_httpClient.DefaultRequestHeaders.Contains("User-Agent"))
@@ -42,24 +47,32 @@ public class PixabayVideoService : IThemeVideoService
         if (string.IsNullOrWhiteSpace(apiKey))
         {
             _logger.LogWarning("Pixabay API key is not configured.");
-            return GetFallbackVideos(query, validPage, validPerPage);
+            return [];
         }
 
-        var url = $"https://pixabay.com/api/videos/?key={apiKey}&q={Uri.EscapeDataString(query)}&video_type=film&per_page={validPerPage}&page={validPage}";
+        var trimmedQuery = (query ?? string.Empty).Trim();
+        var cacheKey = $"pixabay:{trimmedQuery.ToLowerInvariant()}:{validPerPage}:{validPage}";
+        if (_cache.TryGetValue(cacheKey, out IReadOnlyList<ThemeVideoDto>? cached) && cached != null)
+        {
+            return cached;
+        }
+
+        var url = $"https://pixabay.com/api/videos/?key={apiKey}&q={Uri.EscapeDataString(trimmedQuery)}&video_type=film&per_page={validPerPage}&page={validPage}";
 
         try
         {
-            var response = await _httpClient.GetAsync(url, cancellationToken);
+            using var response = await _httpClient.GetAsync(url, cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
-                _logger.LogWarning("Pixabay API returned {StatusCode}: {Reason}", response.StatusCode, response.ReasonPhrase);
-                return GetFallbackVideos(query, validPage, validPerPage);
+                _logger.LogWarning("Pixabay API returned {StatusCode}", (int)response.StatusCode);
+                return [];
             }
 
-            var doc = await response.Content.ReadFromJsonAsync<JsonDocument>(cancellationToken: cancellationToken);
+            using var doc = await response.Content.ReadFromJsonAsync<JsonDocument>(cancellationToken: cancellationToken);
             if (doc == null || !doc.RootElement.TryGetProperty("hits", out var hitsElement))
             {
-                return GetFallbackVideos(query, validPage, validPerPage);
+                _logger.LogWarning("Pixabay API returned an unexpected payload.");
+                return [];
             }
 
             var list = new List<ThemeVideoDto>();
@@ -113,50 +126,17 @@ public class PixabayVideoService : IThemeVideoService
                 }
             }
 
-            return list.Count > 0 ? list : GetFallbackVideos(query, validPage, validPerPage);
+            _cache.Set(cacheKey, (IReadOnlyList<ThemeVideoDto>)list, CacheDuration);
+            return list;
         }
-        catch (Exception ex)
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            _logger.LogError(ex, "Failed to fetch videos from Pixabay");
-            return GetFallbackVideos(query, validPage, validPerPage);
+            throw;
         }
-    }
-
-    private static IReadOnlyList<ThemeVideoDto> GetFallbackVideos(string query = "", int page = 1, int perPage = 12)
-    {
-        var allFallbacks = new List<ThemeVideoDto>
+        catch (Exception ex) when (ex is HttpRequestException or JsonException or OperationCanceledException or KeyNotFoundException or InvalidOperationException or FormatException)
         {
-            new(101, "https://pixabay.com/videos/id-101/", 30, "https://images.unsplash.com/photo-1519692933481-e162a57d6721?w=640", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4", "rain, window, cozy, focus, drizzle"),
-            new(102, "https://pixabay.com/videos/id-102/", 45, "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=640", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4", "cafe, evening, warm ambient, coffee shop, study"),
-            new(103, "https://pixabay.com/videos/id-103/", 60, "https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=640", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4", "cyberpunk, neon, night city, synthwave, terminal"),
-            new(104, "https://pixabay.com/videos/id-104/", 40, "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=640", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyBlazes.mp4", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyBlazes.mp4", "fireplace, wood cabin, crackle, winter warmth"),
-            new(105, "https://pixabay.com/videos/id-105/", 50, "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=640", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4", "zen, japanese garden, bamboo, water fountain, calm"),
-            new(106, "https://pixabay.com/videos/id-106/", 90, "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=640", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4", "space station, orbit, earth, cosmic calm, stars"),
-            new(107, "https://pixabay.com/videos/id-107/", 35, "https://images.unsplash.com/photo-1448375240586-882707db888b?w=640", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackSeeTheWorld.mp4", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackSeeTheWorld.mp4", "forest, mist, pine trees, morning breeze, green"),
-            new(108, "https://pixabay.com/videos/id-108/", 55, "https://images.unsplash.com/photo-1507842229451-7f01be45c067?w=640", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4", "library, ancient books, quiet reading, wood desk"),
-            new(109, "https://pixabay.com/videos/id-109/", 48, "https://images.unsplash.com/photo-1514565131-fce0801e5785?w=640", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4", "sunset, skyline, golden hour, rooftop, evening"),
-            new(110, "https://pixabay.com/videos/id-110/", 65, "https://images.unsplash.com/photo-1517411032315-54ef2cb783bb?w=640", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WhatCarCanYouGetForAGrand.mp4", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WhatCarCanYouGetForAGrand.mp4", "snow, gentle blizzard, frosted window, winter stillness"),
-            new(111, "https://pixabay.com/videos/id-111/", 42, "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=640", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4", "midnight, minimalist moon, monochrome dark, deep code"),
-            new(112, "https://pixabay.com/videos/id-112/", 38, "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=640", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4", "retro 80s, crt glow, vaporwave, pixel arcade, beats")
-        };
-
-        var filtered = string.IsNullOrWhiteSpace(query)
-            ? allFallbacks
-            : allFallbacks.Where(f => f.Tags.Contains(query, StringComparison.OrdinalIgnoreCase)).ToList();
-
-        if (filtered.Count == 0) filtered = allFallbacks;
-
-        var validPage = Math.Max(1, page);
-        var validPerPage = Math.Clamp(perPage, 1, 50);
-        var count = Math.Min(validPerPage, filtered.Count);
-        var startOffset = ((validPage - 1) * validPerPage) % filtered.Count;
-
-        var result = new List<ThemeVideoDto>(count);
-        for (var i = 0; i < count; i++)
-        {
-            result.Add(filtered[(startOffset + i) % filtered.Count]);
+            _logger.LogWarning(ex, "Failed to fetch videos from Pixabay");
+            return [];
         }
-
-        return result;
     }
 }

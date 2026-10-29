@@ -49,6 +49,7 @@ public static class DependencyInjection
 
         // Servisler
         services.AddHttpContextAccessor();
+        services.AddMemoryCache();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IGoogleAuthService, GoogleAuthService>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();

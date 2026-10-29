@@ -147,8 +147,13 @@ public class AtmosphereAiService : IAtmosphereAiService
         var hadRecentDistractions = recentReflections.Count != 0 && recentReflections.Average(r => r.FocusQuality) < 3.0;
 
         // 3. Anlik Hava Durumu
-        var weather = await _weatherService.GetCurrentWeatherAsync(cancellationToken: cancellationToken);
+        var weatherSyncDisabled = await _context.UserPreferences
+            .AnyAsync(p => p.UserId == userId && !p.WeatherSyncEnabled, cancellationToken);
+        var weather = weatherSyncDisabled
+            ? null
+            : await _weatherService.GetCurrentWeatherAsync(cancellationToken: cancellationToken);
         var weatherCondition = weather?.WeatherCondition ?? "Clear";
+        var isRainy = weather != null && IsRainyWeatherCode(weather.WeatherCode);
 
         // 4. Kolektif Bilgelik Sorgusu (Katman 2)
         var contextQuery = $"{circadianSlot} yorgunluk:{fatigueScore:F0} hava:{weatherCondition}";
@@ -164,7 +169,7 @@ public class AtmosphereAiService : IAtmosphereAiService
             Prompt: null,
             FocusGoal: focusGoal,
             MoodTarget: fatigueScore >= 60 ? "CalmZen" : (circadianSlot == "Morning" ? "EnergeticFlow" : "MidnightFocus"),
-            PreferredAmbience: weatherCondition.Contains("Rain", StringComparison.OrdinalIgnoreCase) ? "RainWindow" : "CracklingFireplace",
+            PreferredAmbience: isRainy ? "RainWindow" : "CracklingFireplace",
             VisualAesthetic: circadianSlot == "LateNight" ? "CyberpunkNeon" : (circadianSlot == "Morning" ? "JapaneseZen" : "RetroStudio"),
             TimeOfDay: circadianSlot);
 
@@ -259,6 +264,9 @@ public class AtmosphereAiService : IAtmosphereAiService
         _logger.LogInformation("Kolektif AI bellegine anonim seans icgorusu eklendi: {Insight}", collectiveInsight);
         return true;
     }
+
+    private static bool IsRainyWeatherCode(int code) =>
+        code is >= 51 and <= 67 or >= 80 and <= 82 or >= 95 and <= 99;
 
     private async Task<GeneratedAtmosphereDto> GenerateWithGeminiAsync(
         string displayName,
