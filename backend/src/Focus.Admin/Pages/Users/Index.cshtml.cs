@@ -8,12 +8,21 @@ namespace Focus.Admin.Pages.Users;
 
 public class IndexModel : PageModel
 {
-    private readonly IApplicationDbContext _context;
+    public const int MaxCoinAdjustment = 100_000;
+    public const int MaxReasonLength = 200;
+    public const long MaxXpGrant = 1_000_000;
 
-    public IndexModel(IApplicationDbContext context)
+    private readonly IApplicationDbContext _context;
+    private readonly ILogger<IndexModel> _logger;
+
+    public IndexModel(IApplicationDbContext context, ILogger<IndexModel> logger)
     {
         _context = context;
+        _logger = logger;
     }
+
+    [TempData]
+    public string? StatusMessage { get; set; }
 
     [BindProperty(SupportsGet = true)]
     public string? Search { get; set; }
@@ -24,7 +33,7 @@ public class IndexModel : PageModel
     public int TotalCount { get; set; }
     public int RegisteredCount { get; set; }
     public int GuestCount { get; set; }
-    public int TotalCoins { get; set; }
+    public long TotalCoins { get; set; }
 
     public List<UserViewModel> Users { get; set; } = new();
 
@@ -45,7 +54,7 @@ public class IndexModel : PageModel
         TotalCount = await _context.Users.CountAsync();
         GuestCount = await _context.Users.CountAsync(u => u.IsGuest);
         RegisteredCount = TotalCount - GuestCount;
-        TotalCoins = await _context.CoinLedgerEntries.SumAsync(c => (int?)c.Coins) ?? 0;
+        TotalCoins = await _context.CoinLedgerEntries.SumAsync(c => (long?)c.Coins) ?? 0;
 
         var query = _context.Users
             .Include(u => u.Avatar)
@@ -95,28 +104,69 @@ public class IndexModel : PageModel
 
     public async Task<IActionResult> OnPostGrantCoinsAsync(Guid userId, int amount, string? reason)
     {
-        if (amount != 0)
+        var trimmedReason = reason?.Trim();
+        if (string.IsNullOrEmpty(trimmedReason) || trimmedReason.Length > MaxReasonLength)
         {
-            var entry = new CoinLedgerEntry(userId, CoinTransactionReason.AdminAdjustment, amount);
-            _context.CoinLedgerEntries.Add(entry);
-            await _context.SaveChangesAsync();
+            return Fail($"Gerekçe zorunludur ve en fazla {MaxReasonLength} karakter olabilir.");
         }
 
+        if (amount == 0 || Math.Abs((long)amount) > MaxCoinAdjustment)
+        {
+            return Fail($"Miktar sıfırdan farklı olmalı ve -{MaxCoinAdjustment:N0} ile {MaxCoinAdjustment:N0} arasında olmalıdır.");
+        }
+
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        if (user is null)
+        {
+            return Fail("Kullanıcı bulunamadı.");
+        }
+
+        var balance = await _context.CoinLedgerEntries
+            .Where(c => c.UserId == userId)
+            .SumAsync(c => (long?)c.Coins) ?? 0;
+        if (balance + amount < 0)
+        {
+            return Fail($"Bakiye sıfırın altına düşemez (mevcut bakiye: {balance:N0}).");
+        }
+
+        _context.CoinLedgerEntries.Add(new CoinLedgerEntry(userId, CoinTransactionReason.AdminAdjustment, amount));
+        user.RegisterWalletChange();
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("Admin coin adjustment applied: User {UserId}, Amount {Amount}, Reason {Reason}", userId, amount, trimmedReason);
+        StatusMessage = $"{user.DisplayName} için {amount:+#,0;-#,0} coin uygulandı.";
         return RedirectToPage(new { Search, Filter });
     }
 
     public async Task<IActionResult> OnPostAddXpAsync(Guid userId, long xp)
     {
-        if (xp > 0)
+        if (xp < 1 || xp > MaxXpGrant)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
-            if (user != null)
-            {
-                user.AddXp(xp);
-                await _context.SaveChangesAsync();
-            }
+            return Fail($"XP miktarı 1 ile {MaxXpGrant:N0} arasında olmalıdır.");
         }
 
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        if (user is null)
+        {
+            return Fail("Kullanıcı bulunamadı.");
+        }
+
+        if (user.CurrentXp > long.MaxValue - xp)
+        {
+            return Fail("Kullanıcının XP değeri bu eklemeyi kaldıramaz.");
+        }
+
+        user.AddXp(xp);
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("Admin XP grant applied: User {UserId}, Xp {Xp}", userId, xp);
+        StatusMessage = $"{user.DisplayName} için {xp:N0} XP eklendi.";
+        return RedirectToPage(new { Search, Filter });
+    }
+
+    private IActionResult Fail(string message)
+    {
+        StatusMessage = message;
         return RedirectToPage(new { Search, Filter });
     }
 }

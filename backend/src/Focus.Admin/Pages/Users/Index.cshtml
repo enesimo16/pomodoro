@@ -17,6 +17,19 @@
     </div>
 </div>
 
+@if (!string.IsNullOrEmpty(Model.StatusMessage))
+{
+    <div class="polaris-card mb-4" style="border-left: 3px solid #202223;">
+        <div class="polaris-card-body py-3 d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-2">
+                <span class="polaris-badge polaris-badge-dark">Bilgi</span>
+                <span class="fw-semibold text-dark">@Model.StatusMessage</span>
+            </div>
+            <button type="button" class="btn-close" onclick="this.closest('.polaris-card').remove();"></button>
+        </div>
+    </div>
+}
+
 <!-- PANEL 1: Kullanıcı Özet KPI Panelleri -->
 <div class="row g-3 mb-4">
     <div class="col-sm-6 col-xl-3">
@@ -154,10 +167,12 @@
                                                 <!-- Coin Ekleme Formu -->
                                                 <form method="post" asp-page-handler="GrantCoins" class="mb-4">
                                                     <input type="hidden" name="userId" value="@user.Id" />
+                                                    <input type="hidden" name="Search" value="@Model.Search" />
+                                                    <input type="hidden" name="Filter" value="@Model.Filter" />
                                                     <label class="form-label fw-semibold small">Coin Bakiyesi Ayarla (+/-)</label>
                                                     <div class="input-group mb-2">
-                                                        <input type="number" name="amount" class="form-control form-control-sm" placeholder="Miktar (örn: 100 veya -50)" required />
-                                                        <input type="text" name="reason" class="form-control form-control-sm" placeholder="Gerekçe (İsteğe bağlı)" />
+                                                        <input type="number" name="amount" class="form-control form-control-sm" placeholder="Miktar (örn: 100 veya -50)" min="-100000" max="100000" required />
+                                                        <input type="text" name="reason" class="form-control form-control-sm" placeholder="Gerekçe (zorunlu)" maxlength="200" required />
                                                         <button type="submit" class="polaris-btn polaris-btn-primary polaris-btn-sm">Uygula</button>
                                                     </div>
                                                     <div class="form-text small">Mevcut bakiye: <strong>@user.Coins Coin</strong></div>
@@ -168,9 +183,11 @@
                                                 <!-- XP Ekleme Formu -->
                                                 <form method="post" asp-page-handler="AddXp">
                                                     <input type="hidden" name="userId" value="@user.Id" />
+                                                    <input type="hidden" name="Search" value="@Model.Search" />
+                                                    <input type="hidden" name="Filter" value="@Model.Filter" />
                                                     <label class="form-label fw-semibold small">Deneyim Puanı Ekle (XP)</label>
                                                     <div class="input-group">
-                                                        <input type="number" name="xp" class="form-control form-control-sm" placeholder="Miktar (örn: 500)" min="1" required />
+                                                        <input type="number" name="xp" class="form-control form-control-sm" placeholder="Miktar (örn: 500)" min="1" max="1000000" required />
                                                         <button type="submit" class="polaris-btn polaris-btn-secondary polaris-btn-sm">XP Tanımla</button>
                                                     </div>
                                                 </form>
