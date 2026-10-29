@@ -1,38 +1,83 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import {
+  api,
+  clearLegacyAuthStorage,
+  describeError,
+  loginAsGuest,
+  type StudyRoomDto,
+} from "@/lib/api";
 
 export default function LandingHomePage() {
+  const router = useRouter();
   const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [authTab, setAuthTab] = useState<"guest" | "login" | "register">("guest");
   const [guestName, setGuestName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [publicRooms, setPublicRooms] = useState<StudyRoomDto[] | null | undefined>(undefined);
+
+  useEffect(() => {
+    clearLegacyAuthStorage();
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .get<StudyRoomDto[]>("/study-rooms/public")
+      .then((rooms) => {
+        if (!cancelled) setPublicRooms(rooms);
+      })
+      .catch(() => {
+        if (!cancelled) setPublicRooms(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!authModalOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setAuthModalOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [authModalOpen]);
+
+  const openGuestModal = () => {
+    setAuthError(null);
+    setAuthModalOpen(true);
+  };
+
+  const focusingCount = publicRooms
+    ? publicRooms.reduce((sum, room) => sum + room.members.filter((m) => m.isFocusing).length, 0)
+    : 0;
 
   const handleGuestSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setAuthError(null);
     try {
-      const res = await fetch("http://localhost:5000/api/v1/auth/guest", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ preferredDisplayName: guestName.trim() || undefined })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (typeof window !== "undefined") {
-          localStorage.setItem("bokodoro_auth", JSON.stringify(data));
-        }
-        const name = data.user?.displayName || guestName || "Sakin";
-        window.location.href = `/room?guest=${encodeURIComponent(name)}`;
-        return;
+      await loginAsGuest(guestName.trim());
+      clearLegacyAuthStorage();
+
+      // Davet baglantisiyla gelindiyse oda ve davet kodu odaya aktarilir
+      const incoming = new URLSearchParams(window.location.search);
+      const forward = new URLSearchParams();
+      for (const key of ["room", "invite"]) {
+        const value = incoming.get(key);
+        if (value) forward.set(key, value);
       }
-    } catch {
-      // API çevrimdışı olsa bile akışı kesme
+      const query = forward.toString();
+      router.push(query ? `/room?${query}` : "/room");
+    } catch (err) {
+      setAuthError(describeError(err));
+    } finally {
+      setIsLoading(false);
     }
-    window.location.href = `/room?guest=${encodeURIComponent(guestName || "Sakin")}`;
   };
 
   return (
@@ -66,19 +111,7 @@ export default function LandingHomePage() {
 
           <div className="flex items-center gap-3">
             <button
-              onClick={() => {
-                setAuthTab("login");
-                setAuthModalOpen(true);
-              }}
-              className="pixel-btn pixel-btn-secondary text-xs px-3 py-2 text-[#8b949e] hover:text-white"
-            >
-              Giriş Yap
-            </button>
-            <button
-              onClick={() => {
-                setAuthTab("guest");
-                setAuthModalOpen(true);
-              }}
+              onClick={openGuestModal}
               className="pixel-btn pixel-btn-primary text-xs px-4 py-2"
             >
               Hemen Başla (Misafir)
@@ -114,10 +147,7 @@ export default function LandingHomePage() {
 
             <div className="flex flex-wrap items-center gap-4 pt-2">
               <button
-                onClick={() => {
-                  setAuthTab("guest");
-                  setAuthModalOpen(true);
-                }}
+                onClick={openGuestModal}
                 className="pixel-btn pixel-btn-primary text-sm px-6 py-3.5 flex items-center gap-2"
               >
                 <span>[ ODAYA GEÇ &gt; MİSAFİR MODU ]</span>
@@ -147,7 +177,7 @@ export default function LandingHomePage() {
           <div className="flex-1 w-full max-w-lg">
             <div className="pixel-box p-4 bg-[#10141a]">
               <div className="flex items-center justify-between border-b border-[#262c36] pb-2 mb-3 text-xs text-[#8b949e]">
-                <span>// CANLI_ODA_ONIZLEMESI.RAW</span>
+                <span>{"// CANLI_ODA_ONIZLEMESI.RAW"}</span>
                 <span className="text-[#38ef7d]">25:00 ODAK MODU</span>
               </div>
 
@@ -155,7 +185,7 @@ export default function LandingHomePage() {
                 {/* Arka Pencere Yağmur Izgarası */}
                 <div className="absolute top-3 left-6 right-6 h-28 border border-[#30363d] bg-[#0a1017] flex items-center justify-center">
                   <div className="absolute inset-0 opacity-40 bg-[radial-gradient(#38ef7d_1px,transparent_1px)] [background-size:8px_8px]"></div>
-                  <span className="text-[10px] text-[#484f58] tracking-widest">// DISARIDA_YAGMUR_YAGIYOR</span>
+                  <span className="text-[10px] text-[#484f58] tracking-widest">{"// PENCERE"}</span>
                 </div>
 
                 {/* Karakter & Masa Kompozisyonu */}
@@ -187,14 +217,16 @@ export default function LandingHomePage() {
                   {/* Ahşap Masa */}
                   <div className="w-64 h-4 bg-[#231a14] border-t-2 border-b-2 border-[#5c3a1e] mt-[-2px] shadow-[0_4px_0_#0a0604] z-30 flex items-center justify-between px-3">
                     <div className="w-1 h-1 bg-[#c99f7d]"></div>
-                    <div className="text-[8px] text-[#8b6848] font-mono tracking-widest">// BOKO-DESK #01</div>
+                    <div className="text-[8px] text-[#8b6848] font-mono tracking-widest">{"// BOKO-DESK #01"}</div>
                     <div className="w-1 h-1 bg-[#c99f7d]"></div>
                   </div>
                 </div>
 
-                <div className="absolute top-2 right-2 text-[9px] px-2 py-0.5 bg-[#10141a] border border-[#30363d] text-[#38ef7d]">
-                  ● 3 ARKADAŞIN ÇALIŞIYOR
-                </div>
+                {focusingCount > 0 && (
+                  <div className="absolute top-2 right-2 text-[9px] px-2 py-0.5 bg-[#10141a] border border-[#30363d] text-[#38ef7d]">
+                    ● {focusingCount} KİŞİ ODAKTA
+                  </div>
+                )}
               </div>
 
               {/* Alt Bilgi Barı */}
@@ -209,7 +241,7 @@ export default function LandingHomePage() {
                 </div>
                 <div className="p-2 border border-[#262c36] bg-[#0d1117]">
                   <span className="text-[#8b949e] block">Ödül</span>
-                  <span className="text-[#e6edf3] font-bold">+25 XP / +5 Coin</span>
+                  <span className="text-[#e6edf3] font-bold">XP + Coin</span>
                 </div>
               </div>
             </div>
@@ -352,60 +384,52 @@ export default function LandingHomePage() {
           <div className="flex-1 w-full max-w-md">
             <div className="pixel-box p-4 bg-[#10141a]">
               <div className="flex items-center justify-between border-b border-[#262c36] pb-2 mb-3 text-xs text-[#8b949e]">
-                <span>// ORTAK_MASA_CANLI.NET</span>
-                <span className="text-[#38ef7d]">ODA: #KUTUPHANE-04</span>
+                <span>{"// HERKESE_ACIK_ODALAR"}</span>
+                <span className="text-[#38ef7d]">
+                  {publicRooms ? `${focusingCount} kişi odakta` : ""}
+                </span>
               </div>
               <div className="space-y-2">
-                <div className="p-2.5 border border-[#30363d] bg-[#06080b] flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-5 h-5 bg-[#38ef7d] text-black font-bold flex items-center justify-center text-[10px]">
-                      S
-                    </div>
-                    <div>
-                      <span className="text-[#e6edf3] font-bold block">Sen</span>
-                      <span className="text-[10px] text-[#8b949e]">Masa #1 (23:14 kaldı)</span>
-                    </div>
+                {publicRooms && publicRooms.length === 0 && (
+                  <div className="p-2.5 border border-[#30363d] bg-[#06080b] text-xs text-[#8b949e]">
+                    Şu an halka açık bir oda yok. Misafir olarak girip kendi odanı açabilir ve arkadaşını
+                    davet edebilirsin.
                   </div>
-                  <span className="px-2 py-0.5 bg-[#161b22] border border-[#23c761] text-[#38ef7d] text-[10px]">
-                    Odakta
-                  </span>
-                </div>
-
-                <div className="p-2.5 border border-[#30363d] bg-[#06080b] flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-5 h-5 bg-[#e5a93c] text-black font-bold flex items-center justify-center text-[10px]">
-                      A
-                    </div>
-                    <div>
-                      <span className="text-[#e6edf3] font-bold block">Ahmet</span>
-                      <span className="text-[10px] text-[#8b949e]">Masa #2 (14:02 kaldı)</span>
-                    </div>
+                )}
+                {publicRooms === null && (
+                  <div className="p-2.5 border border-[#30363d] bg-[#06080b] text-xs text-[#8b949e]">
+                    Oda listesi şu an alınamıyor.
                   </div>
-                  <span className="px-2 py-0.5 bg-[#161b22] border border-[#30363d] text-[#e5a93c] text-[10px]">
-                    Odakta
-                  </span>
-                </div>
-
-                <div className="p-2.5 border border-[#30363d] bg-[#06080b] flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-5 h-5 bg-[#161b22] border border-[#30363d] text-[#8b949e] font-bold flex items-center justify-center text-[10px]">
-                      +
-                    </div>
-                    <div>
-                      <span className="text-[#8b949e] font-bold block">Boş Masa #3</span>
-                      <span className="text-[10px] text-[#484f58]">Arkadaşını davet et</span>
-                    </div>
+                )}
+                {publicRooms === undefined && (
+                  <div className="p-2.5 border border-[#30363d] bg-[#06080b] text-xs text-[#8b949e]">
+                    Odalar yükleniyor...
                   </div>
-                  <button
-                    onClick={() => {
-                      setAuthTab("guest");
-                      setAuthModalOpen(true);
-                    }}
-                    className="pixel-btn pixel-btn-primary text-[10px] px-2 py-1"
+                )}
+                {publicRooms?.slice(0, 3).map((room) => (
+                  <div
+                    key={room.code}
+                    className="p-2.5 border border-[#30363d] bg-[#06080b] flex items-center justify-between text-xs"
                   >
-                    Otur
-                  </button>
-                </div>
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-5 h-5 bg-[#161b22] border border-[#30363d] text-[#38ef7d] font-bold flex items-center justify-center text-[10px]">
+                        #
+                      </div>
+                      <div>
+                        <span className="text-[#e6edf3] font-bold block">{room.name}</span>
+                        <span className="text-[10px] text-[#8b949e]">
+                          {room.currentMemberCount} / {room.maxCapacity} kişi
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={openGuestModal}
+                      className="pixel-btn pixel-btn-primary text-[10px] px-2 py-1"
+                    >
+                      Otur
+                    </button>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -424,10 +448,7 @@ export default function LandingHomePage() {
           </p>
           <div className="pt-6">
             <button
-              onClick={() => {
-                setAuthTab("guest");
-                setAuthModalOpen(true);
-              }}
+              onClick={openGuestModal}
               className="pixel-btn pixel-btn-primary text-sm px-8 py-4 text-black font-bold"
             >
               [ HEMEN ODAYA GİR &gt; MİSAFİR ]
@@ -444,198 +465,81 @@ export default function LandingHomePage() {
             <Link href="/room" className="hover:text-[#38ef7d]">
               Çalışma Odası
             </Link>
-            <a
-              href="http://localhost:5001/?admin_key=focus_master_key_9971x"
-              target="_blank"
-              rel="noreferrer"
-              className="hover:text-[#38ef7d]"
-            >
-              Admin Paneli
-            </a>
-            <a
-              href="http://localhost:5000/swagger"
-              target="_blank"
-              rel="noreferrer"
-              className="hover:text-[#38ef7d]"
-            >
-              API Sözleşmesi
-            </a>
           </div>
         </div>
       </footer>
 
       {/* ============================================================ */}
-      {/* 7. RETRO PİKSEL GİRİŞ / MİSAFİR MODAL */}
+      {/* 7. RETRO PİKSEL MİSAFİR GİRİŞ MODALI */}
       {/* ============================================================ */}
       {authModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="pixel-box p-6 w-full max-w-md bg-[#10141a] relative">
-            {/* Modal Kapat Butonu */}
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setAuthModalOpen(false);
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="auth-dialog-title"
+            className="pixel-box p-6 w-full max-w-md bg-[#10141a] relative"
+          >
             <button
+              type="button"
               onClick={() => setAuthModalOpen(false)}
+              aria-label="Pencereyi kapat"
               className="absolute top-4 right-4 text-xs px-2 py-1 border border-[#30363d] text-[#8b949e] hover:text-white"
             >
               [X]
             </button>
 
-            {/* Modal Başlık */}
             <div className="border-b border-[#262c36] pb-3 mb-4">
-              <span className="text-base font-bold text-[#38ef7d] block">
-                BOKODORO // ERİŞİM PANELİ
-              </span>
-              <span className="text-xs text-[#8b949e]">
-                Odaya geçmek için bir yöntem seçin.
-              </span>
+              <h2 id="auth-dialog-title" className="text-base font-bold text-[#38ef7d] block">
+                BOKODORO // MİSAFİR GİRİŞİ
+              </h2>
+              <span className="text-xs text-[#8b949e]">Odaya geçmek için bir takma ad seç.</span>
             </div>
 
-            {/* Modal Sekmeleri */}
-            <div className="flex gap-2 mb-4">
+            <form onSubmit={handleGuestSubmit} className="flex flex-col gap-4">
+              <div className="p-3 bg-[#06080b] border border-[#21262d] text-xs text-[#8b949e] leading-relaxed">
+                <strong className="text-[#38ef7d]">Sıfır Sürtünme:</strong> Şifre veya e-posta gerekmez.
+                Sadece bir takma ad seçin, hemen odanıza geçin.
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label htmlFor="guest-name" className="text-xs text-[#8b949e]">
+                  Karakter / Takma Ad:
+                </label>
+                <input
+                  id="guest-name"
+                  type="text"
+                  required
+                  autoFocus
+                  maxLength={32}
+                  placeholder="ör. PikselYolcusu"
+                  value={guestName}
+                  onChange={(e) => setGuestName(e.target.value)}
+                  className="p-2.5 bg-[#06080b] border border-[#30363d] text-xs text-[#38ef7d] focus:border-[#38ef7d] outline-none font-mono"
+                />
+              </div>
+
+              {authError && (
+                <div role="alert" className="p-3 border border-[#f85149] bg-[#1a0d0d] text-xs text-[#ff7b72]">
+                  {authError}
+                </div>
+              )}
+
               <button
-                onClick={() => setAuthTab("guest")}
-                className={`pixel-btn text-xs px-3 py-1.5 flex-1 ${
-                  authTab === "guest" ? "pixel-btn-primary" : "pixel-btn-secondary"
-                }`}
+                type="submit"
+                disabled={isLoading}
+                className="pixel-btn pixel-btn-primary text-xs py-3 text-black font-bold mt-2 disabled:opacity-60"
               >
-                Misafir Modu
+                {isLoading ? "Odaya Bağlanılıyor..." : "[ ODAYA GİRİŞ YAP ]"}
               </button>
-              <button
-                onClick={() => setAuthTab("login")}
-                className={`pixel-btn text-xs px-3 py-1.5 flex-1 ${
-                  authTab === "login" ? "pixel-btn-primary" : "pixel-btn-secondary"
-                }`}
-              >
-                Giriş Yap
-              </button>
-              <button
-                onClick={() => setAuthTab("register")}
-                className={`pixel-btn text-xs px-3 py-1.5 flex-1 ${
-                  authTab === "register" ? "pixel-btn-primary" : "pixel-btn-secondary"
-                }`}
-              >
-                Kayıt Ol
-              </button>
-            </div>
 
-            {/* FORM 1: MİSAFİR MODU */}
-            {authTab === "guest" && (
-              <form onSubmit={handleGuestSubmit} className="flex flex-col gap-4">
-                <div className="p-3 bg-[#06080b] border border-[#21262d] text-xs text-[#8b949e] leading-relaxed">
-                  💡 <strong className="text-[#38ef7d]">Sıfır Sürtünme:</strong> Şifre veya e-posta
-                  gerekmez. Sadece bir takma ad seçin, hemen odanıza geçin. Verileriniz daha sonra
-                  tek tıkla hesaba dönüştürülebilir.
-                </div>
-
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs text-[#8b949e]">Karakter / Takma Ad:</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="ör. PikselYolcusu"
-                    value={guestName}
-                    onChange={(e) => setGuestName(e.target.value)}
-                    className="p-2.5 bg-[#06080b] border border-[#30363d] text-xs text-[#38ef7d] focus:border-[#38ef7d] outline-none font-mono"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="pixel-btn pixel-btn-primary text-xs py-3 text-black font-bold mt-2"
-                >
-                  {isLoading ? "Odaya Bağlanılıyor..." : "[ ODAYA GİRİŞ YAP ]"}
-                </button>
-              </form>
-            )}
-
-            {/* FORM 2: GİRİŞ YAP */}
-            {authTab === "login" && (
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  window.location.href = "/room";
-                }}
-                className="flex flex-col gap-4"
-              >
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs text-[#8b949e]">E-Posta:</label>
-                  <input
-                    type="email"
-                    required
-                    placeholder="ornek@alanadi.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="p-2.5 bg-[#06080b] border border-[#30363d] text-xs text-[#38ef7d] focus:border-[#38ef7d] outline-none font-mono"
-                  />
-                </div>
-
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs text-[#8b949e]">Şifre:</label>
-                  <input
-                    type="password"
-                    required
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="p-2.5 bg-[#06080b] border border-[#30363d] text-xs text-[#38ef7d] focus:border-[#38ef7d] outline-none font-mono"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  className="pixel-btn pixel-btn-primary text-xs py-3 text-black font-bold mt-2"
-                >
-                  [ GİRİŞ YAP ]
-                </button>
-              </form>
-            )}
-
-            {/* FORM 3: KAYIT OL */}
-            {authTab === "register" && (
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  window.location.href = "/room";
-                }}
-                className="flex flex-col gap-4"
-              >
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs text-[#8b949e]">Kullanıcı Adı:</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="kullanici_adi"
-                    className="p-2.5 bg-[#06080b] border border-[#30363d] text-xs text-[#38ef7d] focus:border-[#38ef7d] outline-none font-mono"
-                  />
-                </div>
-
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs text-[#8b949e]">E-Posta:</label>
-                  <input
-                    type="email"
-                    required
-                    placeholder="ornek@alanadi.com"
-                    className="p-2.5 bg-[#06080b] border border-[#30363d] text-xs text-[#38ef7d] focus:border-[#38ef7d] outline-none font-mono"
-                  />
-                </div>
-
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs text-[#8b949e]">Şifre:</label>
-                  <input
-                    type="password"
-                    required
-                    placeholder="••••••••"
-                    className="p-2.5 bg-[#06080b] border border-[#30363d] text-xs text-[#38ef7d] focus:border-[#38ef7d] outline-none font-mono"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  className="pixel-btn pixel-btn-primary text-xs py-3 text-black font-bold mt-2"
-                >
-                  [ HESAP OLUŞTUR ]
-                </button>
-              </form>
-            )}
+              <p className="text-[11px] text-[#484f58]">Google ile giriş yakında.</p>
+            </form>
           </div>
         </div>
       )}
